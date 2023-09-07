@@ -1,0 +1,23 @@
+{
+  "slug": "EigenLite",
+  "name": "EigenLite",
+  "version": "2.0.0",
+  "license": "open-source",
+  "brand": "TheTechnobear",
+  "author": "Mark Harris",
+  "authorEmail": "",
+  "authorUrl": "",
+  "pluginUrl": "",
+  "manualUrl": "",
+  "sourceUrl": "",
+  "donateUrl": "",
+  "changelogUrl": "",
+  "modules": [
+    {
+      "slug": "EDevice",
+      "name": "EDevice",
+      "description": "device module",
+      "tags": []
+    }
+  ]
+}
