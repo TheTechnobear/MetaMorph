@@ -7,17 +7,15 @@ include $(RACK_DIR)/arch.mk
 FLAGS +=
 CFLAGS +=
 CXXFLAGS += 
+LDFLAGS += 
 
 # Careful about linking to shared libraries, since you can't assume much about the user's environment and library search path.
 # Static libraries are fine, but they should be added to this plugin's build system.
-LDFLAGS += -L/Users/kodiak/projects/VCVModules/EigenLite -lpicodecoder 
-# TODO: not working !
-# LDFLAGS +=  -Wl,-rpath=.
 
-EL_DIR=EL/eigenapi
+EL_DIR=EigenLite/eigenapi
+EL_RES_DIR=EigenLite/resources
 CFLAGS += -I ${EL_DIR}
 CXXFLAGS += -I ${EL_DIR} -I ${EL_DIR}/picross
-
 
 EIGENHARP_SRC = \
     ${EL_DIR}/picross/src/pic_backtrace.c\
@@ -41,7 +39,17 @@ EIGENHARP_SRC = \
     ${EL_DIR}/src/ef_tau.cpp\
     ${EL_DIR}/src/ef_pico.cpp\
     ${EL_DIR}/src/eigenapi.cpp\
-    ${EL_DIR}/src/fwr_posix.cpp
+    ${EL_DIR}/src/fwr_posix.cpp\
+    ${EL_DIR}/src/fwr_embedded.cpp
+ 
+
+EMB_FW_SRC_DIR=${EL_RES_DIR}/firmware/cpp
+
+EIGENHARP_SRC += \
+    ${EMB_FW_SRC_DIR}/bs_mm_fw_0103.cpp\
+    ${EMB_FW_SRC_DIR}/pico.cpp\
+    ${EMB_FW_SRC_DIR}/psu_mm_fw_0102.cpp	
+
 
 ifdef ARCH_X64
 endif
@@ -53,6 +61,9 @@ EIGENHARP_SRC += \
         ${EL_DIR}/picross/src/pic_thread_posix.cpp\
         ${EL_DIR}/picross/src/pic_usb_linux.cpp\
         ${EL_DIR}/picross/src/pic_tool_linux.cpp
+        
+LDFLAGS += ${EL_RES_DIR}/picodecoder/linux/x86_64/libpicodecoder_static.a
+
 endif
 ifdef ARCH_MAC
 EIGENHARP_SRC += \
@@ -61,8 +72,15 @@ EIGENHARP_SRC += \
     ${EL_DIR}/picross/src/pic_usb_macosx.cpp\
 	${EL_DIR}/picross/src/pic_tool_macosx.cpp
 
-#TODO: is this needed? I think not! 
 #    ${EL_DIR}/picross/src/pic_power_macosx.mm 
+
+ifdef ARCH_X64
+LDFLAGS += ${EL_RES_DIR}/picodecoder/macOs/x86_64/libpicodecoder_static.a
+endif
+ifdef ARCH_ARM64
+LDFLAGS += ${EL_RES_DIR}/picodecoder/macOs/arm64/libpicodecoder_static.a
+endif
+
 
 endif
 ifdef ARCH_WIN
