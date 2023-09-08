@@ -1,5 +1,6 @@
 #include "plugin.hpp"
 
+#include "../EL/eigenapi/eigenapi.h"
 
 struct EDevice : Module {
 	enum ParamId {
@@ -31,6 +32,10 @@ struct EDevice : Module {
 		configOutput(OUT1_OUTPUT, "");
 		configOutput(OUT3_OUTPUT, "");
 		configOutput(OUT4_OUTPUT, "");
+
+		EigenApi::FWR_Posix reader("res");
+		auto harp = new EigenApi::Eigenharp(reader);
+		harp->start();
 	}
 
 	void process(const ProcessArgs& args) override {
