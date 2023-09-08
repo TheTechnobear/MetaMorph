@@ -1,0 +1,3 @@
+[submodule "MetaMorph/EigenLite"]
+	path = MetaMorph/EigenLite
+	url = https://github.com/thetechnobear/EigenLite
