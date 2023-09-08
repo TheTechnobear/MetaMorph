@@ -2,6 +2,114 @@
 
 #include "../EigenLite/eigenapi/eigenapi.h"
 
+#include <iostream>
+
+
+class PrinterCallback: public  EigenApi::Callback
+{
+public:
+    PrinterCallback(EigenApi::Eigenharp& eh) : eh_(eh), led_(false)
+    {
+    }
+    
+    virtual void device(const char* dev, DeviceType dt, int rows, int cols, int ribbons, int pedals)
+    {
+        std::cout << "device " << dev << " (" << dt << ") " << rows << " x " << cols << " strips " << ribbons << " pedals " << pedals << std::endl;
+        switch(dt) {
+            case PICO : maxLeds_ = 16; break;
+            case TAU : maxLeds_ = 84; break;
+            case ALPHA: maxLeds_ = 120; break;
+            default: maxLeds_ = 0;
+        }
+    }
+
+    virtual void disconnect(const char* dev, DeviceType dt)
+    {
+        std::cout << "disconnect " << dev << " (" << dt << ") " << std::endl;
+    }
+
+    virtual void key(const char* dev, unsigned long long t, unsigned course, unsigned key, bool a, unsigned p, int r, int y)
+    {
+        std::cout  << "key " << dev << " @ " << t << " - " << course << ":" << key << ' ' << a << ' ' << p << ' ' << r << ' ' << y << std::endl;
+        if(course) {
+            // mode key
+            eh_.setLED(dev, course, key, a);
+        } else {
+            if(!a) {
+                led_ = ! led_;
+                for(int i=0;i<maxLeds_;i++) {
+                    if(led_)
+                        eh_.setLED(dev, 0, i,i % 3);
+                    else
+                        eh_.setLED(dev, 0, i, 0);
+                }
+            }
+        }
+    }
+    virtual void breath(const char* dev, unsigned long long t, unsigned val)
+    {
+        std::cout  << "breath " << dev << " @ " << t << " - "  << val << std::endl;
+    }
+    
+    virtual void strip(const char* dev, unsigned long long t, unsigned strip, unsigned val, bool a)
+    {
+        std::cout  << "strip " << dev << " @ " << t << " - " << strip << " = " << val << " " << a << std::endl;
+    }
+    
+    virtual void pedal(const char* dev, unsigned long long t, unsigned pedal, unsigned val)
+    {
+        std::cout  << "pedal " << dev << " @ " << t << " - " << pedal << " = " << val << std::endl;
+    }
+    
+    EigenApi::Eigenharp& eh_;
+    bool led_=false;
+    int  maxLeds_=0;  
+};
+
+class NullCallback: public  EigenApi::Callback
+{
+public:
+    NullCallback(EigenApi::Eigenharp& eh) : eh_(eh), led_(false)
+    {
+    }
+    
+    void device(const char* dev, DeviceType dt, int rows, int cols, int ribbons, int pedals) override
+    {
+        std::cout << "device " << dev << " (" << dt << ") " << rows << " x " << cols << " strips " << ribbons << " pedals " << pedals << std::endl;
+        switch(dt) {
+            case PICO : maxLeds_ = 16; break;
+            case TAU : maxLeds_ = 84; break;
+            case ALPHA: maxLeds_ = 120; break;
+            default: maxLeds_ = 0;
+        }
+    }
+
+    void disconnect(const char* dev, DeviceType dt) override
+    {
+    }
+
+    void key(const char* dev, unsigned long long t, unsigned course, unsigned key, bool a, unsigned p, int r, int y) override
+    {
+    }
+
+    void breath(const char* dev, unsigned long long t, unsigned val) override
+    {
+    }
+    
+    void strip(const char* dev, unsigned long long t, unsigned strip, unsigned val, bool a) override
+    {
+    }
+    
+    void pedal(const char* dev, unsigned long long t, unsigned pedal, unsigned val) override
+    {
+    }
+    
+    EigenApi::Eigenharp& eh_;
+    bool led_=false;
+    int  maxLeds_=0;
+};
+
+
 struct EDevice : Module {
 	enum ParamId {
 		PARAM1_PARAM,
@@ -33,13 +141,26 @@ struct EDevice : Module {
 		configOutput(OUT3_OUTPUT, "");
 		configOutput(OUT4_OUTPUT, "");
 
-		EigenApi::FWR_Embedded reader;
-		auto harp = new EigenApi::Eigenharp(reader);
-		harp->start();
+		harp_ = std::make_shared<EigenApi::Eigenharp>(firmware_);
+		harp_->start();
+		harp_->addCallback(new NullCallback(*harp_));
+		
+	}
+	~EDevice() {
+		if(harp_) {
+			harp_->stop();
+		}
 	}
 
 	void process(const ProcessArgs& args) override {
+	    harp_->setPollTime(0);
+		harp_->process();
 	}
+
+	std::shared_ptr<EigenApi::Eigenharp> harp_;
+	EigenApi::FWR_Embedded firmware_;
+
+
 };
 
 
