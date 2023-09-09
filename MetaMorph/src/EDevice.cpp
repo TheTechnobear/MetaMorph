@@ -70,6 +70,8 @@ struct EDevice : Module, EigenApi::Callback {
 
 	} voices_[MAX_VOICE];
 
+	unsigned maxVoices_=MAX_VOICE;
+
 	enum ParamId {
 		PARAMS_LEN
 	};
@@ -125,6 +127,7 @@ struct EDevice : Module, EigenApi::Callback {
 	}
 
 	void process(const ProcessArgs& args) override {
+		unsigned nChannels = maxVoices_ + 1 <= MAX_VOICE ? maxVoices_ + 1 : MAX_VOICE;
 
 		int rate = args.sampleRate / 1000; // really should be 2k, lets do a bit more
 		float iRate = 1.0f / float(rate);
@@ -132,7 +135,7 @@ struct EDevice : Module, EigenApi::Callback {
 			harp_->process(); // will hit callbacks
 		}
 
-		for(unsigned voice=0;voice<MAX_VOICE;voice++) {
+		for(unsigned voice=0;voice<nChannels;voice++) {
 			auto& vdata = voices_[voice];
 			vdata.process(iRate);
 			lights[voice].setBrightness(vdata.curPV_ / 10.0f);
@@ -142,10 +145,10 @@ struct EDevice : Module, EigenApi::Callback {
 			outputs[OUT_Z_OUTPUT].setVoltage(vdata.curPV_, voice);
 		}
 
-		outputs[OUT_K_OUTPUT].setChannels(MAX_VOICE);
-		outputs[OUT_X_OUTPUT].setChannels(MAX_VOICE);
-		outputs[OUT_Y_OUTPUT].setChannels(MAX_VOICE);
-		outputs[OUT_Z_OUTPUT].setChannels(MAX_VOICE);
+		outputs[OUT_K_OUTPUT].setChannels(nChannels);
+		outputs[OUT_X_OUTPUT].setChannels(nChannels);
+		outputs[OUT_Y_OUTPUT].setChannels(nChannels);
+		outputs[OUT_Z_OUTPUT].setChannels(nChannels);
 	}
 
 
@@ -267,7 +270,23 @@ struct EDeviceWidget : ModuleWidget {
 		addChild(createLightCentered<MediumLight<RedLight>>(mm2px(Vec(31.846, 70.793)), module, EDevice::LED15_LIGHT));
 		addChild(createLightCentered<MediumLight<RedLight>>(mm2px(Vec(43.846, 70.793)), module, EDevice::LED16_LIGHT));
 	}
+
+	void appendContextMenu(Menu* menu) override {
+		EDevice* module = getModule<EDevice>();
+
+		menu->addChild(new MenuSeparator);
+
+		// Controls int Module::mode
+		menu->addChild(
+			createIndexPtrSubmenuItem("Max Voices",
+			{
+				"1","2","3","4","5", "6", "7", "8",
+				"9","10","11","12","13","14","15","16"
+			},
+			&module->maxVoices_
+		));
+	}
 };
 
 
-Model* modelEDevice = createModel<EDevice, EDeviceWidget>("EDevice");
+Model* modelEDevice = createModel<EDevice, EDeviceWidget>("EigenHarp");

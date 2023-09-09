@@ -1,23 +1,29 @@
 {
-  "slug": "EigenLite",
-  "name": "EigenLite",
+  "slug": "MetaMorph",
+  "name": "MetaMorph",
   "version": "2.0.0",
   "license": "open-source",
   "brand": "TheTechnobear",
   "author": "Mark Harris",
   "authorEmail": "",
   "authorUrl": "",
-  "pluginUrl": "",
+  "pluginUrl": "http://polyexpression.com",
   "manualUrl": "",
   "sourceUrl": "",
   "donateUrl": "",
   "changelogUrl": "",
   "modules": [
     {
-      "slug": "EDevice",
-      "name": "EDevice",
-      "description": "device module",
-      "tags": []
+      "slug": "EigenHarp",
+      "name": "EigenHarp",
+      "description": "connects to eigenharps via usb",
+      "tags": ["polyphonic"]
+    },
+    {
+      "slug": "Scaler",
+      "name": "Scaler",
+      "description": "scales eigenharp signals",
+      "tags": ["polyphonic"]
     }
   ]
 }
