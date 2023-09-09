@@ -2,29 +2,51 @@
 aka observations about how to get this working ! 
 
 
+# performance
 
-# rpath
-Im not sure how to get rpath working within this plugin ... needs to be done via makefile
-currently Ive copied picodecoder to /usr/local/lib
+performance looks ok... seems to take about 9-10% in release build
+a 16 voice poly is around 28% with EH
+however, its around 25% without using EH... 
 
-one option could be to make a static library version of pico decoder...useful for everyone!
+in debug rack, 16 voices is over 300%...
+but thats also true without EH
 
-# EigenLite location/submodule
-we want to build EigenLite as a static library this seems to work
+but means we want a voice limitation feature! 
 
-however, the vcvrack makefile systems wants everything UNDER the plugin directory.
-as it copies source to build...
 
-so I probably need to get the subdirectory under vcv module directory,
-but this is going to be confusing as VCVModules/EigenLite/EigenLite
-I probably need to rename this plugin to avoid this confusion.
 
-# ihx files
 
-we could include as resource ...
-or
+# features to do..
+
+1. voice limit
+simple parameter for max voice, to reduce from 16.
+
+
+# issues
+
+
+
+I can see a lot of stepping ! 
+and this feels like its causing distortion...
+
+checking Rack SDK, process is caused every frame...
+i.e. it is not per block... 
+
+this is a bit unncessary for the eigenharp which tops out at about 2khz
+
 ```
- xxd -i pico.ihx pico.cpp    
+Key Properties:
+Sampled at 2000 samples/second, per key.
+10 bit (1024 values) resolution.
+Sensitive to direct pressure and to lateral pressure in both directions.
 ```
-this will create a cpp file with the ihx as a data structure that we could store in binary
 
+so, for 48khz SR, we only need to process every 24 samples... 
+i.e. SR / 2khz  = 48000/2000 
+
+processBypass... we need to implement so we can still process messages even if we dont output data
+
+
+why the distortion stepping? do we need to slew it for use at audio rate...
+feels like we might need to... as we are only updating at 2khz, and in 10bit steps.
+perhaps use a slew to over 2khz ->48hz... as it will not be noticed !

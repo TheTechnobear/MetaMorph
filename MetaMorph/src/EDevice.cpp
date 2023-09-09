@@ -5,186 +5,240 @@
 #include <iostream>
 
 
-class PrinterCallback: public  EigenApi::Callback
-{
-public:
-    PrinterCallback(EigenApi::Eigenharp& eh) : eh_(eh), led_(false)
-    {
-    }
-    
-    virtual void device(const char* dev, DeviceType dt, int rows, int cols, int ribbons, int pedals)
-    {
-        std::cout << "device " << dev << " (" << dt << ") " << rows << " x " << cols << " strips " << ribbons << " pedals " << pedals << std::endl;
-        switch(dt) {
-            case PICO : maxLeds_ = 16; break;
-            case TAU : maxLeds_ = 84; break;
-            case ALPHA: maxLeds_ = 120; break;
-            default: maxLeds_ = 0;
-        }
-    }
 
-    virtual void disconnect(const char* dev, DeviceType dt)
-    {
-        std::cout << "disconnect " << dev << " (" << dt << ") " << std::endl;
-    }
+struct EDevice : Module, EigenApi::Callback {
+	static constexpr unsigned MAX_VOICE = 16;
+	struct VoiceData {
+		bool active_=false;
+		unsigned key_=0;
+		unsigned p_=0;
+		int r_=0;
+		int y_=0;
 
-    virtual void key(const char* dev, unsigned long long t, unsigned course, unsigned key, bool a, unsigned p, int r, int y)
-    {
-        std::cout  << "key " << dev << " @ " << t << " - " << course << ":" << key << ' ' << a << ' ' << p << ' ' << r << ' ' << y << std::endl;
-        if(course) {
-            // mode key
-            eh_.setLED(dev, course, key, a);
-        } else {
-            if(!a) {
-                led_ = ! led_;
-                for(int i=0;i<maxLeds_;i++) {
-                    if(led_)
-                        eh_.setLED(dev, 0, i,i % 3);
-                    else
-                        eh_.setLED(dev, 0, i, 0);
-                }
-            }
-        }
-    }
-    virtual void breath(const char* dev, unsigned long long t, unsigned val)
-    {
-        std::cout  << "breath " << dev << " @ " << t << " - "  << val << std::endl;
-    }
-    
-    virtual void strip(const char* dev, unsigned long long t, unsigned strip, unsigned val, bool a)
-    {
-        std::cout  << "strip " << dev << " @ " << t << " - " << strip << " = " << val << " " << a << std::endl;
-    }
-    
-    virtual void pedal(const char* dev, unsigned long long t, unsigned pedal, unsigned val)
-    {
-        std::cout  << "pedal " << dev << " @ " << t << " - " << pedal << " = " << val << std::endl;
-    }
-    
-    EigenApi::Eigenharp& eh_;
-    bool led_=false;
-    int  maxLeds_=0;  
-};
+	} voices_[MAX_VOICE];
 
-class NullCallback: public  EigenApi::Callback
-{
-public:
-    NullCallback(EigenApi::Eigenharp& eh) : eh_(eh), led_(false)
-    {
-    }
-    
-    void device(const char* dev, DeviceType dt, int rows, int cols, int ribbons, int pedals) override
-    {
-        std::cout << "device " << dev << " (" << dt << ") " << rows << " x " << cols << " strips " << ribbons << " pedals " << pedals << std::endl;
-        switch(dt) {
-            case PICO : maxLeds_ = 16; break;
-            case TAU : maxLeds_ = 84; break;
-            case ALPHA: maxLeds_ = 120; break;
-            default: maxLeds_ = 0;
-        }
-    }
-
-    void disconnect(const char* dev, DeviceType dt) override
-    {
-    }
-
-    void key(const char* dev, unsigned long long t, unsigned course, unsigned key, bool a, unsigned p, int r, int y) override
-    {
-    }
-
-    void breath(const char* dev, unsigned long long t, unsigned val) override
-    {
-    }
-    
-    void strip(const char* dev, unsigned long long t, unsigned strip, unsigned val, bool a) override
-    {
-    }
-    
-    void pedal(const char* dev, unsigned long long t, unsigned pedal, unsigned val) override
-    {
-    }
-    
-    EigenApi::Eigenharp& eh_;
-    bool led_=false;
-    int  maxLeds_=0;
-};
-
-
-struct EDevice : Module {
 	enum ParamId {
-		PARAM1_PARAM,
-		PARAM2_PARAM,
 		PARAMS_LEN
 	};
 	enum InputId {
-		IN1_INPUT,
 		INPUTS_LEN
 	};
 	enum OutputId {
-		OUT2_OUTPUT,
-		OUT1_OUTPUT,
-		OUT3_OUTPUT,
-		OUT4_OUTPUT,
+		OUT_K_OUTPUT,
+		OUT_X_OUTPUT,
+		OUT_Y_OUTPUT,
+		OUT_Z_OUTPUT,
 		OUTPUTS_LEN
 	};
 	enum LightId {
+		LED1_LIGHT,
+		LED2_LIGHT,
+		LED3_LIGHT,
+		LED4_LIGHT,
+		LED5_LIGHT,
+		LED6_LIGHT,
+		LED7_LIGHT,
+		LED8_LIGHT,
+		LED9_LIGHT,
+		LED10_LIGHT,
+		LED11_LIGHT,
+		LED12_LIGHT,
+		LED13_LIGHT,
+		LED14_LIGHT,
+		LED15_LIGHT,
+		LED16_LIGHT,
 		LIGHTS_LEN
 	};
 
+
 	EDevice() {
 		config(PARAMS_LEN, INPUTS_LEN, OUTPUTS_LEN, LIGHTS_LEN);
-		configParam(PARAM1_PARAM, 0.f, 1.f, 0.f, "");
-		configParam(PARAM2_PARAM, 0.f, 1.f, 0.f, "");
-		configInput(IN1_INPUT, "");
-		configOutput(OUT2_OUTPUT, "");
-		configOutput(OUT1_OUTPUT, "");
-		configOutput(OUT3_OUTPUT, "");
-		configOutput(OUT4_OUTPUT, "");
+		configOutput(OUT_K_OUTPUT, "Key");
+		configOutput(OUT_X_OUTPUT, "X");
+		configOutput(OUT_Y_OUTPUT, "Y");
+		configOutput(OUT_Z_OUTPUT, "Z");
 
 		harp_ = std::make_shared<EigenApi::Eigenharp>(firmware_);
+	    harp_->setPollTime(0);
 		harp_->start();
-		harp_->addCallback(new NullCallback(*harp_));
+		harp_->addCallback(this);
 		
 	}
 	~EDevice() {
 		if(harp_) {
+			harp_->removeCallback(this);
 			harp_->stop();
 		}
 	}
 
 	void process(const ProcessArgs& args) override {
-	    harp_->setPollTime(0);
-		harp_->process();
+
+		int rate = args.sampleRate / 1000; // really should be 2k, lets do a bit more
+		if((args.frame % rate) == 0) {
+			harp_->process(); // will hit callbacks
+		}
+
+		for(unsigned voice=0;voice<MAX_VOICE;voice++) {
+			auto& vdata = voices_[voice];
+			float kV = vdata.active_ ? keyToV(vdata.key_) : 0.0f;
+			float pV = vdata.active_ ? pToV(vdata.p_) : 0.0f;
+			float rV = vdata.active_ ? rToV(vdata.r_) : 0.0f;
+			float yV = vdata.active_ ? yToV(vdata.y_) : 0.0f;
+	
+			lights[voice].setBrightness(pV / 10.0f);
+
+			outputs[OUT_K_OUTPUT].setVoltage(kV, voice);
+			outputs[OUT_X_OUTPUT].setVoltage(rV, voice);
+			outputs[OUT_Y_OUTPUT].setVoltage(yV, voice);
+			outputs[OUT_Z_OUTPUT].setVoltage(pV, voice);
+		}
+
+		outputs[OUT_K_OUTPUT].setChannels(MAX_VOICE);
+		outputs[OUT_X_OUTPUT].setChannels(MAX_VOICE);
+		outputs[OUT_Y_OUTPUT].setChannels(MAX_VOICE);
+		outputs[OUT_Z_OUTPUT].setChannels(MAX_VOICE);
+	}
+
+
+	void processBypass (const ProcessArgs &args) override {
+		int rate = args.sampleRate / 1000; // really should be 2k, lets do a bit more
+		if((args.frame % rate) == 0) {
+			harp_->process(); // will hit callbacks
+		}
 	}
 
 	std::shared_ptr<EigenApi::Eigenharp> harp_;
 	EigenApi::FWR_Embedded firmware_;
 
 
+	float keyToV(unsigned key) { // -5 to +5v, v/oct
+		return  float(key) / 12.0f;
+	}
+
+	float pToV(unsigned p) { // 0..10v
+		return float(p * 10)/ 4096.0f;
+	}
+	float rToV(int r) { // -5 to +5v
+		return float(r * 5) / 4096.0f;
+	}
+	float yToV(int y) { // -5 to +5v
+		return float(y * 5) / 4096.0f;
+	}
+
+    void device(const char* dev, DeviceType dt, int rows, int cols, int ribbons, int pedals) override {
+    }
+
+    void disconnect(const char* dev, DeviceType dt) override
+    {
+    }
+
+    void key(const char* dev, unsigned long long t, unsigned course, unsigned key, bool a, unsigned p, int r, int y) override  {
+		if(course > 0) {
+			// function buttons
+			return;
+		}
+
+		auto v = findVoice(key);
+		if(v) {
+			// active voice
+			if(a) {
+				// was active, still is, update below
+			} else {
+				// free the voice !
+				freeVoice(v);
+				harp_->setLED(dev,course,key,0);
+				// no more action neccesary
+				v = nullptr;
+			}
+		} else {
+			// no active voice
+			if(a) {
+				// allocate new voice, we will update details below
+				v = findFreeVoice();
+				harp_->setLED(dev,course,key,3);
+
+				// note: v will be null if we have no more voices available
+			} else {
+				// ok, not active... and no voice anyway - ignore
+			}
+		}
+		if(v) {
+			v->active_ = a;
+			v->key_ = key;
+			v->p_ = p;
+			v->r_ = r;
+			v->y_ = y;
+		}
+    }
+
+    void breath(const char* dev, unsigned long long t, unsigned val) override {
+    }
+    
+    void strip(const char* dev, unsigned long long t, unsigned strip, unsigned val, bool a) override  {
+    }
+    
+    void pedal(const char* dev, unsigned long long t, unsigned pedal, unsigned val) override  {
+    }
+    
+	VoiceData* findFreeVoice() {
+		for(auto& v : voices_) {
+			if(!v.active_) {
+				return &v;
+			}
+		}
+		return nullptr;
+	}
+
+	VoiceData* findVoice(unsigned key) {
+		for(auto& v : voices_) {
+			if(v.active_ && v.key_ == key) {
+				return &v;
+			}
+		}
+		return nullptr;
+	}
+
+	void freeVoice(VoiceData* vp) {
+		vp->active_ = false;
+		vp->key_ = 0;
+		vp->p_ = 0;
+		vp->r_ = 0;
+		vp->y_ = 0;
+	}
 };
 
 
 struct EDeviceWidget : ModuleWidget {
 	EDeviceWidget(EDevice* module) {
 		setModule(module);
+
 		setPanel(createPanel(asset::plugin(pluginInstance, "res/EDevice.svg")));
-
-		
-
 		addChild(createWidget<ScrewSilver>(Vec(RACK_GRID_WIDTH, 0)));
 		addChild(createWidget<ScrewSilver>(Vec(box.size.x - 2 * RACK_GRID_WIDTH, 0)));
 		addChild(createWidget<ScrewSilver>(Vec(RACK_GRID_WIDTH, RACK_GRID_HEIGHT - RACK_GRID_WIDTH)));
 		addChild(createWidget<ScrewSilver>(Vec(box.size.x - 2 * RACK_GRID_WIDTH, RACK_GRID_HEIGHT - RACK_GRID_WIDTH)));
 
-		addParam(createParamCentered<RoundBlackKnob>(mm2px(Vec(10.556, 28.958)), module, EDevice::PARAM1_PARAM));
-		addParam(createParamCentered<RoundHugeBlackKnob>(mm2px(Vec(27.96, 54.065)), module, EDevice::PARAM2_PARAM));
+		addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(7.275, 117.83)), module, EDevice::OUT_K_OUTPUT));
+		addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(19.353, 117.83)), module, EDevice::OUT_X_OUTPUT));
+		addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(31.431, 117.83)), module, EDevice::OUT_Y_OUTPUT));
+		addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(43.509, 117.83)), module, EDevice::OUT_Z_OUTPUT));
 
-		addInput(createInputCentered<PJ301MPort>(mm2px(Vec(8.702, 105.562)), module, EDevice::IN1_INPUT));
-
-		addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(20.684, 118.686)), module, EDevice::OUT2_OUTPUT));
-		addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(9.272, 118.971)), module, EDevice::OUT1_OUTPUT));
-		addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(32.097, 118.971)), module, EDevice::OUT3_OUTPUT));
-		addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(43.223, 119.256)), module, EDevice::OUT4_OUTPUT));
+		addChild(createLightCentered<MediumLight<RedLight>>(mm2px(Vec(7.846, 34.793)), module, EDevice::LED1_LIGHT));
+		addChild(createLightCentered<MediumLight<RedLight>>(mm2px(Vec(19.846, 34.793)), module, EDevice::LED2_LIGHT));
+		addChild(createLightCentered<MediumLight<RedLight>>(mm2px(Vec(31.846, 34.793)), module, EDevice::LED3_LIGHT));
+		addChild(createLightCentered<MediumLight<RedLight>>(mm2px(Vec(43.846, 34.793)), module, EDevice::LED4_LIGHT));
+		addChild(createLightCentered<MediumLight<RedLight>>(mm2px(Vec(7.846, 46.793)), module, EDevice::LED5_LIGHT));
+		addChild(createLightCentered<MediumLight<RedLight>>(mm2px(Vec(19.846, 46.793)), module, EDevice::LED6_LIGHT));
+		addChild(createLightCentered<MediumLight<RedLight>>(mm2px(Vec(31.846, 46.793)), module, EDevice::LED7_LIGHT));
+		addChild(createLightCentered<MediumLight<RedLight>>(mm2px(Vec(43.846, 46.793)), module, EDevice::LED8_LIGHT));
+		addChild(createLightCentered<MediumLight<RedLight>>(mm2px(Vec(7.846, 58.793)), module, EDevice::LED9_LIGHT));
+		addChild(createLightCentered<MediumLight<RedLight>>(mm2px(Vec(19.846, 58.793)), module, EDevice::LED10_LIGHT));
+		addChild(createLightCentered<MediumLight<RedLight>>(mm2px(Vec(31.846, 58.793)), module, EDevice::LED11_LIGHT));
+		addChild(createLightCentered<MediumLight<RedLight>>(mm2px(Vec(43.846, 58.793)), module, EDevice::LED12_LIGHT));
+		addChild(createLightCentered<MediumLight<RedLight>>(mm2px(Vec(7.846, 70.793)), module, EDevice::LED13_LIGHT));
+		addChild(createLightCentered<MediumLight<RedLight>>(mm2px(Vec(19.846, 70.793)), module, EDevice::LED14_LIGHT));
+		addChild(createLightCentered<MediumLight<RedLight>>(mm2px(Vec(31.846, 70.793)), module, EDevice::LED15_LIGHT));
+		addChild(createLightCentered<MediumLight<RedLight>>(mm2px(Vec(43.846, 70.793)), module, EDevice::LED16_LIGHT));
 	}
 };
 
