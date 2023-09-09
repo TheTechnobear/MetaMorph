@@ -9,11 +9,64 @@
 struct EDevice : Module, EigenApi::Callback {
 	static constexpr unsigned MAX_VOICE = 16;
 	struct VoiceData {
+		// harp values
 		bool active_=false;
 		unsigned key_=0;
 		unsigned p_=0;
 		int r_=0;
 		int y_=0;
+
+		// target voltages
+		float keyV_=0.0f;
+		float pV_=0.0f;
+		float rV_=0.0f;
+		float yV_=0.0f;
+
+		// target voltages
+		float curKeyV_=0.0f;
+		float curPV_=0.0f;
+		float curRV_=0.0f;
+		float curYV_=0.0f;
+
+
+		float keyToV() { // -5 to +5v, v/oct
+			return  float(key_) / 12.0f;
+		}
+
+		float pToV() { // 0..10v
+			return float(p_ * 10)/ 4096.0f;
+		}
+		float rToV() { // -5 to +5v
+			return float(r_ * 5) / 4096.0f;
+		}
+		float yToV() { // -5 to +5v
+			return float(y_ * 5) / 4096.0f;
+		}
+
+
+		void updateVoice(unsigned key, bool a, unsigned p, int r, int y) {
+			active_ = a;
+			key_ = key;
+			p_ = p;
+			r_ = r;
+			y_ = y;
+
+			keyV_ = active_ ? keyToV() : 0.0f;
+			pV_ = active_ ? pToV() : 0.0f;
+			rV_ = active_ ? rToV() : 0.0f;
+			yV_ = active_ ? yToV() : 0.0f;			
+		}
+
+		void process(float stepPct_) {
+			curKeyV_ = keyV_;  // we do not slew key!
+			curPV_ += (pV_ - curPV_) * stepPct_; 
+			curRV_ += (rV_ - curRV_) * stepPct_; 
+			curYV_ += (yV_ - curYV_ ) * stepPct_; 
+		}
+
+		void freeVoice() {
+			updateVoice(0,false,0,0,0);
+		}
 
 	} voices_[MAX_VOICE];
 
@@ -74,23 +127,19 @@ struct EDevice : Module, EigenApi::Callback {
 	void process(const ProcessArgs& args) override {
 
 		int rate = args.sampleRate / 1000; // really should be 2k, lets do a bit more
+		float iRate = 1.0f / float(rate);
 		if((args.frame % rate) == 0) {
 			harp_->process(); // will hit callbacks
 		}
 
 		for(unsigned voice=0;voice<MAX_VOICE;voice++) {
 			auto& vdata = voices_[voice];
-			float kV = vdata.active_ ? keyToV(vdata.key_) : 0.0f;
-			float pV = vdata.active_ ? pToV(vdata.p_) : 0.0f;
-			float rV = vdata.active_ ? rToV(vdata.r_) : 0.0f;
-			float yV = vdata.active_ ? yToV(vdata.y_) : 0.0f;
-	
-			lights[voice].setBrightness(pV / 10.0f);
-
-			outputs[OUT_K_OUTPUT].setVoltage(kV, voice);
-			outputs[OUT_X_OUTPUT].setVoltage(rV, voice);
-			outputs[OUT_Y_OUTPUT].setVoltage(yV, voice);
-			outputs[OUT_Z_OUTPUT].setVoltage(pV, voice);
+			vdata.process(iRate);
+			lights[voice].setBrightness(vdata.curPV_ / 10.0f);
+			outputs[OUT_K_OUTPUT].setVoltage(vdata.curKeyV_, voice);
+			outputs[OUT_X_OUTPUT].setVoltage(vdata.curRV_, voice);
+			outputs[OUT_Y_OUTPUT].setVoltage(vdata.curYV_, voice);
+			outputs[OUT_Z_OUTPUT].setVoltage(vdata.curPV_, voice);
 		}
 
 		outputs[OUT_K_OUTPUT].setChannels(MAX_VOICE);
@@ -110,20 +159,6 @@ struct EDevice : Module, EigenApi::Callback {
 	std::shared_ptr<EigenApi::Eigenharp> harp_;
 	EigenApi::FWR_Embedded firmware_;
 
-
-	float keyToV(unsigned key) { // -5 to +5v, v/oct
-		return  float(key) / 12.0f;
-	}
-
-	float pToV(unsigned p) { // 0..10v
-		return float(p * 10)/ 4096.0f;
-	}
-	float rToV(int r) { // -5 to +5v
-		return float(r * 5) / 4096.0f;
-	}
-	float yToV(int y) { // -5 to +5v
-		return float(y * 5) / 4096.0f;
-	}
 
     void device(const char* dev, DeviceType dt, int rows, int cols, int ribbons, int pedals) override {
     }
@@ -163,11 +198,7 @@ struct EDevice : Module, EigenApi::Callback {
 			}
 		}
 		if(v) {
-			v->active_ = a;
-			v->key_ = key;
-			v->p_ = p;
-			v->r_ = r;
-			v->y_ = y;
+			v->updateVoice(key,a,p,r,y);
 		}
     }
 
@@ -198,12 +229,8 @@ struct EDevice : Module, EigenApi::Callback {
 		return nullptr;
 	}
 
-	void freeVoice(VoiceData* vp) {
-		vp->active_ = false;
-		vp->key_ = 0;
-		vp->p_ = 0;
-		vp->r_ = 0;
-		vp->y_ = 0;
+	void freeVoice(VoiceData* p) {
+		p->freeVoice();
 	}
 };
 
