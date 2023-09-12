@@ -17,13 +17,41 @@
       "slug": "EigenHarp",
       "name": "EigenHarp",
       "description": "connects to eigenharps via usb",
-      "tags": ["polyphonic"]
+      "tags": [
+        "polyphonic"
+      ]
     },
     {
       "slug": "Scaler",
       "name": "Scaler",
       "description": "scales eigenharp signals",
-      "tags": ["polyphonic"]
+      "tags": [
+        "polyphonic"
+      ]
+    },
+    {
+      "slug": "EFunction",
+      "name": "EFunction",
+      "description": "",
+      "tags": [
+        "polyphonic"
+      ]
+    },
+    {
+      "slug": "ESwitch",
+      "name": "ESwitch",
+      "description": "",
+      "tags": [
+        "polyphonic"
+      ]
+    },
+    {
+      "slug": "ESplit",
+      "name": "ESplit",
+      "description": "",
+      "tags": [
+        "polyphonic"
+      ]
     }
   ]
 }

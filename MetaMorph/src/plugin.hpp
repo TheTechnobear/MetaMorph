@@ -9,3 +9,6 @@ extern Plugin* pluginInstance;
 
 extern Model* modelEDevice;
 extern Model* modelEScaler;
+extern Model* modelESplit;
+extern Model* modelESwitch;
+extern Model* modelEFunction;

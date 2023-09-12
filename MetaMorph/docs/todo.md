@@ -15,38 +15,40 @@ but means we want a voice limitation feature!
 
 
 
+# todo 
+1. custom json
+store voice limit
+device filter
 
-# features to do..
+
+2. elitelite change 
+allow connection of specific device
+idea... 
+change to use usb:enumerate(, , finder_t). this will give us multiple devices.
+just report as pico_1, pico_2, tau_1, alpha_1  etc... so we assume usb enumerate is consistent.
+
+eigenlite will then default to 'load first', but you can also specify filter above.
+.. this 'filter' will be stored in custom json
+
+note: discoverthread is separate from poll...
+so use a quick n simple, volatile bool to protect... 
+poll always just moves on ... catch you next time.
+discover, will do another check on flag quickly after... 
+so a kind of 'spin lock'
+
+rememeber discover thread is not checking that often.
+
+3. check EigenLite
+breath/strip/pedal are all unsigned... I though breath was bipolar?
+... or is this inferred from 'value' ?
+
+
+
+
+
+# notes
 
 1. voice limit
 simple parameter for max voice, to reduce from 16.
-
-
-# issues
-
-
-
-I can see a lot of stepping ! 
-and this feels like its causing distortion...
-
-checking Rack SDK, process is caused every frame...
-i.e. it is not per block... 
-
-this is a bit unncessary for the eigenharp which tops out at about 2khz
-
-```
-Key Properties:
-Sampled at 2000 samples/second, per key.
-10 bit (1024 values) resolution.
-Sensitive to direct pressure and to lateral pressure in both directions.
-```
-
-so, for 48khz SR, we only need to process every 24 samples... 
-i.e. SR / 2khz  = 48000/2000 
-
-processBypass... we need to implement so we can still process messages even if we dont output data
-
-
-why the distortion stepping? do we need to slew it for use at audio rate...
-feels like we might need to... as we are only updating at 2khz, and in 10bit steps.
-perhaps use a slew to over 2khz ->48hz... as it will not be noticed !
+.. implemented as menu item, but this does not appear to 'initialise' correctly or be save...
+(may need to use custom json save/load - needed aanywa)
