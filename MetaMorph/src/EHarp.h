@@ -2,6 +2,9 @@
 
 #include "../EigenLite/eigenapi/eigenapi.h"
 
+#include "Encoding.h"
+
+
 // todo move to namespace and classes 
 class keyValue {
 public:
@@ -175,32 +178,45 @@ public:
     {
     }
 
+
     void key(const char* dev, unsigned long long t, unsigned course, unsigned k, bool a, unsigned p, int r, int y) override  {
         bool percKey = false;
         bool mainKey = false;
         bool funcKey = false;
 
         unsigned key = k;
+        long keyId = 0;
 
         switch(harpData_.type_) {
             case EHarp::PICO : {
-                if(course > 0 ) 
+                if(course > 0 ) {
                     funcKey = true;
-                else 
+                    keyId = makeKeyId(4,1, key % 4, 0);
+                }
+                else {
                     mainKey = true;
+                    keyId = makeKeyId(9,2, key % 9, key / 9);
+                }
                 break;
             }
 
             case EHarp::TAU : {
-                if(course > 0 ) 
+                if(course > 0 ) {
                     funcKey = true;
+                    keyId = makeKeyId(8,1, key % 8, 0);
+                }
                 else {
                     if(key >=72 ) {
                         percKey = true;
                         key = key - 72;
+                        keyId = makeKeyId(12,1, key % 12, 1);
                     } else {
                         mainKey = true;
-                    }
+                        // 16,16,20,20
+                        int row = key < 32 ? key % 16 :(key - 32) % 20;
+                        int col =  key < 32 ? key / 16 : ((key - 32) / 20) + 2;
+                        keyId = makeKeyId(20,4, row, col);
+                     }
                 }
                 break;
             }
@@ -208,8 +224,10 @@ public:
                     if(key >=120 ) {
                         percKey = true;
                         key = key - 120;
+                        keyId = makeKeyId(12,1, key % 12, 1);
                     } else {
                         mainKey = true;
+                        keyId = makeKeyId(24,5, key % 24, key / 24);
                     }
                 break;
             }
@@ -217,7 +235,7 @@ public:
 
         if(mainKey || percKey) {
             auto& voices = mainKey ? harpData_.mainVoices_  : harpData_.percVoices_;
-            auto v = voices.findVoice(key);
+            auto v = voices.findVoice(keyId);
             if(v) {
                 if(!a) {
                     voices.freeVoice(v);
@@ -229,11 +247,11 @@ public:
                 }
             }
             if(v) {
-                v->updateVoice(key,a,p,r,y);
+                v->updateVoice(keyId,a,p,r,y);
             }
         } else if (funcKey) {
             auto& voices = harpData_.funcVoices_;
-            auto v = voices.findVoice(key);
+            auto v = voices.findVoice(keyId);
             if(v) {
                 if(!a) {
                     voices.freeVoice(v);
@@ -245,7 +263,7 @@ public:
                 }
             }
             if(v) {
-                v->updateVoice(key,a);
+                v->updateVoice(keyId,a);
             }
         }
     }

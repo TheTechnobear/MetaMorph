@@ -6,6 +6,7 @@
 
 #include "EHarp.h"
 
+#include "Encoding.h"
 
 struct EDevice : Module {
 	enum ParamId {
@@ -103,6 +104,7 @@ struct EDevice : Module {
 		}
 	}
 
+
 	void process(const ProcessArgs& args) override {
 
 		maxMainVoices_ = params[P_BASEPOLY_PARAM].getValue();
@@ -152,7 +154,10 @@ struct EDevice : Module {
 				auto& vdata = keys.voices_[voice];
 				float pV = vdata.pV_.next(iRate);
 				lights[voice].setBrightness(pV / 10.0f);
-				outputs[OUT_K_OUTPUT].setVoltage(vdata.keyV_.next(iRate) , voice);
+
+				float key = 0.0f;
+				encodeKey(vdata.key_, key);
+				outputs[OUT_K_OUTPUT].setVoltage(key, voice);
 				outputs[OUT_X_OUTPUT].setVoltage(vdata.rV_.next(iRate) , voice);
 				outputs[OUT_Y_OUTPUT].setVoltage(vdata.yV_.next(iRate) , voice);
 				outputs[OUT_Z_OUTPUT].setVoltage(pV, voice);
@@ -170,7 +175,9 @@ struct EDevice : Module {
 
 			for(unsigned voice=0;voice<nChannels;voice++) {
 				auto& vdata = keys.voices_[voice];
-				outputs[OUT_PK_OUTPUT].setVoltage(vdata.keyV_.next(iRate) , voice);
+				float key = 0.0f;
+				encodeKey(vdata.key_, key);
+				outputs[OUT_PK_OUTPUT].setVoltage(key, voice);
 				outputs[OUT_PX_OUTPUT].setVoltage(vdata.rV_.next(iRate) , voice);
 				outputs[OUT_PY_OUTPUT].setVoltage(vdata.yV_.next(iRate) , voice);
 				outputs[OUT_PZ_OUTPUT].setVoltage(vdata.pV_.next(iRate) , voice);
@@ -188,7 +195,9 @@ struct EDevice : Module {
 
 			for(unsigned voice=0;voice<nChannels;voice++) {
 				auto& vdata = keys.voices_[voice];
-				outputs[OUT_FK_OUTPUT].setVoltage(vdata.keyV_.next(iRate), voice);
+				float key = 0.0f;
+				encodeKey(vdata.key_, key);
+				outputs[OUT_FK_OUTPUT].setVoltage(key, voice);
 				outputs[OUT_FG_OUTPUT].setVoltage(vdata.actV_.next(iRate), voice);
 			}
 

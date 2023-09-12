@@ -1,5 +1,6 @@
 #include "plugin.hpp"
 
+#include "Encoding.h"
 
 struct EScaler : Module {
 	enum ParamId {
@@ -47,13 +48,11 @@ struct EScaler : Module {
 
 	}
 
+
+
 	void process(const ProcessArgs& args) override {
 		unsigned nChannels = std::max(1, inputs[IN_K_INPUT].getChannels());
 
-		// int keyInRow = params[P_NCOLS_PARAM].getValue();
-		// int keyInCol = params[P_NROW_PARAM].getValue();
-		// todp
-		int keyInCol = 8;
 		int rowM = params[P_ROW_MULT_PARAM].getValue();
 		int colM = params[P_COL_MULT_PARAM].getValue();
 		int offset = params[P_OFFSET_PARAM].getValue();
@@ -67,18 +66,19 @@ struct EScaler : Module {
 		
 		for(unsigned ch=0; ch < nChannels; ch++) {
 			float inKey = inputs[IN_K_INPUT].getVoltage(ch);
-			int k = int((inKey * 12.0f) + 0.25f);
-		    // r = k % keyInCol , c = k / keyInCol, note = (r * rowM) + (c * colM) + offset
-			int r = k % keyInCol;
-			int c = k / keyInCol; 
-			int note = (r * rowM) + (c * colM) + offset;
-			float voct = float(note) / 12.0f;
-			float inX = (inputs[IN_X_INPUT].getVoltage(ch) / 5.0f); // +-5v
-			float xPb = (inX * inX) * ( xPBR / 12.0f);
 
-			voct += xPb + globalPb;
+			if(inKey!=0.0f) {
+				unsigned kg_r, kg_c, r, c; 
+				decoderKey(inKey,kg_r,kg_c,r,c);
+				int note = (r * rowM) + (c * colM) + offset;
+				float voct = float(note) / 12.0f;
+				float inX = (inputs[IN_X_INPUT].getVoltage(ch) / 5.0f); // +-5v
+				float xPb = (inX * inX) * ( xPBR / 12.0f);
 
-			outputs[OUT_VOCT_OUTPUT].setVoltage(voct,ch);
+				voct += xPb + globalPb;
+
+				outputs[OUT_VOCT_OUTPUT].setVoltage(voct,ch);
+			}
 		}
 
 		outputs[OUT_VOCT_OUTPUT].setChannels(nChannels);
