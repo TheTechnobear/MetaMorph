@@ -146,6 +146,8 @@ struct EHarp {
     Voices<FullVoice> mainVoices_;
     Voices<FullVoice> percVoices_;
     Voices<FunctionVoice> funcVoices_;
+    const char* lastDevice_ = "";
+
 };
 
 class EHarpCallback : public EigenApi::Callback{
@@ -171,11 +173,15 @@ public:
             }
         }
 
+        harpData_.lastDevice_ = dev;
     }
 
 
     void disconnected(const char* dev) override
     {
+        if(harpData_.lastDevice_ == dev) {
+             harpData_.lastDevice_ = "";
+        }
     }
 
 

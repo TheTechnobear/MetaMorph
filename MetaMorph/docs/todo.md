@@ -16,39 +16,51 @@ but means we want a voice limitation feature!
 
 
 # todo 
-1. custom json
+## custom json
 store voice limit
 device filter
 
 
-2. elitelite change 
-allow connection of specific device
-idea... 
-change to use usb:enumerate(, , finder_t). this will give us multiple devices.
-just report as pico_1, pico_2, tau_1, alpha_1  etc... so we assume usb enumerate is consistent.
-
-eigenlite will then default to 'load first', but you can also specify filter above.
-.. this 'filter' will be stored in custom json
-
-note: discoverthread is separate from poll...
-so use a quick n simple, volatile bool to protect... 
-poll always just moves on ... catch you next time.
-discover, will do another check on flag quickly after... 
-so a kind of 'spin lock'
-
-rememeber discover thread is not checking that often.
-
-3. check EigenLite
+## check EigenLite
 breath/strip/pedal are all unsigned... I though breath was bipolar?
 ... or is this inferred from 'value' ?
 
-
-
-
-
-# notes
-
-1. voice limit
+## voice limit
 simple parameter for max voice, to reduce from 16.
 .. implemented as menu item, but this does not appear to 'initialise' correctly or be save...
 (may need to use custom json save/load - needed aanywa)
+currently have put this as knob on panel, but feels intrusive
+
+
+### keygroup size info.
+currently Ive been sending wih the key message, as I thought we only needed to process a key
+(which usually is the case... e.g. routing, scale message )
+
+however, when scaler does static lighting.. so it needs to know before any button is touched.
+and this is not a rare case.. we have static lighting in many places.. 
+(e.g. octave buttons, so function, of keygroup switch)
+
+so kg size cannot be sent with key messages... they need to be present from the moment a harp connects.
+
+
+
+### fix module to one eigenharp?
+this does not seem like a bad ideas.. 
+most of the downstream modues are going to be configured with respect to a layout
+e.g. function buttons placed on cols 4/5 of alpha... which doesnt work on pico ;) 
+
+also lights... need to be target to a particular device... 
+
+how should this look? 
+I think device filter ANY, Base, Pico,  1..N is fine.
+
+but ANY will mean first device only... 
+its probably not a priority at the moment though.
+
+
+
+
+
+
+
+

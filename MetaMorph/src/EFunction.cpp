@@ -16,6 +16,7 @@ struct EFunction : Module {
 	enum InputId {
 		IN_K_INPUT,
 		IN_X_INPUT,
+		IN_KG_INPUT,
 		IN_ENABLE_INPUT,
 		IN_LIGHTS_INPUT,
 		INPUTS_LEN
@@ -44,6 +45,7 @@ struct EFunction : Module {
 		configParam(P_F4_Y_PARAM, 0.f, 1.f, 0.f, "");
 		configInput(IN_K_INPUT, "");
 		configInput(IN_X_INPUT, "");
+		configInput(IN_KG_INPUT, "");
 		configInput(IN_ENABLE_INPUT, "");
 		configInput(IN_LIGHTS_INPUT, "");
 		configOutput(OUT_F1_OUTPUT, "");
@@ -79,6 +81,7 @@ struct EFunctionWidget : ModuleWidget {
 
 		addInput(createInputCentered<PJ301MPort>(mm2px(Vec(6.705, 80.645)), module, EFunction::IN_K_INPUT));
 		addInput(createInputCentered<PJ301MPort>(mm2px(Vec(18.782, 80.645)), module, EFunction::IN_X_INPUT));
+		addInput(createInputCentered<PJ301MPort>(mm2px(Vec(43.217, 80.645)), module, EFunction::IN_KG_INPUT));
 		addInput(createInputCentered<PJ301MPort>(mm2px(Vec(7.275, 118.359)), module, EFunction::IN_ENABLE_INPUT));
 		addInput(createInputCentered<PJ301MPort>(mm2px(Vec(30.029, 118.359)), module, EFunction::IN_LIGHTS_INPUT));
 

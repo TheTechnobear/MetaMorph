@@ -12,7 +12,7 @@ inline long makeKeyId(unsigned kg_r,unsigned kg_c, unsigned r, unsigned c) {
 }
 
 // encoder a keyid into float
-inline void encodeKey(long keyId, float& key) {
+inline void encodeKey(long keyId, float& msg) {
     long kid = keyId;
     unsigned kg_r, kg_c, r, c;
     c = kid & 0xff;
@@ -23,28 +23,28 @@ inline void encodeKey(long keyId, float& key) {
     kid = kid >> 8;
     kg_r = kid & 0xff;
 
-    char* keyStream = (char*)(&key);
-    keyStream[0] = (char) kg_r;	
-    keyStream[1] = (char) kg_c;
-    keyStream[2] = (char) r;
-    keyStream[3] = (char) c;
+    char* stream = (char*)(&msg);
+    stream[0] = (char) kg_r;	
+    stream[1] = (char) kg_c;
+    stream[2] = (char) r;
+    stream[3] = (char) c;
 }
 
 // encode/decode floats 
 
-inline void encoderKey(float& key, unsigned kg_r,unsigned kg_c, unsigned r, unsigned c) {
-    char* keyStream = (char*)(&key);
-    keyStream[0] = (char) kg_r;	
-    keyStream[1] = (char) kg_c;
-    keyStream[2] = (char) r;
-    keyStream[3] = (char) c;
+inline void encoderKey(float& msg, unsigned kg_r,unsigned kg_c, unsigned r, unsigned c) {
+    char* stream = (char*)(&msg);
+    stream[0] = (char) kg_r;	
+    stream[1] = (char) kg_c;
+    stream[2] = (char) r;
+    stream[3] = (char) c;
 }
 
-inline void decoderKey(float key, unsigned& kg_r,unsigned& kg_c, unsigned& r, unsigned& c) {
-    char* keyStream = (char*)(&key);
-    kg_r = (unsigned) keyStream[0];	
-    kg_c = (unsigned) keyStream[1];	
-    r = (unsigned) keyStream[2];	
-    c = (unsigned) keyStream[3];				
+inline void decoderKey(float msg, unsigned& kg_r,unsigned& kg_c, unsigned& r, unsigned& c) {
+    char* stream = (char*)(&msg);
+    kg_r = (unsigned) stream[0];	
+    kg_c = (unsigned) stream[1];	
+    r = (unsigned) stream[2];	
+    c = (unsigned) stream[3];				
 }
 
