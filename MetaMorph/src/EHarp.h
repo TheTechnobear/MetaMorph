@@ -146,6 +146,45 @@ struct EHarp {
     Voices<FullVoice> mainVoices_;
     Voices<FullVoice> percVoices_;
     Voices<FunctionVoice> funcVoices_;
+
+    struct KeyGroup {
+        enum {
+            KG_MAIN,
+            KG_PERC,
+            KG_FUNC
+        };
+        unsigned r_=0,c_=0;
+    } keygroups_[3];
+
+    int translateRCtoK(unsigned kg, unsigned r, unsigned c) {
+        int k=-1;
+        if(kg == 0 && type_==TAU) {
+            // special handling for tau main group
+            // where we have 'faked' some extra keys
+            unsigned kg_r = keygroups_[kg].r_;
+            unsigned kg_c = keygroups_[kg].c_;
+            if(c<2) {
+                if(r<16) {
+                    k = c * 16 + r;
+                }
+                // else out of range
+            } else {
+                if(c<kg_c && r < kg_r) {
+                    k = 32 + (( c - 2)) * 20 + r;
+                }
+                // else out of range
+            }
+        } else {
+                unsigned kg_r = keygroups_[kg].r_;
+                unsigned kg_c = keygroups_[kg].c_;
+                if(r<kg_r && c < kg_c) {
+                    k = c * kg_r + r;
+                }
+                // else out of range
+        }
+        return k;
+    }
+
     const char* lastDevice_ = "";
 
 };
@@ -161,14 +200,33 @@ public:
         switch (dt) {
             case PICO : {
                 harpData_.type_ = EHarp::PICO;
+                harpData_.keygroups_[EHarp::KeyGroup::KG_MAIN].r_=9;
+                harpData_.keygroups_[EHarp::KeyGroup::KG_MAIN].c_=2;
+                harpData_.keygroups_[EHarp::KeyGroup::KG_PERC].r_=0;
+                harpData_.keygroups_[EHarp::KeyGroup::KG_PERC].c_=0;
+                harpData_.keygroups_[EHarp::KeyGroup::KG_FUNC].r_=4;
+                harpData_.keygroups_[EHarp::KeyGroup::KG_FUNC].c_=1;
+
                 break;
             }
             case TAU : {
                 harpData_.type_ = EHarp::TAU;
+                harpData_.keygroups_[EHarp::KeyGroup::KG_MAIN].r_=20;
+                harpData_.keygroups_[EHarp::KeyGroup::KG_MAIN].c_=4;
+                harpData_.keygroups_[EHarp::KeyGroup::KG_PERC].r_=12;
+                harpData_.keygroups_[EHarp::KeyGroup::KG_PERC].c_=1;
+                harpData_.keygroups_[EHarp::KeyGroup::KG_FUNC].r_=8;
+                harpData_.keygroups_[EHarp::KeyGroup::KG_FUNC].c_=1;
                 break;
             }
             case ALPHA : {
                 harpData_.type_ = EHarp::ALPHA;
+                harpData_.keygroups_[EHarp::KeyGroup::KG_MAIN].r_=24;
+                harpData_.keygroups_[EHarp::KeyGroup::KG_MAIN].c_=5;
+                harpData_.keygroups_[EHarp::KeyGroup::KG_PERC].r_=12;
+                harpData_.keygroups_[EHarp::KeyGroup::KG_PERC].c_=1;
+                harpData_.keygroups_[EHarp::KeyGroup::KG_FUNC].r_=0;
+                harpData_.keygroups_[EHarp::KeyGroup::KG_FUNC].c_=0;
                 break;
             }
         }
@@ -197,11 +255,11 @@ public:
             case EHarp::PICO : {
                 if(course > 0 ) {
                     funcKey = true;
-                    keyId = makeKeyId(4,1, key % 4, 0);
+                    keyId = makeKeyId( key % 4, 0);
                 }
                 else {
                     mainKey = true;
-                    keyId = makeKeyId(9,2, key % 9, key / 9);
+                    keyId = makeKeyId(key % 9, key / 9);
                 }
                 break;
             }
@@ -209,19 +267,19 @@ public:
             case EHarp::TAU : {
                 if(course > 0 ) {
                     funcKey = true;
-                    keyId = makeKeyId(8,1, key % 8, 0);
+                    keyId = makeKeyId(key % 8, 0);
                 }
                 else {
                     if(key >=72 ) {
                         percKey = true;
                         key = key - 72;
-                        keyId = makeKeyId(12,1, key % 12, 1);
+                        keyId = makeKeyId(key % 12, 1);
                     } else {
                         mainKey = true;
                         // 16,16,20,20
                         int row = key < 32 ? key % 16 :(key - 32) % 20;
                         int col =  key < 32 ? key / 16 : ((key - 32) / 20) + 2;
-                        keyId = makeKeyId(20,4, row, col);
+                        keyId = makeKeyId(row, col);
                      }
                 }
                 break;
@@ -230,10 +288,10 @@ public:
                     if(key >=120 ) {
                         percKey = true;
                         key = key - 120;
-                        keyId = makeKeyId(12,1, key % 12, 1);
+                        keyId = makeKeyId( key % 12, 1);
                     } else {
                         mainKey = true;
-                        keyId = makeKeyId(24,5, key % 24, key / 24);
+                        keyId = makeKeyId(key % 24, key / 24);
                     }
                 break;
             }

@@ -11,18 +11,28 @@
 
 struct EDevice : Module {
 	enum ParamId {
-		P_BASEPOLY_PARAM,
-		P_PERCPOLY_PARAM,
-		P_FUNCPOLY_PARAM,
 		P_FILTERTYPE_PARAM,
 		P_FILTERNUMBER_PARAM,
+		P_FUNCPOLY_PARAM,
+		P_BASEPOLY_PARAM,
+		P_PERCPOLY_PARAM,
 		PARAMS_LEN
 	};
 	enum InputId {
-		IN_LIGHTS_INPUT,
+		IN_FUNC_LIGHTS_INPUT,
+		IN_MAIN_LIGHTS_INPUT,
+		IN_PERC_LIGHTS_INPUT,
 		INPUTS_LEN
 	};
 	enum OutputId {
+		OUT_S1_OUTPUT,
+		OUT_S2_OUTPUT,
+		OUT_P1_OUTPUT,
+		OUT_P2_OUTPUT,
+		OUT_BREATH_OUTPUT,
+		OUT_FK_OUTPUT,
+		OUT_FG_OUTPUT,
+		OUT_KG_FUNC_OUTPUT,
 		OUT_K_OUTPUT,
 		OUT_X_OUTPUT,
 		OUT_Y_OUTPUT,
@@ -33,17 +43,8 @@ struct EDevice : Module {
 		OUT_PY_OUTPUT,
 		OUT_PZ_OUTPUT,
 		OUT_KG_PERC_OUTPUT,
-		OUT_FK_OUTPUT,
-		OUT_FG_OUTPUT,
-		OUT_KG_FUNC_OUTPUT,
-		OUT_BREATH_OUTPUT,
-		OUT_S1_OUTPUT,
-		OUT_S2_OUTPUT,
-		OUT_P1_OUTPUT,
-		OUT_P2_OUTPUT,
 		OUTPUTS_LEN
 	};
-
 	enum LightId {
 		LED1_LIGHT,
 		LED2_LIGHT,
@@ -65,6 +66,7 @@ struct EDevice : Module {
 	};
 
 
+
 	EDevice() {
 		config(PARAMS_LEN, INPUTS_LEN, OUTPUTS_LEN, LIGHTS_LEN);
 		configParam(P_BASEPOLY_PARAM, 0.f, 16.f, 16.f, "");
@@ -72,7 +74,17 @@ struct EDevice : Module {
 		configParam(P_FUNCPOLY_PARAM, 0.f, 16.f, 4, "");
 		configSwitch(P_FILTERTYPE_PARAM, 0.f, 2.f, 0.f, "Type", {"None", "Base", "Pico"});
 		configParam(P_FILTERNUMBER_PARAM, 1.f, 5.f, 1.f, "Dev Num");
-		configInput(IN_LIGHTS_INPUT, "");
+		configInput(IN_FUNC_LIGHTS_INPUT, "");
+		configInput(IN_MAIN_LIGHTS_INPUT, "");
+		configInput(IN_PERC_LIGHTS_INPUT, "");
+		configOutput(OUT_S1_OUTPUT, "");
+		configOutput(OUT_S2_OUTPUT, "");
+		configOutput(OUT_P1_OUTPUT, "");
+		configOutput(OUT_P2_OUTPUT, "");
+		configOutput(OUT_BREATH_OUTPUT, "");
+		configOutput(OUT_FK_OUTPUT, "");
+		configOutput(OUT_FG_OUTPUT, "");
+		configOutput(OUT_KG_FUNC_OUTPUT, "");
 		configOutput(OUT_K_OUTPUT, "");
 		configOutput(OUT_X_OUTPUT, "");
 		configOutput(OUT_Y_OUTPUT, "");
@@ -83,14 +95,6 @@ struct EDevice : Module {
 		configOutput(OUT_PY_OUTPUT, "");
 		configOutput(OUT_PZ_OUTPUT, "");
 		configOutput(OUT_KG_PERC_OUTPUT, "");
-		configOutput(OUT_FK_OUTPUT, "");
-		configOutput(OUT_FG_OUTPUT, "");
-		configOutput(OUT_KG_FUNC_OUTPUT, "");
-		configOutput(OUT_BREATH_OUTPUT, "");
-		configOutput(OUT_S1_OUTPUT, "");
-		configOutput(OUT_S2_OUTPUT, "");
-		configOutput(OUT_P1_OUTPUT, "");
-		configOutput(OUT_P2_OUTPUT, "");
 
 
 		paramQuantities[P_FILTERTYPE_PARAM]->snapEnabled = true;
@@ -115,11 +119,27 @@ struct EDevice : Module {
 		}
 	}
 
-
 	void process(const ProcessArgs& args) override {
+		doProcess(args);
+	}
+
+	void processBypass (const ProcessArgs &args) override {
+		doProcessBypass(args);
+	}
+
+	/// keep my code separate 
+	void doProcessBypass (const ProcessArgs &args)  {
+		int rate = args.sampleRate / 1000; // really should be 2k, lets do a bit more
+		if((args.frame % rate) == 0) {
+			harp_->process(); // will hit callbacks
+		}
+	}
+
+	void doProcess(const ProcessArgs& args) {
 
 		maxMainVoices_ = params[P_BASEPOLY_PARAM].getValue();
 		maxPercVoices_ = params[P_PERCPOLY_PARAM].getValue();
+		maxFuncVoices_ = params[P_FUNCPOLY_PARAM].getValue();
 
 		if(	params[P_FILTERTYPE_PARAM].getValue() != filterType_
 			|| params[P_FILTERNUMBER_PARAM].getValue() != filterDeviceNum_) {
@@ -150,11 +170,6 @@ struct EDevice : Module {
 		if((args.frame % rate) == 0) {
 			harp_->process(); // will hit callbacks
 		}
-		// to do - leds
-		// pico we need to set led when key is made active
-		// but this needs to be review complete when we have light inputs !
-
-		// harp_->setLED(dev,course,key,3);
 
 
 		{ // main voices
@@ -166,8 +181,7 @@ struct EDevice : Module {
 				float pV = vdata.pV_.next(iRate);
 				lights[voice].setBrightness(pV / 10.0f);
 
-				float key = 0.0f;
-				encodeKey(vdata.key_, key);
+				float key = encodeKeyId(vdata.key_);
 				outputs[OUT_K_OUTPUT].setVoltage(key, voice);
 				outputs[OUT_X_OUTPUT].setVoltage(vdata.rV_.next(iRate) , voice);
 				outputs[OUT_Y_OUTPUT].setVoltage(vdata.yV_.next(iRate) , voice);
@@ -178,6 +192,13 @@ struct EDevice : Module {
 			outputs[OUT_X_OUTPUT].setChannels(nChannels);
 			outputs[OUT_Y_OUTPUT].setChannels(nChannels);
 			outputs[OUT_Z_OUTPUT].setChannels(nChannels);
+
+			auto& kg = harpData_.keygroups_[EHarp::KeyGroup::KG_MAIN];
+			outputs[OUT_KG_MAIN_OUTPUT].setVoltage(encodeKeyGroup(kg.r_, kg.c_));
+
+			float ledmsg = inputs[IN_MAIN_LIGHTS_INPUT].getVoltage();
+			handleLedInput(ledmsg,EHarp::KeyGroup::KG_MAIN);
+
 		}
 
 		{ // perc voices
@@ -186,8 +207,7 @@ struct EDevice : Module {
 
 			for(unsigned voice=0;voice<nChannels;voice++) {
 				auto& vdata = keys.voices_[voice];
-				float key = 0.0f;
-				encodeKey(vdata.key_, key);
+				float key = encodeKeyId(vdata.key_);
 				outputs[OUT_PK_OUTPUT].setVoltage(key, voice);
 				outputs[OUT_PX_OUTPUT].setVoltage(vdata.rV_.next(iRate) , voice);
 				outputs[OUT_PY_OUTPUT].setVoltage(vdata.yV_.next(iRate) , voice);
@@ -198,6 +218,12 @@ struct EDevice : Module {
 			outputs[OUT_PX_OUTPUT].setChannels(nChannels);
 			outputs[OUT_PY_OUTPUT].setChannels(nChannels);
 			outputs[OUT_PZ_OUTPUT].setChannels(nChannels);
+
+			auto& kg = harpData_.keygroups_[EHarp::KeyGroup::KG_PERC];
+			outputs[OUT_KG_PERC_OUTPUT].setVoltage(encodeKeyGroup(kg.r_, kg.c_));
+
+			float ledmsg = inputs[IN_FUNC_LIGHTS_INPUT].getVoltage();
+			handleLedInput(ledmsg,EHarp::KeyGroup::KG_PERC);
 		}
 
 		{ // func voices
@@ -206,14 +232,19 @@ struct EDevice : Module {
 
 			for(unsigned voice=0;voice<nChannels;voice++) {
 				auto& vdata = keys.voices_[voice];
-				float key = 0.0f;
-				encodeKey(vdata.key_, key);
+				float key = encodeKeyId(vdata.key_);
 				outputs[OUT_FK_OUTPUT].setVoltage(key, voice);
 				outputs[OUT_FG_OUTPUT].setVoltage(vdata.actV_.next(iRate), voice);
 			}
 
 			outputs[OUT_FK_OUTPUT].setChannels(nChannels);
 			outputs[OUT_FG_OUTPUT].setChannels(nChannels);
+
+			auto& kg = harpData_.keygroups_[EHarp::KeyGroup::KG_FUNC];
+			outputs[OUT_KG_FUNC_OUTPUT].setVoltage(encodeKeyGroup(kg.r_, kg.c_));
+			float ledmsg = inputs[IN_FUNC_LIGHTS_INPUT].getVoltage();
+			handleLedInput(ledmsg,EHarp::KeyGroup::KG_FUNC);
+
 		}
 
 		outputs[OUT_BREATH_OUTPUT].setVoltage(harpData_.breathV_.next(iRate));
@@ -223,54 +254,48 @@ struct EDevice : Module {
 		outputs[OUT_P2_OUTPUT].setVoltage(harpData_.pedalV_[1].next(iRate));
 
 
-		// led handling 
-		float ledmsg = inputs[IN_LIGHTS_INPUT].getVoltage();
-		if(ledmsg!=0.0f) {
+	}
+
+	void handleLedInput(float msg, unsigned kg) {
+		if(msg!=0.0f) {
 			LedMsgType t;
 			unsigned r=0,c=0;
-			decodeLedMsg(ledmsg,t,r,c);
-			int k = c * 9 + r;
 
+			decodeLedMsg(msg,t,r,c);
 			switch(t) {
 				case LED_CLEAR_ALL : {
-					for (unsigned ir = 0; ir < r; ir++) {
-						for (unsigned ic = 0; ic < c ; ic++) {
-							int k = ic * 9 + ir;
-							harp_->setLED(harpData_.lastDevice_,0, k,0);
+					unsigned kg_r = harpData_.keygroups_[kg].r_;
+					unsigned kg_c = harpData_.keygroups_[kg].c_;
+					for (unsigned ir = 0; ir < kg_r; ir++) {
+						for (unsigned ic = 0; ic < kg_c ; ic++) {
+							int k = harpData_.translateRCtoK(kg, ir, ic);
+							if(k>=0) harp_->setLED(harpData_.lastDevice_,0, k,0);
 						}
 					}
 					break;
 				}
 				case LED_SET_OFF : {
-					harp_->setLED(harpData_.lastDevice_,0, k, 0);
+					int k = harpData_.translateRCtoK(kg, r, c);
+					if(k>=0) harp_->setLED(harpData_.lastDevice_,0, k, 0);
 					break;
 				}
 				case LED_SET_GREEN : {
-					harp_->setLED(harpData_.lastDevice_,0, k, 1);
+					int k = harpData_.translateRCtoK(kg, r, c);
+					if(k>=0) harp_->setLED(harpData_.lastDevice_,0, k, 1);
 					break;
 				}
 				case LED_SET_RED : {
-					harp_->setLED(harpData_.lastDevice_,0, k, 2);
+					int k = harpData_.translateRCtoK(kg, r, c);
+					if(k>=0) harp_->setLED(harpData_.lastDevice_,0, k, 2);
 					break;
 				}
 				case LED_SET_ORANGE : {
-					harp_->setLED(harpData_.lastDevice_,0, k, 3);
+					int k = harpData_.translateRCtoK(kg, r, c);
+					if(k>=0) harp_->setLED(harpData_.lastDevice_,0, k, 3);
 					break;
 				}
 			}
-		}
-
-
-	}
-
-
-
-
-	void processBypass (const ProcessArgs &args) override {
-		int rate = args.sampleRate / 1000; // really should be 2k, lets do a bit more
-		if((args.frame % rate) == 0) {
-			harp_->process(); // will hit callbacks
-		}
+		}		
 	}
 
 	std::shared_ptr<EigenApi::Eigenharp> harp_;
@@ -296,49 +321,51 @@ struct EDeviceWidget : ModuleWidget {
 		addChild(createWidget<ScrewSilver>(Vec(RACK_GRID_WIDTH, RACK_GRID_HEIGHT - RACK_GRID_WIDTH)));
 		addChild(createWidget<ScrewSilver>(Vec(box.size.x - 2 * RACK_GRID_WIDTH, RACK_GRID_HEIGHT - RACK_GRID_WIDTH)));
 
-		addParam(createParamCentered<RoundBlackKnob>(mm2px(Vec(41.859, 31.622)), module, EDevice::P_BASEPOLY_PARAM));
-		addParam(createParamCentered<RoundBlackKnob>(mm2px(Vec(41.859, 47.497)), module, EDevice::P_PERCPOLY_PARAM));
-		addParam(createParamCentered<RoundBlackKnob>(mm2px(Vec(41.859, 64.43)), module, EDevice::P_FUNCPOLY_PARAM));
-		addParam(createParamCentered<RoundBlackKnob>(mm2px(Vec(7.591, 70.251)), module, EDevice::P_FILTERTYPE_PARAM));
-		addParam(createParamCentered<RoundBlackKnob>(mm2px(Vec(24.926, 70.251)), module, EDevice::P_FILTERNUMBER_PARAM));
+		addParam(createParamCentered<RoundBlackKnob>(mm2px(Vec(11.3, 36.87)), module, EDevice::P_FILTERTYPE_PARAM));
+		addParam(createParamCentered<RoundBlackKnob>(mm2px(Vec(28.635, 36.87)), module, EDevice::P_FILTERNUMBER_PARAM));
+		addParam(createParamCentered<RoundBlackKnob>(mm2px(Vec(11.617, 85.257)), module, EDevice::P_FUNCPOLY_PARAM));
+		addParam(createParamCentered<RoundBlackKnob>(mm2px(Vec(11.047, 101.235)), module, EDevice::P_BASEPOLY_PARAM));
+		addParam(createParamCentered<RoundBlackKnob>(mm2px(Vec(11.047, 117.11)), module, EDevice::P_PERCPOLY_PARAM));
 
-		addInput(createInputCentered<PJ301MPort>(mm2px(Vec(110.0, 118.701)), module, EDevice::IN_LIGHTS_INPUT));
+		addInput(createInputCentered<PJ301MPort>(mm2px(Vec(63.211, 85.891)), module, EDevice::IN_FUNC_LIGHTS_INPUT));
+		addInput(createInputCentered<PJ301MPort>(mm2px(Vec(93.453, 101.582)), module, EDevice::IN_MAIN_LIGHTS_INPUT));
+		addInput(createInputCentered<PJ301MPort>(mm2px(Vec(93.453, 117.457)), module, EDevice::IN_PERC_LIGHTS_INPUT));
 
-		addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(57.898, 31.669)), module, EDevice::OUT_K_OUTPUT));
-		addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(69.976, 31.669)), module, EDevice::OUT_X_OUTPUT));
-		addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(82.054, 31.669)), module, EDevice::OUT_Y_OUTPUT));
-		addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(94.132, 31.669)), module, EDevice::OUT_Z_OUTPUT));
-		addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(109.984, 32.239)), module, EDevice::OUT_KG_MAIN_OUTPUT));
-		addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(57.898, 47.544)), module, EDevice::OUT_PK_OUTPUT));
-		addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(69.976, 47.544)), module, EDevice::OUT_PX_OUTPUT));
-		addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(82.054, 47.544)), module, EDevice::OUT_PY_OUTPUT));
-		addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(94.132, 47.544)), module, EDevice::OUT_PZ_OUTPUT));
-		addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(109.835, 47.646)), module, EDevice::OUT_KG_PERC_OUTPUT));
-		addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(57.613, 64.941)), module, EDevice::OUT_FK_OUTPUT));
-		addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(69.691, 64.941)), module, EDevice::OUT_FG_OUTPUT));
-		addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(80.047, 64.941)), module, EDevice::OUT_KG_FUNC_OUTPUT));
-		addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(109.192, 64.726)), module, EDevice::OUT_BREATH_OUTPUT));
-		addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(57.613, 81.13)), module, EDevice::OUT_S1_OUTPUT));
-		addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(69.691, 81.13)), module, EDevice::OUT_S2_OUTPUT));
-		addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(81.768, 81.13)), module, EDevice::OUT_P1_OUTPUT));
-		addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(93.846, 81.13)), module, EDevice::OUT_P2_OUTPUT));
+		addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(27.656, 68.006)), module, EDevice::OUT_S1_OUTPUT));
+		addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(39.734, 68.006)), module, EDevice::OUT_S2_OUTPUT));
+		addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(51.812, 68.006)), module, EDevice::OUT_P1_OUTPUT));
+		addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(63.889, 68.006)), module, EDevice::OUT_P2_OUTPUT));
+		addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(78.379, 67.864)), module, EDevice::OUT_BREATH_OUTPUT));
+		addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(27.371, 85.768)), module, EDevice::OUT_FK_OUTPUT));
+		addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(39.449, 85.768)), module, EDevice::OUT_FG_OUTPUT));
+		addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(49.805, 85.768)), module, EDevice::OUT_KG_FUNC_OUTPUT));
+		addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(27.085, 101.282)), module, EDevice::OUT_K_OUTPUT));
+		addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(39.163, 101.282)), module, EDevice::OUT_X_OUTPUT));
+		addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(51.241, 101.282)), module, EDevice::OUT_Y_OUTPUT));
+		addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(63.319, 101.282)), module, EDevice::OUT_Z_OUTPUT));
+		addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(79.171, 101.853)), module, EDevice::OUT_KG_MAIN_OUTPUT));
+		addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(27.085, 117.157)), module, EDevice::OUT_PK_OUTPUT));
+		addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(39.163, 117.157)), module, EDevice::OUT_PX_OUTPUT));
+		addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(51.241, 117.157)), module, EDevice::OUT_PY_OUTPUT));
+		addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(63.319, 117.157)), module, EDevice::OUT_PZ_OUTPUT));
+		addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(79.023, 117.259)), module, EDevice::OUT_KG_PERC_OUTPUT));
 
-		addChild(createLightCentered<MediumLight<RedLight>>(mm2px(Vec(5.278, 29.657)), module, EDevice::LED1_LIGHT));
-		addChild(createLightCentered<MediumLight<RedLight>>(mm2px(Vec(11.457, 29.657)), module, EDevice::LED2_LIGHT));
-		addChild(createLightCentered<MediumLight<RedLight>>(mm2px(Vec(17.636, 29.657)), module, EDevice::LED3_LIGHT));
-		addChild(createLightCentered<MediumLight<RedLight>>(mm2px(Vec(23.816, 29.657)), module, EDevice::LED4_LIGHT));
-		addChild(createLightCentered<MediumLight<RedLight>>(mm2px(Vec(5.278, 35.836)), module, EDevice::LED5_LIGHT));
-		addChild(createLightCentered<MediumLight<RedLight>>(mm2px(Vec(11.457, 35.836)), module, EDevice::LED6_LIGHT));
-		addChild(createLightCentered<MediumLight<RedLight>>(mm2px(Vec(17.636, 35.836)), module, EDevice::LED7_LIGHT));
-		addChild(createLightCentered<MediumLight<RedLight>>(mm2px(Vec(23.816, 35.836)), module, EDevice::LED8_LIGHT));
-		addChild(createLightCentered<MediumLight<RedLight>>(mm2px(Vec(5.278, 42.015)), module, EDevice::LED9_LIGHT));
-		addChild(createLightCentered<MediumLight<RedLight>>(mm2px(Vec(11.457, 42.015)), module, EDevice::LED10_LIGHT));
-		addChild(createLightCentered<MediumLight<RedLight>>(mm2px(Vec(17.636, 42.015)), module, EDevice::LED11_LIGHT));
-		addChild(createLightCentered<MediumLight<RedLight>>(mm2px(Vec(23.816, 42.015)), module, EDevice::LED12_LIGHT));
-		addChild(createLightCentered<MediumLight<RedLight>>(mm2px(Vec(5.278, 48.195)), module, EDevice::LED13_LIGHT));
-		addChild(createLightCentered<MediumLight<RedLight>>(mm2px(Vec(11.457, 48.195)), module, EDevice::LED14_LIGHT));
-		addChild(createLightCentered<MediumLight<RedLight>>(mm2px(Vec(17.636, 48.195)), module, EDevice::LED15_LIGHT));
-		addChild(createLightCentered<MediumLight<RedLight>>(mm2px(Vec(23.816, 48.195)), module, EDevice::LED16_LIGHT));
+		addChild(createLightCentered<MediumLight<RedLight>>(mm2px(Vec(48.359, 31.369)), module, EDevice::LED1_LIGHT));
+		addChild(createLightCentered<MediumLight<RedLight>>(mm2px(Vec(54.538, 31.369)), module, EDevice::LED2_LIGHT));
+		addChild(createLightCentered<MediumLight<RedLight>>(mm2px(Vec(60.717, 31.369)), module, EDevice::LED3_LIGHT));
+		addChild(createLightCentered<MediumLight<RedLight>>(mm2px(Vec(66.896, 31.369)), module, EDevice::LED4_LIGHT));
+		addChild(createLightCentered<MediumLight<RedLight>>(mm2px(Vec(48.359, 37.548)), module, EDevice::LED5_LIGHT));
+		addChild(createLightCentered<MediumLight<RedLight>>(mm2px(Vec(54.538, 37.548)), module, EDevice::LED6_LIGHT));
+		addChild(createLightCentered<MediumLight<RedLight>>(mm2px(Vec(60.717, 37.548)), module, EDevice::LED7_LIGHT));
+		addChild(createLightCentered<MediumLight<RedLight>>(mm2px(Vec(66.896, 37.548)), module, EDevice::LED8_LIGHT));
+		addChild(createLightCentered<MediumLight<RedLight>>(mm2px(Vec(48.359, 43.727)), module, EDevice::LED9_LIGHT));
+		addChild(createLightCentered<MediumLight<RedLight>>(mm2px(Vec(54.538, 43.727)), module, EDevice::LED10_LIGHT));
+		addChild(createLightCentered<MediumLight<RedLight>>(mm2px(Vec(60.717, 43.727)), module, EDevice::LED11_LIGHT));
+		addChild(createLightCentered<MediumLight<RedLight>>(mm2px(Vec(66.896, 43.727)), module, EDevice::LED12_LIGHT));
+		addChild(createLightCentered<MediumLight<RedLight>>(mm2px(Vec(48.359, 49.906)), module, EDevice::LED13_LIGHT));
+		addChild(createLightCentered<MediumLight<RedLight>>(mm2px(Vec(54.538, 49.906)), module, EDevice::LED14_LIGHT));
+		addChild(createLightCentered<MediumLight<RedLight>>(mm2px(Vec(60.717, 49.906)), module, EDevice::LED15_LIGHT));
+		addChild(createLightCentered<MediumLight<RedLight>>(mm2px(Vec(66.896, 49.906)), module, EDevice::LED16_LIGHT));
 	}
 	
 	void appendContextMenu(Menu* menu) override {

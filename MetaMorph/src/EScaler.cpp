@@ -76,30 +76,29 @@ struct EScaler : Module {
 
 		float globalPb = global * gPBR;
 		
+		float kg = inputs[IN_KG_INPUT].getVoltage();
+		unsigned kg_r=0, kg_c=0;
+		decodeKeyGroup(kg,kg_r,kg_c);
+		if( (kg_c_ != kg_c) || (kg_r_ != kg_r)) {
+			layoutChanged_ = true;
+			kg_c_ = kg_c;
+			kg_r_ = kg_r;
+		}
+
 		for(unsigned ch=0; ch < nChannels; ch++) {
 			float inKey = inputs[IN_K_INPUT].getVoltage(ch);
 
-			if(inKey!=0.0f) {
-				unsigned kg_r, kg_c, r, c; 
-				decoderKey(inKey,kg_r,kg_c,r,c);
+			unsigned r, c; 
+			decodeKey(inKey,r,c);
 
-				// tmp hack
-				if( (kg_c_ != kg_c) || (kg_r_ != kg_r)) {
-					layoutChanged_ = true;
-					kg_c_=kg_c;
-					kg_r_ = kg_r;
-				}
-				
+			int note = (r * rowM) + (c * colM) + offset;
+			float voct = float(note) / 12.0f;
+			float inX = (inputs[IN_X_INPUT].getVoltage(ch) / 5.0f); // +-5v
+			float xPb = (inX * inX) * ( xPBR / 12.0f);
 
-				int note = (r * rowM) + (c * colM) + offset;
-				float voct = float(note) / 12.0f;
-				float inX = (inputs[IN_X_INPUT].getVoltage(ch) / 5.0f); // +-5v
-				float xPb = (inX * inX) * ( xPBR / 12.0f);
+			voct += xPb + globalPb;
 
-				voct += xPb + globalPb;
-
-				outputs[OUT_VOCT_OUTPUT].setVoltage(voct,ch);
-			}
+			outputs[OUT_VOCT_OUTPUT].setVoltage(voct,ch);
 		}
 
 
@@ -120,11 +119,11 @@ struct EScaler : Module {
 						createLedMsg(msg, r,c, LED_SET_GREEN);
 						ledQueue_.write(msg);
 					}
-					else if((note %5) == 0) {
+					else if(((note % 12) %5) == 0) {
 						createLedMsg(msg, r,c, LED_SET_RED);
 						ledQueue_.write(msg);
 					}
-					else if((note %7) == 0) {
+					else if(((note %12) %7) == 0) {
 						createLedMsg(msg, r,c, LED_SET_ORANGE);
 						ledQueue_.write(msg);
 					}
