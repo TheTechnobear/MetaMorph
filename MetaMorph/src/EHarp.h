@@ -156,9 +156,8 @@ struct EHarp {
         unsigned r_=0,c_=0;
     } keygroups_[3];
 
-    int translateRCtoK(unsigned kg, unsigned r, unsigned c) {
-        int k=-1;
-        if(kg == 0 && type_==TAU) {
+    bool translateRCtoK(unsigned kg, unsigned r, unsigned c, unsigned& course, unsigned& k) {
+        if(kg == KeyGroup::KG_MAIN && type_==TAU) {
             // special handling for tau main group
             // where we have 'faked' some extra keys
             unsigned kg_r = keygroups_[kg].r_;
@@ -166,11 +165,15 @@ struct EHarp {
             if(c<2) {
                 if(r<16) {
                     k = c * 16 + r;
+                    course = 0;
+                    return true;
                 }
                 // else out of range
             } else {
                 if(c<kg_c && r < kg_r) {
                     k = 32 + (( c - 2)) * 20 + r;
+                    course = 0;
+                    return true;
                 }
                 // else out of range
             }
@@ -179,10 +182,12 @@ struct EHarp {
                 unsigned kg_c = keygroups_[kg].c_;
                 if(r<kg_r && c < kg_c) {
                     k = c * kg_r + r;
+                    course = (kg == KeyGroup::KG_FUNC);
+                    return true;
                 }
                 // else out of range
         }
-        return k;
+        return false;
     }
 
     const char* lastDevice_ = "";

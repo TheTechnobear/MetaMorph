@@ -260,38 +260,44 @@ struct EDevice : Module {
 		if(msg!=0.0f) {
 			LedMsgType t;
 			unsigned r=0,c=0;
+			unsigned k=0,course=0;
 
 			decodeLedMsg(msg,t,r,c);
 			switch(t) {
 				case LED_CLEAR_ALL : {
 					unsigned kg_r = harpData_.keygroups_[kg].r_;
 					unsigned kg_c = harpData_.keygroups_[kg].c_;
-					for (unsigned ir = 0; ir < kg_r; ir++) {
-						for (unsigned ic = 0; ic < kg_c ; ic++) {
-							int k = harpData_.translateRCtoK(kg, ir, ic);
-							if(k>=0) harp_->setLED(harpData_.lastDevice_,0, k,0);
+					for ( r = 0; r < kg_r; r++) {
+						for (c = 0; c < kg_c ; c++) {
+							if(harpData_.translateRCtoK(kg, r, c, course, k)) {
+								harp_->setLED(harpData_.lastDevice_,course, k,0);
+							}
 						}
 					}
 					break;
 				}
 				case LED_SET_OFF : {
-					int k = harpData_.translateRCtoK(kg, r, c);
-					if(k>=0) harp_->setLED(harpData_.lastDevice_,0, k, 0);
+					if(harpData_.translateRCtoK(kg, r, c, course, k)) {
+						harp_->setLED(harpData_.lastDevice_,course, k,0);
+					}
 					break;
 				}
 				case LED_SET_GREEN : {
-					int k = harpData_.translateRCtoK(kg, r, c);
-					if(k>=0) harp_->setLED(harpData_.lastDevice_,0, k, 1);
+					if(harpData_.translateRCtoK(kg, r, c, course, k)) {
+						harp_->setLED(harpData_.lastDevice_,course, k,1);
+					}
 					break;
 				}
 				case LED_SET_RED : {
-					int k = harpData_.translateRCtoK(kg, r, c);
-					if(k>=0) harp_->setLED(harpData_.lastDevice_,0, k, 2);
+					if(harpData_.translateRCtoK(kg, r, c, course, k)) {
+						harp_->setLED(harpData_.lastDevice_,course, k,2);
+					}
 					break;
 				}
 				case LED_SET_ORANGE : {
-					int k = harpData_.translateRCtoK(kg, r, c);
-					if(k>=0) harp_->setLED(harpData_.lastDevice_,0, k, 3);
+					if(harpData_.translateRCtoK(kg, r, c, course, k)) {
+						harp_->setLED(harpData_.lastDevice_,course, k,3);
+					}
 					break;
 				}
 			}
