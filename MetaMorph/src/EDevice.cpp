@@ -215,11 +215,19 @@ struct EDevice : Module {
 
 			for(unsigned voice=0;voice<nChannels;voice++) {
 				auto& vdata = keys.voices_[voice];
-				float key = encodeKeyId(vdata.key_);
-				outputs[OUT_PK_OUTPUT].setVoltage(key, voice);
-				outputs[OUT_PX_OUTPUT].setVoltage(vdata.rV_.next(iRate) , voice);
-				outputs[OUT_PY_OUTPUT].setVoltage(vdata.yV_.next(iRate) , voice);
-				outputs[OUT_PZ_OUTPUT].setVoltage(vdata.pV_.next(iRate) , voice);
+
+				if(vdata.active_) {
+					float key = encodeKeyId(vdata.key_);
+					outputs[OUT_PK_OUTPUT].setVoltage(key, voice);
+					outputs[OUT_PX_OUTPUT].setVoltage(vdata.rV_.next(iRate) , voice);
+					outputs[OUT_PY_OUTPUT].setVoltage(vdata.yV_.next(iRate) , voice);
+					outputs[OUT_PZ_OUTPUT].setVoltage(vdata.pV_.next(iRate) , voice);
+				} else {
+					outputs[OUT_PK_OUTPUT].setVoltage(0.f, voice);
+					outputs[OUT_PX_OUTPUT].setVoltage(0.f, voice);
+					outputs[OUT_PY_OUTPUT].setVoltage(0.f, voice);
+					outputs[OUT_PZ_OUTPUT].setVoltage(0.f, voice);
+				}
 			}
 
 			outputs[OUT_PK_OUTPUT].setChannels(nChannels);
@@ -241,8 +249,13 @@ struct EDevice : Module {
 			for(unsigned voice=0;voice<nChannels;voice++) {
 				auto& vdata = keys.voices_[voice];
 				float key = encodeKeyId(vdata.key_);
-				outputs[OUT_FK_OUTPUT].setVoltage(key, voice);
-				outputs[OUT_FG_OUTPUT].setVoltage(vdata.actV_.next(iRate), voice);
+				if(vdata.active_) {
+					outputs[OUT_FK_OUTPUT].setVoltage(key, voice);
+					outputs[OUT_FG_OUTPUT].setVoltage(vdata.actV_.next(iRate), voice);
+				} else {
+					outputs[OUT_FK_OUTPUT].setVoltage(0.f, voice);
+					outputs[OUT_FG_OUTPUT].setVoltage(0.f, voice);
+				}
 			}
 
 			outputs[OUT_FK_OUTPUT].setChannels(nChannels);
