@@ -127,28 +127,26 @@ struct ESplit : Module {
 
 		for(unsigned ch=0; ch < nChannels; ch++) {
 			unsigned in_r=0, in_c=0;
-			bool valid= false;
-			decodeKey(inputs[IN_K_INPUT].getVoltage(ch), valid, in_r, in_c);
+			bool valid= ! (inputs[IN_ENABLE_INPUT].getVoltage()  > 2.0f);
+			if(valid) {
+				decodeKey(inputs[IN_K_INPUT].getVoltage(ch), valid, in_r, in_c);
+			}
 
 			float inX = inputs[IN_X_INPUT].getVoltage(ch);
 			float inY = inputs[IN_Y_INPUT].getVoltage(ch);
 			float inZ = inputs[IN_Z_INPUT].getVoltage(ch);
-			bool inSplit[2]= {false,false};
 			
-			for(int s=0;s<2;s++) {
-				inSplit[s] = 
-				(in_r >= startY[s] && in_r < endY[s]) 
-				&& 
-				(in_c >= startX[s] && in_c < endX[s])
-				;
-			} //check split
-
 			unsigned splitId;
 			{
 				splitId=0;
 				auto& voices = splits_[splitId];
 				auto v =voices.findVoice(ch);
-				if(valid && inSplit[splitId]) {
+				bool inSplit = 
+					(in_r >= startY[splitId] && in_r < endY[splitId]) 
+					&& 
+					(in_c >= startX[splitId] && in_c < endX[splitId])
+					;
+				if(valid && inSplit) {
 					unsigned r = in_r - startY[splitId];
 					unsigned c = in_c - startX[splitId];
 
@@ -179,7 +177,12 @@ struct ESplit : Module {
 				splitId=1;
 				auto& voices = splits_[splitId];
 				auto v =voices.findVoice(ch);
-				if(valid && inSplit[splitId]) {
+				bool inSplit = 
+					(in_r >= startY[splitId] && in_r < endY[splitId]) 
+					&& 
+					(in_c >= startX[splitId] && in_c < endX[splitId])
+					;
+				if(valid && inSplit) {
 					unsigned r = in_r - startY[splitId];
 					unsigned c = in_c - startX[splitId];
 

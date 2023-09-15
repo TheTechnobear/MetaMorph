@@ -19,13 +19,6 @@ however, this requires using custom json
 ### EigenLite
 move to using floats, so that things like breath can be bipolar, and also have calibrations
 
-### voicing 
-current eigenharp voice.active , means send 0 voltages
-... does this mean we possibly miss 'note off'
-(as key is now 'invalid')
-
-
-
 
 
 ### fix module to one eigenharp?
