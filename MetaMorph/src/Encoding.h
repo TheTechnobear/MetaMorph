@@ -6,17 +6,18 @@
 inline float encodeKey(unsigned r, unsigned c) {
     float msg;
     char* stream = (char*)(&msg);
-    stream[0] = (char) 0;	
+    stream[0] = (char) 0x01;
     stream[1] = (char) 0;
     stream[2] = (char) r;
     stream[3] = (char) c;
     return msg;
 }
 
-inline void decodeKey(float msg,unsigned& r, unsigned& c) {
+inline void decodeKey(float msg,bool& active, unsigned& r, unsigned& c) {
     char* stream = (char*)(&msg);
+    active = (bool) stream[0] & 0x1;	
     r = (unsigned) stream[2];	
-    c = (unsigned) stream[3];				
+    c = (unsigned) stream[3];
 }
 
 

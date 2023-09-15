@@ -89,16 +89,20 @@ struct EScaler : Module {
 			float inKey = inputs[IN_K_INPUT].getVoltage(ch);
 
 			unsigned r, c; 
-			decodeKey(inKey,r,c);
+			bool valid= false;
+			decodeKey(inKey,valid,r,c);
 
-			int note = (r * rowM) + (c * colM) + offset;
-			float voct = float(note) / 12.0f;
-			float inX = (inputs[IN_X_INPUT].getVoltage(ch) / 5.0f); // +-5v
-			float xPb = (inX * inX) * ( xPBR / 12.0f);
+			if(valid) {
+				int note = (r * rowM) + (c * colM) + offset;
+				float voct = float(note) / 12.0f;
+				float inX = (inputs[IN_X_INPUT].getVoltage(ch) / 5.0f); // +-5v
+				float xPb = (inX * inX) * ( xPBR / 12.0f);
 
-			voct += xPb + globalPb;
-
-			outputs[OUT_VOCT_OUTPUT].setVoltage(voct,ch);
+				voct += xPb + globalPb;
+				outputs[OUT_VOCT_OUTPUT].setVoltage(voct,ch);
+			} else {
+				outputs[OUT_VOCT_OUTPUT].setVoltage(0,ch);
+			}
 		}
 
 
@@ -108,25 +112,37 @@ struct EScaler : Module {
 		if(layoutChanged_) {
 			// note: im not checking for queue overflow as not much I can do ;)
 			ledQueue_.clear();
-			float msg;
-			createLedClearMsg(msg, kg_r_, kg_c_);
+			float msg = encodeLedMsg(LED_SET_OFF,0,0,kg_r_, kg_c_);
 			ledQueue_.write(msg);
 			
 			for (unsigned r = 0; r < kg_r_; r++) {
 				for (unsigned c = 0; c < kg_c_; c++) {
 					int note = (r * rowM) + (c * colM) + offset;
 					if((note %12) == 0) {
-						createLedMsg(msg, r,c, LED_SET_GREEN);
+						float msg = encodeLedMsg(LED_SET_GREEN,r,c, 1,1);
 						ledQueue_.write(msg);
-					}
+{
+
+			unsigned startr,startc, sizer,sizec;
+			LedMsgType t;
+			decodeLedMsg(msg,t,startr,startc,sizer,sizec);
+			assert(t== LED_SET_GREEN);
+			assert(startr == r);
+			assert(startc == c);
+			assert(sizer == 1);
+			assert(sizec == 1);
+}						
+
+					} 
+
 					else if(((note % 12) %5) == 0) {
-						createLedMsg(msg, r,c, LED_SET_RED);
+						float msg = encodeLedMsg(LED_SET_RED, r,c, 1, 1);
 						ledQueue_.write(msg);
 					}
 					else if(((note %12) %7) == 0) {
-						createLedMsg(msg, r,c, LED_SET_ORANGE);
+						float msg = encodeLedMsg(LED_SET_ORANGE,r,c, 1,1);
 						ledQueue_.write(msg);
-					}
+					} 
 				}
 			}
 			layoutChanged_  = false;

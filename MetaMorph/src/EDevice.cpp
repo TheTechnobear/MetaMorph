@@ -178,14 +178,22 @@ struct EDevice : Module {
 
 			for(unsigned voice=0;voice<nChannels;voice++) {
 				auto& vdata = keys.voices_[voice];
-				float pV = vdata.pV_.next(iRate);
-				lights[voice].setBrightness(pV / 10.0f);
 
-				float key = encodeKeyId(vdata.key_);
-				outputs[OUT_K_OUTPUT].setVoltage(key, voice);
-				outputs[OUT_X_OUTPUT].setVoltage(vdata.rV_.next(iRate) , voice);
-				outputs[OUT_Y_OUTPUT].setVoltage(vdata.yV_.next(iRate) , voice);
-				outputs[OUT_Z_OUTPUT].setVoltage(pV, voice);
+				if(vdata.active_) {
+					float pV = vdata.pV_.next(iRate);
+					lights[voice].setBrightness(pV / 10.0f);
+
+					float key = encodeKeyId(vdata.key_);
+					outputs[OUT_K_OUTPUT].setVoltage(key, voice);
+					outputs[OUT_X_OUTPUT].setVoltage(vdata.rV_.next(iRate) , voice);
+					outputs[OUT_Y_OUTPUT].setVoltage(vdata.yV_.next(iRate) , voice);
+					outputs[OUT_Z_OUTPUT].setVoltage(pV, voice);
+				} else {
+					outputs[OUT_K_OUTPUT].setVoltage(0.f, voice);
+					outputs[OUT_X_OUTPUT].setVoltage(0.f, voice);
+					outputs[OUT_Y_OUTPUT].setVoltage(0.f, voice);
+					outputs[OUT_Z_OUTPUT].setVoltage(0.f, voice);
+				}
 			}
 
 			outputs[OUT_K_OUTPUT].setChannels(nChannels);
@@ -262,46 +270,17 @@ struct EDevice : Module {
 			unsigned r=0,c=0;
 			unsigned k=0,course=0;
 
-			decodeLedMsg(msg,t,r,c);
-			switch(t) {
-				case LED_CLEAR_ALL : {
-					unsigned kg_r = harpData_.keygroups_[kg].r_;
-					unsigned kg_c = harpData_.keygroups_[kg].c_;
-					for ( r = 0; r < kg_r; r++) {
-						for (c = 0; c < kg_c ; c++) {
-							if(harpData_.translateRCtoK(kg, r, c, course, k)) {
-								harp_->setLED(harpData_.lastDevice_,course, k,0);
-							}
-						}
-					}
-					break;
-				}
-				case LED_SET_OFF : {
+			unsigned startr,startc, sizer,sizec;
+			decodeLedMsg(msg,t,startr,startc,sizer,sizec);
+			for ( r = startr; r < (startr+sizer); r++) {
+				for (c = startc; c <  (startc+sizec) ; c++) {
 					if(harpData_.translateRCtoK(kg, r, c, course, k)) {
-						harp_->setLED(harpData_.lastDevice_,course, k,0);
+						// LED enum matches setLED
+						harp_->setLED(harpData_.lastDevice_,course, k,t);
 					}
-					break;
-				}
-				case LED_SET_GREEN : {
-					if(harpData_.translateRCtoK(kg, r, c, course, k)) {
-						harp_->setLED(harpData_.lastDevice_,course, k,1);
-					}
-					break;
-				}
-				case LED_SET_RED : {
-					if(harpData_.translateRCtoK(kg, r, c, course, k)) {
-						harp_->setLED(harpData_.lastDevice_,course, k,2);
-					}
-					break;
-				}
-				case LED_SET_ORANGE : {
-					if(harpData_.translateRCtoK(kg, r, c, course, k)) {
-						harp_->setLED(harpData_.lastDevice_,course, k,3);
-					}
-					break;
 				}
 			}
-		}		
+		}
 	}
 
 	std::shared_ptr<EigenApi::Eigenharp> harp_;

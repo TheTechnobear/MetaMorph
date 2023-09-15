@@ -1,5 +1,7 @@
 #include "plugin.hpp"
 
+#include "Encoding.h"
+#include "LightWire.h"
 
 struct ESplit : Module {
 	enum ParamId {
@@ -7,6 +9,8 @@ struct ESplit : Module {
 		P_S1_END_X_PARAM,
 		P_S1_START_Y_PARAM,
 		P_S1_END_Y_PARAM,
+		P_S1_POLY_PARAM,
+		P_S2_POLY_PARAM,
 		P_S2_START_X_PARAM,
 		P_S2_END_X_PARAM,
 		P_S2_START_Y_PARAM,
@@ -19,11 +23,13 @@ struct ESplit : Module {
 		IN_Y_INPUT,
 		IN_Z_INPUT,
 		IN_KG_INPUT,
+		IN1_LIGHTS_INPUT,
+		IN2_LIGHTS_INPUT,
 		IN_ENABLE_INPUT,
-		IN_LIGHTS_INPUT,
 		INPUTS_LEN
 	};
 	enum OutputId {
+		OUT_LIGHTS_OUTPUT,
 		OUT1_K_OUTPUT,
 		OUT1_X_OUTPUT,
 		OUT1_Y_OUTPUT,
@@ -34,7 +40,6 @@ struct ESplit : Module {
 		OUT2_Y_OUTPUT,
 		OUT2_Z_OUTPUT,
 		OUT2_KG_OUTPUT,
-		OUT_LIGHTS_OUTPUT,
 		OUTPUTS_LEN
 	};
 	enum LightId {
@@ -43,21 +48,25 @@ struct ESplit : Module {
 
 	ESplit() {
 		config(PARAMS_LEN, INPUTS_LEN, OUTPUTS_LEN, LIGHTS_LEN);
-		configParam(P_S1_START_X_PARAM, 0.f, 1.f, 0.f, "");
-		configParam(P_S1_END_X_PARAM, 0.f, 1.f, 0.f, "");
-		configParam(P_S1_START_Y_PARAM, 0.f, 1.f, 0.f, "");
-		configParam(P_S1_END_Y_PARAM, 0.f, 1.f, 0.f, "");
-		configParam(P_S2_START_X_PARAM, 0.f, 1.f, 0.f, "");
-		configParam(P_S2_END_X_PARAM, 0.f, 1.f, 0.f, "");
-		configParam(P_S2_START_Y_PARAM, 0.f, 1.f, 0.f, "");
-		configParam(P_S2_END_Y_PARAM, 0.f, 1.f, 0.f, "");
+		configParam(P_S1_START_X_PARAM, 0.f, 24.f, 0.f, "");
+		configParam(P_S1_END_X_PARAM, 1.f, 24.f, 4.f, "");
+		configParam(P_S1_START_Y_PARAM, 0.f, 24.f, 0.f, "");
+		configParam(P_S1_END_Y_PARAM, 1.f, 24.f, 4.f, "");
+		configParam(P_S1_POLY_PARAM, 1.f, 16.f, 8.f, "");
+		configParam(P_S2_POLY_PARAM, 1.f, 16.f, 8.f, "");
+		configParam(P_S2_START_X_PARAM, 0.f, 24.f, 0.f, "");
+		configParam(P_S2_END_X_PARAM, 1.f, 24.f, 4.f, "");
+		configParam(P_S2_START_Y_PARAM, 0.f, 24.f, 0.f, "");
+		configParam(P_S2_END_Y_PARAM, 1.f, 24.f, 4.f, "");
 		configInput(IN_K_INPUT, "");
 		configInput(IN_X_INPUT, "");
 		configInput(IN_Y_INPUT, "");
 		configInput(IN_Z_INPUT, "");
 		configInput(IN_KG_INPUT, "");
+		configInput(IN1_LIGHTS_INPUT, "");
+		configInput(IN2_LIGHTS_INPUT, "");
 		configInput(IN_ENABLE_INPUT, "");
-		configInput(IN_LIGHTS_INPUT, "");
+		configOutput(OUT_LIGHTS_OUTPUT, "");
 		configOutput(OUT1_K_OUTPUT, "");
 		configOutput(OUT1_X_OUTPUT, "");
 		configOutput(OUT1_Y_OUTPUT, "");
@@ -68,11 +77,147 @@ struct ESplit : Module {
 		configOutput(OUT2_Y_OUTPUT, "");
 		configOutput(OUT2_Z_OUTPUT, "");
 		configOutput(OUT2_KG_OUTPUT, "");
-		configOutput(OUT_LIGHTS_OUTPUT, "");
+
+		paramQuantities[P_S1_START_X_PARAM]->snapEnabled = true;		
+		paramQuantities[P_S1_END_X_PARAM]->snapEnabled = true;		
+		paramQuantities[P_S1_START_Y_PARAM]->snapEnabled = true;		
+		paramQuantities[P_S1_END_Y_PARAM]->snapEnabled = true;		
+		paramQuantities[P_S2_START_X_PARAM]->snapEnabled = true;		
+		paramQuantities[P_S2_END_X_PARAM]->snapEnabled = true;		
+		paramQuantities[P_S2_START_Y_PARAM]->snapEnabled = true;		
+		paramQuantities[P_S2_END_Y_PARAM]->snapEnabled = true;		
+
+		paramQuantities[P_S1_POLY_PARAM]->snapEnabled = true;		
+		paramQuantities[P_S2_POLY_PARAM]->snapEnabled = true;		
 	}
 
 	void process(const ProcessArgs& args) override {
+		doProcess(args);
 	}
+
+	void doProcess(const ProcessArgs& args) {
+		unsigned startX[2],startY[2];
+		unsigned endX[2], endY[2];
+		startX[0] = params[P_S1_START_X_PARAM].getValue();
+		startY[0] = params[P_S1_START_Y_PARAM].getValue();
+		startX[1] = params[P_S2_START_X_PARAM].getValue();
+		startY[1] = params[P_S2_START_Y_PARAM].getValue();
+		endX[0] = params[P_S1_END_X_PARAM].getValue();
+		endX[1] = params[P_S2_END_X_PARAM].getValue();
+		endY[0] = params[P_S1_END_Y_PARAM].getValue();
+		endY[1] = params[P_S2_END_Y_PARAM].getValue();
+
+		unsigned maxVoices[2] = {0,0};
+		maxVoices[0] = params[P_S1_POLY_PARAM].getValue();
+		maxVoices[1] = params[P_S2_POLY_PARAM].getValue();
+
+
+		// X = col (horizontal)
+		// Y = row (vertical)
+
+		unsigned in_kg_r, in_kg_c;
+		decodeKeyGroup(inputs[IN_KG_INPUT].getVoltage(),in_kg_r,in_kg_c);
+
+		// todo, we will need to revoice this, once we have poly param
+		unsigned nChannels = inputs[IN_K_INPUT].getChannels();
+
+		for(unsigned ch=0; ch < nChannels; ch++) {
+			unsigned in_r=0, in_c=0;
+			bool valid= false;
+			decodeKey(inputs[IN_K_INPUT].getVoltage(ch),valid, in_r, in_c);
+
+			float inX = inputs[IN_X_INPUT].getVoltage(ch);
+			float inY = inputs[IN_Y_INPUT].getVoltage(ch);
+			float inZ = inputs[IN_Z_INPUT].getVoltage(ch);
+			bool inSplit[2]= {false,false};
+			
+			for(int s=0;s<2;s++) {
+				inSplit[s] = 
+				(in_r >= startY[s] && in_r < endY[s]) 
+				&& 
+				(in_c >= startX[s] && in_c < endX[s])
+				;
+			}
+
+			if(valid) {
+				if(inSplit[0]) {
+					unsigned r = in_r - startY[0];
+					unsigned c = in_c - startX[0];
+					outputs[OUT1_K_OUTPUT].setVoltage(encodeKey(r,c),ch);
+					outputs[OUT1_X_OUTPUT].setVoltage(inX,ch);
+					outputs[OUT1_Y_OUTPUT].setVoltage(inY,ch);
+					outputs[OUT1_Z_OUTPUT].setVoltage(inZ,ch);
+				}
+				if(inSplit[1]) {
+					unsigned r = in_r - startY[1];
+					unsigned c = in_c - startX[1];
+					outputs[OUT2_K_OUTPUT].setVoltage(encodeKey(r,c),ch);
+					outputs[OUT2_X_OUTPUT].setVoltage(inX,ch);
+					outputs[OUT2_Y_OUTPUT].setVoltage(inY,ch);
+					outputs[OUT2_Z_OUTPUT].setVoltage(inZ,ch);
+				}
+			} else {
+					outputs[OUT1_K_OUTPUT].setVoltage(0.f,ch);
+					outputs[OUT1_X_OUTPUT].setVoltage(0.f,ch);
+					outputs[OUT1_Y_OUTPUT].setVoltage(0.f,ch);
+					outputs[OUT1_Z_OUTPUT].setVoltage(0.f,ch);
+					outputs[OUT2_K_OUTPUT].setVoltage(0.f,ch);
+					outputs[OUT2_X_OUTPUT].setVoltage(0.f,ch);
+					outputs[OUT2_Y_OUTPUT].setVoltage(0.f,ch);
+					outputs[OUT2_Z_OUTPUT].setVoltage(0.f,ch);
+			}
+		}
+
+
+
+		float ledmsg[2]= {0.f,0.f};
+		ledmsg[0] = inputs[IN1_LIGHTS_INPUT].getVoltage();
+		ledmsg[1] = inputs[IN2_LIGHTS_INPUT].getVoltage();
+		for(unsigned s = 0;s<2;s++) {
+			if(ledmsg[s] != 0.0f) {
+				unsigned startr,startc, sizer,sizec;
+				LedMsgType t;
+				decodeLedMsg(ledmsg[s],t,startr,startc,sizer,sizec);
+				float msg = encodeLedMsg(
+						t,
+						startr + startY[s],
+						startc + startX[s],
+						sizer,
+						sizec
+					);
+
+				ledQueue_.write(msg);
+			}
+		}
+
+		outputs[OUT1_K_OUTPUT].setChannels(maxVoices[0]);
+		outputs[OUT1_X_OUTPUT].setChannels(maxVoices[0]);
+		outputs[OUT1_Y_OUTPUT].setChannels(maxVoices[0]);
+		outputs[OUT1_Z_OUTPUT].setChannels(maxVoices[0]);
+		outputs[OUT1_KG_OUTPUT].setVoltage(encodeKeyGroup(endY[0] - startY[0], endX[0] - startX[0]));
+
+
+		outputs[OUT2_K_OUTPUT].setChannels(maxVoices[1]);
+		outputs[OUT2_X_OUTPUT].setChannels(maxVoices[1]);
+		outputs[OUT2_Y_OUTPUT].setChannels(maxVoices[1]);
+		outputs[OUT2_Z_OUTPUT].setChannels(maxVoices[1]);
+
+		outputs[OUT2_KG_OUTPUT].setVoltage(encodeKeyGroup(endY[1] - startY[1], endX[1] - startX[1]));
+
+
+		float msg=0.0f;
+		// dont really need this check as empty queue leaves msg untouched.
+		if(ledQueue_.read(msg)) {
+			outputs[OUT_LIGHTS_OUTPUT].setVoltage(msg);
+		} else {
+			outputs[OUT_LIGHTS_OUTPUT].setVoltage(0.0f);
+		}
+
+	}
+
+
+	static constexpr int MAX_MSGS=10;
+	MsgQueue<float> ledQueue_=MAX_MSGS;
 };
 
 
@@ -90,6 +235,8 @@ struct ESplitWidget : ModuleWidget {
 		addParam(createParamCentered<RoundBlackKnob>(mm2px(Vec(31.241, 28.959)), module, ESplit::P_S1_END_X_PARAM));
 		addParam(createParamCentered<RoundBlackKnob>(mm2px(Vec(19.448, 29.101)), module, ESplit::P_S1_START_Y_PARAM));
 		addParam(createParamCentered<RoundBlackKnob>(mm2px(Vec(43.414, 28.959)), module, ESplit::P_S1_END_Y_PARAM));
+		addParam(createParamCentered<RoundBlackKnob>(mm2px(Vec(81.198, 29.53)), module, ESplit::P_S1_POLY_PARAM));
+		addParam(createParamCentered<RoundBlackKnob>(mm2px(Vec(81.198, 46.463)), module, ESplit::P_S2_POLY_PARAM));
 		addParam(createParamCentered<RoundBlackKnob>(mm2px(Vec(6.705, 47.622)), module, ESplit::P_S2_START_X_PARAM));
 		addParam(createParamCentered<RoundBlackKnob>(mm2px(Vec(31.241, 47.48)), module, ESplit::P_S2_END_X_PARAM));
 		addParam(createParamCentered<RoundBlackKnob>(mm2px(Vec(19.448, 47.622)), module, ESplit::P_S2_START_Y_PARAM));
@@ -100,9 +247,11 @@ struct ESplitWidget : ModuleWidget {
 		addInput(createInputCentered<PJ301MPort>(mm2px(Vec(30.86, 63.712)), module, ESplit::IN_Y_INPUT));
 		addInput(createInputCentered<PJ301MPort>(mm2px(Vec(42.938, 63.712)), module, ESplit::IN_Z_INPUT));
 		addInput(createInputCentered<PJ301MPort>(mm2px(Vec(60.366, 64.424)), module, ESplit::IN_KG_INPUT));
+		addInput(createInputCentered<PJ301MPort>(mm2px(Vec(80.877, 82.209)), module, ESplit::IN1_LIGHTS_INPUT));
+		addInput(createInputCentered<PJ301MPort>(mm2px(Vec(80.877, 100.2)), module, ESplit::IN2_LIGHTS_INPUT));
 		addInput(createInputCentered<PJ301MPort>(mm2px(Vec(7.275, 118.359)), module, ESplit::IN_ENABLE_INPUT));
-		addInput(createInputCentered<PJ301MPort>(mm2px(Vec(43.788, 118.359)), module, ESplit::IN_LIGHTS_INPUT));
 
+		addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(80.864, 64.603)), module, ESplit::OUT_LIGHTS_OUTPUT));
 		addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(7.275, 82.376)), module, ESplit::OUT1_K_OUTPUT));
 		addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(19.353, 82.376)), module, ESplit::OUT1_X_OUTPUT));
 		addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(31.431, 82.376)), module, ESplit::OUT1_Y_OUTPUT));
@@ -113,7 +262,6 @@ struct ESplitWidget : ModuleWidget {
 		addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(31.431, 100.367)), module, ESplit::OUT2_Y_OUTPUT));
 		addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(43.509, 100.367)), module, ESplit::OUT2_Z_OUTPUT));
 		addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(60.341, 100.635)), module, ESplit::OUT2_KG_OUTPUT));
-		addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(59.384, 118.359)), module, ESplit::OUT_LIGHTS_OUTPUT));
 	}
 };
 

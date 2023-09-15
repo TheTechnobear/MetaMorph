@@ -1,37 +1,54 @@
 #pragma once
 
 enum LedMsgType {
-    LED_CLEAR_ALL,
     LED_SET_OFF,
     LED_SET_GREEN,
     LED_SET_RED,
     LED_SET_ORANGE
 };
 
-inline void createLedClearMsg(float& msg,unsigned r, unsigned c) {
+inline float encodeLedMsg(
+    LedMsgType t,
+    unsigned startr, unsigned startc, 
+    unsigned sizer, unsigned sizec
+    ) {
+    float msg;
+    long lmsg = 0;
+    lmsg = (lmsg << 6) + (startr & 0x3f); 
+    lmsg = (lmsg << 6) + (startc & 0x3f); 
+    lmsg = (lmsg << 6) + (sizer & 0x3f); 
+    lmsg = (lmsg << 6) + (sizec & 0x3f); 
+    lmsg = (lmsg << 6) + (t & 0x03); 
+
+    char* pL= (char*) &lmsg;
     char* stream = (char*)(&msg);
-    stream[0] = (char) (0x10 | LED_CLEAR_ALL);
-    stream[1] = (char) 0x00;
-    stream[2] = (char) ( r & 0xff);
-    stream[3] = (char) ( c & 0xff);
-    
+    stream[0] = (char) pL[0];
+    stream[1] = (char) pL[1];
+    stream[2] = (char) pL[2];
+    stream[3] = (char) pL[3];   
+    return msg;    
 }
 
-inline void createLedMsg(float& msg, unsigned r, unsigned c, LedMsgType t) {
+inline void decodeLedMsg(   float msg, LedMsgType& t, 
+                            unsigned& startr, unsigned& startc, 
+                            unsigned& sizer, unsigned& sizec) {
+    long lmsg = 0;
+    char* pL= (char*) &lmsg;
     char* stream = (char*)(&msg);
-    stream[0] = (char) (0x10 | t);
-    stream[1] = (char) 0x00;
-    stream[2] = (char) ( r & 0xff);
-    stream[3] = (char) ( c & 0xff);
-}
+    pL[0] = unsigned(stream[0]) & 0xff;
+    pL[1] = unsigned(stream[1]) & 0xff;
+    pL[2] = unsigned(stream[2]) & 0xff;
+    pL[3] = unsigned(stream[3]) & 0xff;
 
-inline void decodeLedMsg(float msg, LedMsgType& t, unsigned& r, unsigned& c) {
-    // unsigned dummy=0;
-    char* stream = (char*)(&msg);
-    t = (LedMsgType) ( stream[0] & 0x0f);	
-    // dummy = (unsigned) stream[1];	
-    r = (unsigned) stream[2];	
-    c = (unsigned) stream[3];				
+    t = (LedMsgType) (lmsg & 0x3);
+    lmsg = lmsg >> 6;
+    sizec = (lmsg & 0x3f);
+    lmsg = lmsg >> 6;
+    sizer = (lmsg & 0x3f);
+    lmsg = lmsg >> 6;
+    startc = (lmsg & 0x3f);
+    lmsg = lmsg >> 6;
+    startr = (lmsg & 0x3f);
 }
 
 
