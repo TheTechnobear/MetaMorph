@@ -13,9 +13,9 @@ inline float encodeKey(unsigned r, unsigned c) {
     return msg;
 }
 
-inline void decodeKey(float msg,bool& active, unsigned& r, unsigned& c) {
+inline void decodeKey(float msg,bool& valid, unsigned& r, unsigned& c) {
     char* stream = (char*)(&msg);
-    active = (bool) stream[0] & 0x1;	
+    valid = (bool) stream[0] & 0x1;	
     r = (unsigned) stream[2];	
     c = (unsigned) stream[3];
 }

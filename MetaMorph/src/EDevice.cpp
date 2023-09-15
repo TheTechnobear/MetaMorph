@@ -194,6 +194,7 @@ struct EDevice : Module {
 					outputs[OUT_Y_OUTPUT].setVoltage(0.f, voice);
 					outputs[OUT_Z_OUTPUT].setVoltage(0.f, voice);
 				}
+
 			}
 
 			outputs[OUT_K_OUTPUT].setChannels(nChannels);

@@ -4,6 +4,7 @@
 
 #include "Encoding.h"
 
+#include <iostream>
 
 // todo move to namespace and classes 
 class keyValue {
@@ -53,6 +54,8 @@ class Voice {
 public: 
     Voice() = default;
     virtual ~Voice() = default;
+    unsigned voiceId_ =0;
+
     bool active_=false;
     unsigned key_ =0;
 
@@ -63,19 +66,31 @@ template <class T>
 class Voices {
     public:
     static constexpr unsigned MAX_VOICE = 16;
+    Voices() {
+        unsigned vId = 0;
+        for(auto& v : voices_) {
+            v.voiceId_ = vId;
+            vId++;
+        }        
+    }
 
-	T* findFreeVoice() {
+	T* findFreeVoice(unsigned maxVoiceId) {
+        unsigned vId=0;
 		for(auto& v : voices_) {
 			if(!v.active_) {
 				return &v;
 			}
+            vId++;
+            if(vId >= maxVoiceId) {
+                return nullptr;
+            }
 		}
 		return nullptr;
 	}
 
 	T* findVoice(unsigned key) {
 		for(auto& v : voices_) {
-			if(v.active_ && v.key_ == key) {
+			if(v.key_ == key && v.active_) {
 				return &v;
 			}
 		}
@@ -108,7 +123,7 @@ struct FullVoice : public Voice {
     }
 
     void freeVoice() override {
-        updateVoice(0,false,0,0,0); 
+        updateVoice(key_,false,0,0,0); 
     }
 };
 
@@ -306,15 +321,16 @@ public:
             auto& voices = mainKey ? harpData_.mainVoices_  : harpData_.percVoices_;
             auto v = voices.findVoice(keyId);
             if(v) {
-                if(!a) {
+                if(v->active_ && !a) {
                     voices.freeVoice(v);
                     v = nullptr;
                 }
             } else {
                 if(a) {
-                    v = voices.findFreeVoice();
+                    v = voices.findFreeVoice(voices.MAX_VOICE);
                 }
             }
+
             if(v) {
                 v->updateVoice(keyId,a,p,r,y);
             }
@@ -322,13 +338,13 @@ public:
             auto& voices = harpData_.funcVoices_;
             auto v = voices.findVoice(keyId);
             if(v) {
-                if(!a) {
+                if(v->active_ && !a) {
                     voices.freeVoice(v);
                     v = nullptr;
                 }
             } else {
                 if(a) {
-                    v = voices.findFreeVoice();
+                    v = voices.findFreeVoice(voices.MAX_VOICE);
                 }
             }
             if(v) {

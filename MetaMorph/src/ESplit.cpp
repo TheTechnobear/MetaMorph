@@ -1,7 +1,10 @@
 #include "plugin.hpp"
 
+#include "EHarp.h"
 #include "Encoding.h"
 #include "LightWire.h"
+
+#include <iostream>
 
 struct ESplit : Module {
 	enum ParamId {
@@ -121,10 +124,11 @@ struct ESplit : Module {
 		// todo, we will need to revoice this, once we have poly param
 		unsigned nChannels = inputs[IN_K_INPUT].getChannels();
 
+
 		for(unsigned ch=0; ch < nChannels; ch++) {
 			unsigned in_r=0, in_c=0;
 			bool valid= false;
-			decodeKey(inputs[IN_K_INPUT].getVoltage(ch),valid, in_r, in_c);
+			decodeKey(inputs[IN_K_INPUT].getVoltage(ch), valid, in_r, in_c);
 
 			float inX = inputs[IN_X_INPUT].getVoltage(ch);
 			float inY = inputs[IN_Y_INPUT].getVoltage(ch);
@@ -137,38 +141,71 @@ struct ESplit : Module {
 				&& 
 				(in_c >= startX[s] && in_c < endX[s])
 				;
+			} //check split
+
+			unsigned splitId;
+			{
+				splitId=0;
+				auto& voices = splits_[splitId];
+				auto v =voices.findVoice(ch);
+				if(valid && inSplit[splitId]) {
+					unsigned r = in_r - startY[splitId];
+					unsigned c = in_c - startX[splitId];
+
+					if(!v) {
+							v = voices.findFreeVoice(maxVoices[splitId]);
+					}
+
+					if (v)  {
+						v->updateVoice(ch,r,c, valid, inX,inY,inZ);
+						outputs[OUT1_K_OUTPUT].setVoltage(encodeKey(r,c),v->voiceId_);
+						outputs[OUT1_X_OUTPUT].setVoltage(inX,v->voiceId_);
+						outputs[OUT1_Y_OUTPUT].setVoltage(inY,v->voiceId_);
+						outputs[OUT1_Z_OUTPUT].setVoltage(inZ,v->voiceId_);
+					}
+				} else {
+					// was in this split, but now key is outside
+					if(v) {
+						voices.freeVoice(v);
+						outputs[OUT1_K_OUTPUT].setVoltage(0.f,v->voiceId_);
+						outputs[OUT1_X_OUTPUT].setVoltage(0.f,v->voiceId_);
+						outputs[OUT1_Y_OUTPUT].setVoltage(0.f,v->voiceId_);
+						outputs[OUT1_Z_OUTPUT].setVoltage(0.f,v->voiceId_);
+					}
+				}
 			}
 
-			if(valid) {
-				if(inSplit[0]) {
-					unsigned r = in_r - startY[0];
-					unsigned c = in_c - startX[0];
-					outputs[OUT1_K_OUTPUT].setVoltage(encodeKey(r,c),ch);
-					outputs[OUT1_X_OUTPUT].setVoltage(inX,ch);
-					outputs[OUT1_Y_OUTPUT].setVoltage(inY,ch);
-					outputs[OUT1_Z_OUTPUT].setVoltage(inZ,ch);
+			{
+				splitId=1;
+				auto& voices = splits_[splitId];
+				auto v =voices.findVoice(ch);
+				if(valid && inSplit[splitId]) {
+					unsigned r = in_r - startY[splitId];
+					unsigned c = in_c - startX[splitId];
+
+					if(!v) {
+							v = voices.findFreeVoice(maxVoices[splitId]);
+					}
+
+					if (v)  {
+						v->updateVoice(ch,r,c, valid, inX,inY,inZ);
+						outputs[OUT2_K_OUTPUT].setVoltage(encodeKey(r,c),v->voiceId_);
+						outputs[OUT2_X_OUTPUT].setVoltage(inX,v->voiceId_);
+						outputs[OUT2_Y_OUTPUT].setVoltage(inY,v->voiceId_);
+						outputs[OUT2_Z_OUTPUT].setVoltage(inZ,v->voiceId_);
+					}
+				} else {
+					// was in this split, but now key is outside
+					if(v) {
+						voices.freeVoice(v);
+						outputs[OUT2_K_OUTPUT].setVoltage(0.f,v->voiceId_);
+						outputs[OUT2_X_OUTPUT].setVoltage(0.f,v->voiceId_);
+						outputs[OUT2_Y_OUTPUT].setVoltage(0.f,v->voiceId_);
+						outputs[OUT2_Z_OUTPUT].setVoltage(0.f,v->voiceId_);
+					}
 				}
-				if(inSplit[1]) {
-					unsigned r = in_r - startY[1];
-					unsigned c = in_c - startX[1];
-					outputs[OUT2_K_OUTPUT].setVoltage(encodeKey(r,c),ch);
-					outputs[OUT2_X_OUTPUT].setVoltage(inX,ch);
-					outputs[OUT2_Y_OUTPUT].setVoltage(inY,ch);
-					outputs[OUT2_Z_OUTPUT].setVoltage(inZ,ch);
-				}
-			} else {
-					outputs[OUT1_K_OUTPUT].setVoltage(0.f,ch);
-					outputs[OUT1_X_OUTPUT].setVoltage(0.f,ch);
-					outputs[OUT1_Y_OUTPUT].setVoltage(0.f,ch);
-					outputs[OUT1_Z_OUTPUT].setVoltage(0.f,ch);
-					outputs[OUT2_K_OUTPUT].setVoltage(0.f,ch);
-					outputs[OUT2_X_OUTPUT].setVoltage(0.f,ch);
-					outputs[OUT2_Y_OUTPUT].setVoltage(0.f,ch);
-					outputs[OUT2_Z_OUTPUT].setVoltage(0.f,ch);
 			}
-		}
-
-
+		} // for channel
 
 		float ledmsg[2]= {0.f,0.f};
 		ledmsg[0] = inputs[IN1_LIGHTS_INPUT].getVoltage();
@@ -218,6 +255,30 @@ struct ESplit : Module {
 
 	static constexpr int MAX_MSGS=10;
 	MsgQueue<float> ledQueue_=MAX_MSGS;
+
+	struct SplitVoice : public Voice  {
+		unsigned r_=0;
+		unsigned c_=0;
+		float x_=0.f;
+		float y_=0.f;
+		float z_=0.f;
+
+		void updateVoice(long key, unsigned r, unsigned c, bool a, float x, float y, float z) {
+			active_ = a;
+			key_ = key; // inbound channel
+			r_=r;
+			c_=c;
+			x_=x;
+			y_=y;
+			z_=z;
+		}
+
+		void freeVoice() override {
+			updateVoice(0xff,false,0,0,0.f,0.f,0.f);
+		}
+	};
+
+    Voices<SplitVoice> splits_[2];
 };
 
 
