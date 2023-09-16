@@ -205,8 +205,7 @@ struct EHarp {
         return false;
     }
 
-    const char* lastDevice_ = "";
-
+    std::string lastDevice_ = "";
 };
 
 class EHarpCallback : public EigenApi::Callback{
@@ -216,6 +215,9 @@ public:
     }
 
     void connected(const char* dev, DeviceType dt) override {
+        if( harpData_.lastDevice_ != "" &&  harpData_.lastDevice_ != dev) {
+            return;
+        }
         
         switch (dt) {
             case PICO : {
@@ -257,13 +259,21 @@ public:
 
     void disconnected(const char* dev) override
     {
-        if(harpData_.lastDevice_ == dev) {
-             harpData_.lastDevice_ = "";
-        }
+        if(harpData_.lastDevice_ != dev) return;
+
+        harpData_.keygroups_[EHarp::KeyGroup::KG_MAIN].r_=0;
+        harpData_.keygroups_[EHarp::KeyGroup::KG_MAIN].c_=0;
+        harpData_.keygroups_[EHarp::KeyGroup::KG_PERC].r_=0;
+        harpData_.keygroups_[EHarp::KeyGroup::KG_PERC].c_=0;
+        harpData_.keygroups_[EHarp::KeyGroup::KG_FUNC].r_=0;
+        harpData_.keygroups_[EHarp::KeyGroup::KG_FUNC].c_=0;
+        harpData_.lastDevice_ = "";
     }
 
 
     void key(const char* dev, unsigned long long t, unsigned course, unsigned k, bool a, unsigned p, int r, int y) override  {
+        if(harpData_.lastDevice_ != dev) return;
+
         bool percKey = false;
         bool mainKey = false;
         bool funcKey = false;
@@ -355,6 +365,8 @@ public:
 
 
     void breath(const char* dev, unsigned long long t, unsigned val) override {
+        if(harpData_.lastDevice_ != dev) return;
+
         // ! this should be EigenLite 
         if(breathZeroPoint_ < 0) breathZeroPoint_ = val;
         int iVal = int(val) - breathZeroPoint_;
@@ -367,6 +379,8 @@ public:
     }
     
     void strip(const char* dev, unsigned long long t, unsigned strip, unsigned val, bool a) override  {
+        if(harpData_.lastDevice_ != dev) return;
+
 		if(strip > EHarp::MAX_STRIP) return;
 		if(a) {
 			harpData_.stripV_[strip - 1].set(val);
@@ -377,6 +391,8 @@ public:
     }
     
     void pedal(const char* dev, unsigned long long t, unsigned pedal, unsigned val) override  {
+        if(harpData_.lastDevice_ != dev) return;
+
 		if(pedal > EHarp::MAX_PEDAL) return;
 		harpData_.pedalV_[pedal - 1].set(val);
     }

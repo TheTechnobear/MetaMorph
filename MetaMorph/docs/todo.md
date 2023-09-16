@@ -11,11 +11,37 @@ aka observations about how to get this working !
 things like polyphony can be implemented as context menu
 however, this requires using custom json
 
+### disconnect keygroup / lights
+if we have device->splitter->scaler
+with lights and keygroup
+user expectation: disconnect KG or Lights -> LEDS all turn off
+
+but this doesn't happen...
+
+a) disconnect keygroup... 
+reason: leds off uses a region, defined by kg!
+solution: we could theoretically use kg_r,kg_c BEFORE change i.e. last voltage.
+b) disconnect lights 
+reason: once disconnected we dont have message!
+solution: always send a voltage on led... so 0v = disconnected.
+... then we can clear region when not present.
+(similar to valid key using high bit to indicate on)
+
+-----------------------------------------------------
+
+## modules ideas
+LightMerge - merge multipe light sources 
+becareful with KG... as we need translation?
+main purpose is multiple function modules from one split
+
+FixedLights - allow fixed lighting 
+
 
 
 -----------------------------------------------------
 
 ## module - eigenHarp 
+
 ### EigenLite
 move to using floats, so that things like breath can be bipolar, and also have calibrations
 
@@ -30,14 +56,17 @@ not sure, without eigenlite api change we do this AND allow no filter
 -----------------------------------------------------
 ## module - scaler 
 
+allow non-chromatic scales
+perhaps have a scale selector, which loads from json file?
+0 = no scale = chromatic, as this is most effecient.
+
+custom lighting - currently fixed to root, 5th , 7th
 
 
 -----------------------------------------------------
 
 
 # module - split 
-### voicing
-we will want to re-voice for each split.
 
 
 -----------------------------------------------------

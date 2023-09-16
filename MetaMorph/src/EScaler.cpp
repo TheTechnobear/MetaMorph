@@ -121,18 +121,6 @@ struct EScaler : Module {
 					if((note %12) == 0) {
 						float msg = encodeLedMsg(LED_SET_GREEN,r,c, 1,1);
 						ledQueue_.write(msg);
-{
-
-			unsigned startr,startc, sizer,sizec;
-			LedMsgType t;
-			decodeLedMsg(msg,t,startr,startc,sizer,sizec);
-			assert(t== LED_SET_GREEN);
-			assert(startr == r);
-			assert(startc == c);
-			assert(sizer == 1);
-			assert(sizec == 1);
-}						
-
 					} 
 
 					else if(((note % 12) %5) == 0) {

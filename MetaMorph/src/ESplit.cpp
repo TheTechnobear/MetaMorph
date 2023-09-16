@@ -234,7 +234,11 @@ struct ESplit : Module {
 		outputs[OUT1_X_OUTPUT].setChannels(maxVoices[0]);
 		outputs[OUT1_Y_OUTPUT].setChannels(maxVoices[0]);
 		outputs[OUT1_Z_OUTPUT].setChannels(maxVoices[0]);
-		outputs[OUT1_KG_OUTPUT].setVoltage(encodeKeyGroup(endY[0] - startY[0], endX[0] - startX[0]));
+		if(in_kg_c > 0 && in_kg_r > 0) {
+			outputs[OUT1_KG_OUTPUT].setVoltage(encodeKeyGroup(endY[0] - startY[0], endX[0] - startX[0]));
+		} else {
+			outputs[OUT1_KG_OUTPUT].setVoltage(0);
+		}
 
 
 		outputs[OUT2_K_OUTPUT].setChannels(maxVoices[1]);
@@ -242,7 +246,11 @@ struct ESplit : Module {
 		outputs[OUT2_Y_OUTPUT].setChannels(maxVoices[1]);
 		outputs[OUT2_Z_OUTPUT].setChannels(maxVoices[1]);
 
-		outputs[OUT2_KG_OUTPUT].setVoltage(encodeKeyGroup(endY[1] - startY[1], endX[1] - startX[1]));
+		if(in_kg_c > 0 && in_kg_r > 0) {
+			outputs[OUT2_KG_OUTPUT].setVoltage(encodeKeyGroup(endY[1] - startY[1], endX[1] - startX[1]));
+		} else {
+			outputs[OUT2_KG_OUTPUT].setVoltage(0.f);
+		}
 
 
 		float msg=0.0f;
@@ -250,7 +258,7 @@ struct ESplit : Module {
 		if(ledQueue_.read(msg)) {
 			outputs[OUT_LIGHTS_OUTPUT].setVoltage(msg);
 		} else {
-			outputs[OUT_LIGHTS_OUTPUT].setVoltage(0.0f);
+			outputs[OUT_LIGHTS_OUTPUT].setVoltage(0.f);
 		}
 
 	}
