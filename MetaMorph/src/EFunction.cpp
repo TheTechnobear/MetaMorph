@@ -129,14 +129,14 @@ struct EFunction : Module {
 				if(valid) {
 					if(in_r == func.r_ && in_c==func.c_) {
 						// trig @ 1..2v
-						bool state  = (inputs[IN_GATE_INPUT].getVoltage() >= 1.5f);
+						bool state  = (inputs[IN_GATE_INPUT].getVoltage(ch) >= 1.5f);
 						if(func.state_!=state) {
 							LedMsgType t = state ? LED_SET_GREEN : LED_SET_ORANGE;
 							// std::cout << "change led " << in_r << "," << in_c << " state" << t << std::endl;
 							float msg = encodeLedMsg(t, in_r, in_c, 1 , 1);
 							ledQueue_.write(msg);
+							func.state_ = state;
 						}
-						func.state_ = state;
 						func.ch_ = ch;
 					}
 				} else {
