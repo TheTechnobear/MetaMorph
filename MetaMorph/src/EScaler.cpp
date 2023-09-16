@@ -53,8 +53,18 @@ struct EScaler : Module {
 	}
 
 
+	void processBypass (const ProcessArgs &args) override {
+		doProcessBypass(args);
+	}
 
 	void process(const ProcessArgs& args) override {
+		doProcess(args);
+	}
+
+	void doProcessBypass (const ProcessArgs &args)  {
+	}
+
+	void doProcess(const ProcessArgs& args) {
 		unsigned nChannels = std::max(1, inputs[IN_K_INPUT].getChannels());
 
 		int rowM = params[P_ROW_MULT_PARAM].getValue();

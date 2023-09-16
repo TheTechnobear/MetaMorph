@@ -2,8 +2,6 @@
 
 #include "../EigenLite/eigenapi/eigenapi.h"
 
-#include <iostream>
-
 #include "EHarp.h"
 
 #include "Encoding.h"
@@ -119,15 +117,15 @@ struct EDevice : Module {
 		}
 	}
 
-	void process(const ProcessArgs& args) override {
-		doProcess(args);
-	}
 
 	void processBypass (const ProcessArgs &args) override {
 		doProcessBypass(args);
 	}
 
-	/// keep my code separate 
+	void process(const ProcessArgs& args) override {
+		doProcess(args);
+	}
+
 	void doProcessBypass (const ProcessArgs &args)  {
 		int rate = args.sampleRate / 1000; // really should be 2k, lets do a bit more
 		if((args.frame % rate) == 0) {
@@ -270,12 +268,12 @@ struct EDevice : Module {
 		}
 
 		outputs[OUT_BREATH_OUTPUT].setVoltage(harpData_.breathV_.next(iRate));
+
 		outputs[OUT_S1_OUTPUT].setVoltage(harpData_.stripV_[0].next(iRate));
 		outputs[OUT_S2_OUTPUT].setVoltage(harpData_.stripV_[1].next(iRate));
+
 		outputs[OUT_P1_OUTPUT].setVoltage(harpData_.pedalV_[0].next(iRate));
 		outputs[OUT_P2_OUTPUT].setVoltage(harpData_.pedalV_[1].next(iRate));
-
-
 	}
 
 	void handleLedInput(float msg, unsigned kg) {

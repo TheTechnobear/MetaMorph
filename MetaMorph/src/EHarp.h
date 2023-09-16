@@ -4,8 +4,6 @@
 
 #include "Encoding.h"
 
-#include <iostream>
-
 // todo move to namespace and classes 
 class keyValue {
 public:
