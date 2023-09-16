@@ -237,7 +237,7 @@ struct EDevice : Module {
 			auto& kg = harpData_.keygroups_[EHarp::KeyGroup::KG_PERC];
 			outputs[OUT_KG_PERC_OUTPUT].setVoltage(encodeKeyGroup(kg.r_, kg.c_));
 
-			float ledmsg = inputs[IN_FUNC_LIGHTS_INPUT].getVoltage();
+			float ledmsg = inputs[IN_PERC_LIGHTS_INPUT].getVoltage();
 			handleLedInput(ledmsg,EHarp::KeyGroup::KG_PERC);
 		}
 

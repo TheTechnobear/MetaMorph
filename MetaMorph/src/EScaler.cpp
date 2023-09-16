@@ -3,7 +3,6 @@
 #include "Encoding.h"
 #include "LightWire.h"
 
-
 struct EScaler : Module {
 	enum ParamId {
 		P_ROW_MULT_PARAM,
@@ -132,15 +131,15 @@ struct EScaler : Module {
 						float msg = encodeLedMsg(LED_SET_GREEN,r,c, 1,1);
 						ledQueue_.write(msg);
 					} 
-
-					else if(((note % 12) %5) == 0) {
-						float msg = encodeLedMsg(LED_SET_RED, r,c, 1, 1);
+					else if((note % 12) == 5) {
+						float msg = encodeLedMsg(LED_SET_RED,r,c, 1,1);
 						ledQueue_.write(msg);
 					}
-					else if(((note %12) %7) == 0) {
-						float msg = encodeLedMsg(LED_SET_ORANGE,r,c, 1,1);
+					else if((note %12)  == 7) {
+						float msg = encodeLedMsg(LED_SET_RED,r,c, 1,1);
 						ledQueue_.write(msg);
 					} 
+
 				}
 			}
 			layoutChanged_  = false;
@@ -164,8 +163,7 @@ struct EScaler : Module {
 
 	int rowM_=0, colM_=0, offset_;
 
-	static constexpr int MAX_MSGS=10;
-	MsgQueue<float> ledQueue_=MAX_MSGS;
+	MsgQueue<float> ledQueue_;
 
 };
 

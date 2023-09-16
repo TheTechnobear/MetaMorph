@@ -170,29 +170,48 @@ struct EHarp {
     } keygroups_[3];
 
     bool translateRCtoK(unsigned kg, unsigned r, unsigned c, unsigned& course, unsigned& k) {
-        if(kg == KeyGroup::KG_MAIN && type_==TAU) {
-            // special handling for tau main group
-            // where we have 'faked' some extra keys
-            unsigned kg_r = keygroups_[kg].r_;
-            unsigned kg_c = keygroups_[kg].c_;
-            if(c<2) {
-                if(r<16) {
-                    k = c * 16 + r;
+        unsigned kg_r = keygroups_[kg].r_;
+        unsigned kg_c = keygroups_[kg].c_;
+        if(type_==TAU) {
+            switch(kg) {
+                case KeyGroup::KG_MAIN : {
+                    // special handling for tau main group
+                    // where we have 'faked' some extra keys
                     course = 0;
-                    return true;
-                }
-                // else out of range
-            } else {
-                if(c<kg_c && r < kg_r) {
-                    k = 32 + (( c - 2)) * 20 + r;
+                    if(c<2) {
+                        if(r<16) {
+                            k = c * 16 + r;
+                            return true;
+                        }
+                        // else out of range
+                    } else {
+                        if(c<kg_c && r < kg_r) {
+                            k = 32 + (( c - 2)) * 20 + r;
+                            return true;
+                        }
+                        // else out of range
+                    }
+                    break;
+                } // main 
+                case KeyGroup::KG_PERC : {
                     course = 0;
-                    return true;
+                    if(r<kg_r && c < kg_c) {
+                        k = c * kg_r + r + 72;
+                        return true;
+                    }
+                    break;
                 }
-                // else out of range
+                case KeyGroup::KG_FUNC : {
+                    course = 1;
+                    if(r<kg_r && c < kg_c) {
+                        k = c * kg_r + r;
+                        return true;
+                    }
+                    break;
+                }
+
             }
         } else {
-                unsigned kg_r = keygroups_[kg].r_;
-                unsigned kg_c = keygroups_[kg].c_;
                 if(r<kg_r && c < kg_c) {
                     k = c * kg_r + r;
                     course = (kg == KeyGroup::KG_FUNC);

@@ -51,12 +51,13 @@ inline void decodeLedMsg(   float msg, LedMsgType& t,
     startr = (lmsg & 0x3f);
 }
 
+static constexpr int MAX_MSGS=100;
 
 
 template<class T>
 class MsgQueue {
 public:
-    MsgQueue(unsigned maxSz=10) : maxSize_(maxSz) {
+    MsgQueue(unsigned maxSz=MAX_MSGS) : maxSize_(maxSz) {
         queue_ = new T[maxSize_];
     }
     

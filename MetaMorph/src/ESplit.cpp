@@ -267,9 +267,7 @@ struct ESplit : Module {
 
 	}
 
-
-	static constexpr int MAX_MSGS=10;
-	MsgQueue<float> ledQueue_=MAX_MSGS;
+	MsgQueue<float> ledQueue_;
 
 	struct SplitVoice : public Voice  {
 		unsigned r_=0;

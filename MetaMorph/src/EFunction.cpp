@@ -172,8 +172,7 @@ struct EFunction : Module {
 	}
 
 
-	static constexpr int MAX_MSGS=10;
-	MsgQueue<float> ledQueue_=MAX_MSGS;
+	MsgQueue<float> ledQueue_;
 
 	bool layoutChanged_=false;
 	unsigned kg_r_=0,kg_c_=0;
