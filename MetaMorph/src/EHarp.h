@@ -401,10 +401,11 @@ public:
 		if(strip > EHarp::MAX_STRIP) return;
 		if(a) {
 			harpData_.stripV_[strip - 1].set(val);
-		} else {
-			// todo: abilty to hold value... rather than assume reset to 0.?
-			harpData_.stripV_[strip - 1].set(0);
 		}
+		// } else {
+		// 	// todo: abilty to hold value... rather than assume reset to 0.?
+		// 	harpData_.stripV_[strip - 1].set(0);
+		// }
     }
     
     void pedal(const char* dev, unsigned long long t, unsigned pedal, unsigned val) override  {

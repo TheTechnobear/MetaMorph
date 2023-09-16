@@ -106,7 +106,7 @@ struct EFunction : Module {
 				auto& func= funcs_[fk];
 				unsigned r = func.r_;
 				unsigned c = func.c_;
-				LedMsgType t = func.state_ ? LED_SET_GREEN : LED_SET_ORANGE;
+				LedMsgType t = func.state_ ? LED_SET_ORANGE : LED_SET_GREEN;
 				if(r < kg_r_ && c < kg_c_) {
 					// std::cout << "layout led " << r << "," << c << " state" << t << std::endl;
 					float msg = encodeLedMsg(t, r, c, 1 , 1);
@@ -131,7 +131,7 @@ struct EFunction : Module {
 						// trig @ 1..2v
 						bool state  = (inputs[IN_GATE_INPUT].getVoltage(ch) >= 1.5f);
 						if(func.state_!=state) {
-							LedMsgType t = state ? LED_SET_GREEN : LED_SET_ORANGE;
+							LedMsgType t = func.state_ ? LED_SET_ORANGE : LED_SET_GREEN;
 							// std::cout << "change led " << in_r << "," << in_c << " state" << t << std::endl;
 							float msg = encodeLedMsg(t, in_r, in_c, 1 , 1);
 							ledQueue_.write(msg);
@@ -149,7 +149,7 @@ struct EFunction : Module {
 						unsigned c = func.c_;
 						if(r < kg_r_ && c < kg_c_) {
 							// std::cout << "revert led " << r << "," << c << " orange" << std::endl;
-							float msg = encodeLedMsg(LED_SET_ORANGE, r, c, 1 , 1);
+							float msg = encodeLedMsg(LED_SET_GREEN, r, c, 1 , 1);
 							ledQueue_.write(msg);
 						}
 					} 
