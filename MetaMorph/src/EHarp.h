@@ -301,7 +301,7 @@ public:
                     if(key >=72 ) {
                         percKey = true;
                         key = key - 72;
-                        keyId = makeKeyId(key % 12, 1);
+                        keyId = makeKeyId(key % 12, 0);
                     } else {
                         mainKey = true;
                         // 16,16,20,20
@@ -316,7 +316,7 @@ public:
                     if(key >=120 ) {
                         percKey = true;
                         key = key - 120;
-                        keyId = makeKeyId( key % 12, 1);
+                        keyId = makeKeyId( key % 12, 0);
                     } else {
                         mainKey = true;
                         keyId = makeKeyId(key % 24, key / 24);
