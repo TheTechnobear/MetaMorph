@@ -5,6 +5,30 @@ you can either just use the SDK dylib or build and use your own RACK standalone 
 
 build is based on make
 
+```
+make 
+make install
+```
+
+make install will place in your installed Rack 
+
+
+if using a dev version dont use install... it can install in rack dir
+
+### cross compile
+```
+make CROSS_COMPILE=x86_64-apple-darwin 
+make CROSS_COMPILE=x86_64-apple-darwin install
+```
+
+```
+make CROSS_COMPILE=arm64-apple-darwin 
+make CROSS_COMPILE=arm64-apple-darwin install
+```
+
+always do a `make clean` before cross compiling
+
+
 
 
 # vcv grouping of modules
