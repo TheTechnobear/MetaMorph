@@ -122,7 +122,98 @@ struct ESplit4 : Module {
 	void doProcessBypass (const ProcessArgs &args)  {
 	}
 
-	void doProcess(const ProcessArgs& args) {
+
+	void doProcess(const ProcessArgs& args);
+
+	struct SplitVoice : public Voice  {
+		unsigned r_=0;
+		unsigned c_=0;
+		float x_=0.f;
+		float y_=0.f;
+		float z_=0.f;
+
+		void updateVoice(long key, unsigned r, unsigned c, bool a, float x, float y, float z) {
+			active_ = a;
+			key_ = key; // inbound channel
+			r_=r;
+			c_=c;
+			x_=x;
+			y_=y;
+			z_=z;
+		}
+
+		void freeVoice() override {
+			updateVoice(0xff,false,0,0,0.f,0.f,0.f);
+		}
+	};
+	static constexpr unsigned MAX_SPLIT = 4;
+    Voices<SplitVoice> voices_[MAX_SPLIT];
+	MsgQueue<float> ledQueue_;
+
+
+};
+
+
+struct ESplit4Widget : ModuleWidget {
+	ESplit4Widget(ESplit4* module) {
+		setModule(module);
+		setPanel(createPanel(asset::plugin(pluginInstance, "res/ESplit4.svg")));
+
+		addChild(createWidget<ScrewSilver>(Vec(RACK_GRID_WIDTH, 0)));
+		addChild(createWidget<ScrewSilver>(Vec(box.size.x - 2 * RACK_GRID_WIDTH, 0)));
+		addChild(createWidget<ScrewSilver>(Vec(RACK_GRID_WIDTH, RACK_GRID_HEIGHT - RACK_GRID_WIDTH)));
+		addChild(createWidget<ScrewSilver>(Vec(box.size.x - 2 * RACK_GRID_WIDTH, RACK_GRID_HEIGHT - RACK_GRID_WIDTH)));
+
+		addParam(createParamCentered<RoundBlackKnob>(mm2px(Vec(8.929, 58.215)), module, ESplit4::P_S1_NROW_PARAM));
+		addParam(createParamCentered<RoundBlackKnob>(mm2px(Vec(23.745, 58.215)), module, ESplit4::P_S1_POLY_PARAM));
+		addParam(createParamCentered<RoundBlackKnob>(mm2px(Vec(8.929, 77.265)), module, ESplit4::P_S2_NROW_PARAM));
+		addParam(createParamCentered<RoundBlackKnob>(mm2px(Vec(23.745, 77.794)), module, ESplit4::P_S2_POLY_PARAM));
+		addParam(createParamCentered<RoundBlackKnob>(mm2px(Vec(8.929, 96.844)), module, ESplit4::P_S3_NROW_PARAM));
+		addParam(createParamCentered<RoundBlackKnob>(mm2px(Vec(23.745, 97.373)), module, ESplit4::P_S3_POLY_PARAM));
+		addParam(createParamCentered<RoundBlackKnob>(mm2px(Vec(8.929, 115.894)), module, ESplit4::P_S4_NROW_PARAM));
+		addParam(createParamCentered<RoundBlackKnob>(mm2px(Vec(23.745, 116.423)), module, ESplit4::P_S4_POLY_PARAM));
+
+		addInput(createInputCentered<PJ301MPort>(mm2px(Vec(22.763, 32.772)), module, ESplit4::IN_ENABLE_INPUT));
+		addInput(createInputCentered<PJ301MPort>(mm2px(Vec(37.355, 32.772)), module, ESplit4::IN_K_INPUT));
+		addInput(createInputCentered<PJ301MPort>(mm2px(Vec(49.433, 32.772)), module, ESplit4::IN_X_INPUT));
+		addInput(createInputCentered<PJ301MPort>(mm2px(Vec(61.51, 32.772)), module, ESplit4::IN_Y_INPUT));
+		addInput(createInputCentered<PJ301MPort>(mm2px(Vec(73.588, 32.772)), module, ESplit4::IN_Z_INPUT));
+		addInput(createInputCentered<PJ301MPort>(mm2px(Vec(85.195, 32.772)), module, ESplit4::IN_KG_INPUT));
+		addInput(createInputCentered<PJ301MPort>(mm2px(Vec(98.869, 58.215)), module, ESplit4::IN1_LIGHTS_INPUT));
+		addInput(createInputCentered<PJ301MPort>(mm2px(Vec(98.869, 77.794)), module, ESplit4::IN2_LIGHTS_INPUT));
+		addInput(createInputCentered<PJ301MPort>(mm2px(Vec(98.869, 97.373)), module, ESplit4::IN3_LIGHTS_INPUT));
+		addInput(createInputCentered<PJ301MPort>(mm2px(Vec(98.869, 116.423)), module, ESplit4::IN4_LIGHTS_INPUT));
+
+		addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(98.285, 32.772)), module, ESplit4::OUT_LIGHTS_OUTPUT));
+		addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(38.496, 58.215)), module, ESplit4::OUT1_K_OUTPUT));
+		addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(50.574, 58.215)), module, ESplit4::OUT1_X_OUTPUT));
+		addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(62.652, 58.215)), module, ESplit4::OUT1_Y_OUTPUT));
+		addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(74.73, 58.215)), module, ESplit4::OUT1_Z_OUTPUT));
+		addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(85.456, 58.215)), module, ESplit4::OUT1_KG_OUTPUT));
+		addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(38.496, 77.794)), module, ESplit4::OUT2_K_OUTPUT));
+		addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(50.574, 77.794)), module, ESplit4::OUT2_X_OUTPUT));
+		addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(62.652, 77.794)), module, ESplit4::OUT2_Y_OUTPUT));
+		addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(74.73, 77.794)), module, ESplit4::OUT2_Z_OUTPUT));
+		addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(85.742, 77.794)), module, ESplit4::OUT2_KG_OUTPUT));
+		addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(38.496, 97.373)), module, ESplit4::OUT3_K_OUTPUT));
+		addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(50.574, 97.373)), module, ESplit4::OUT3_X_OUTPUT));
+		addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(62.652, 97.373)), module, ESplit4::OUT3_Y_OUTPUT));
+		addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(74.73, 97.373)), module, ESplit4::OUT3_Z_OUTPUT));
+		addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(85.456, 97.373)), module, ESplit4::OUT3_KG_OUTPUT));
+		addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(38.496, 116.423)), module, ESplit4::OUT4_K_OUTPUT));
+		addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(50.574, 116.423)), module, ESplit4::OUT4_X_OUTPUT));
+		addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(62.652, 116.423)), module, ESplit4::OUT4_Y_OUTPUT));
+		addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(74.73, 116.423)), module, ESplit4::OUT4_Z_OUTPUT));
+		addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(85.742, 116.423)), module, ESplit4::OUT4_KG_OUTPUT));
+	}
+};
+
+
+Model* modelESplit4 = createModel<ESplit4, ESplit4Widget>("ESplit4");
+
+
+
+	void ESplit4::doProcess(const ProcessArgs& args) {
 
 		unsigned in_kg_r, in_kg_c;
 		float kgMsg = inputs[IN_KG_INPUT].getVoltage();
@@ -248,93 +339,3 @@ struct ESplit4 : Module {
 
 	}
 
-	static constexpr unsigned MAX_SPLIT = 4;
-
-	MsgQueue<float> ledQueue_;
-
-	struct SplitVoice : public Voice  {
-		unsigned r_=0;
-		unsigned c_=0;
-		float x_=0.f;
-		float y_=0.f;
-		float z_=0.f;
-
-		void updateVoice(long key, unsigned r, unsigned c, bool a, float x, float y, float z) {
-			active_ = a;
-			key_ = key; // inbound channel
-			r_=r;
-			c_=c;
-			x_=x;
-			y_=y;
-			z_=z;
-		}
-
-		void freeVoice() override {
-			updateVoice(0xff,false,0,0,0.f,0.f,0.f);
-		}
-	};
-
-
-
-
-    Voices<SplitVoice> voices_[MAX_SPLIT];
-
-};
-
-
-struct ESplit4Widget : ModuleWidget {
-	ESplit4Widget(ESplit4* module) {
-		setModule(module);
-		setPanel(createPanel(asset::plugin(pluginInstance, "res/ESplit4.svg")));
-
-		addChild(createWidget<ScrewSilver>(Vec(RACK_GRID_WIDTH, 0)));
-		addChild(createWidget<ScrewSilver>(Vec(box.size.x - 2 * RACK_GRID_WIDTH, 0)));
-		addChild(createWidget<ScrewSilver>(Vec(RACK_GRID_WIDTH, RACK_GRID_HEIGHT - RACK_GRID_WIDTH)));
-		addChild(createWidget<ScrewSilver>(Vec(box.size.x - 2 * RACK_GRID_WIDTH, RACK_GRID_HEIGHT - RACK_GRID_WIDTH)));
-
-		addParam(createParamCentered<RoundBlackKnob>(mm2px(Vec(8.929, 58.215)), module, ESplit4::P_S1_NROW_PARAM));
-		addParam(createParamCentered<RoundBlackKnob>(mm2px(Vec(23.745, 58.215)), module, ESplit4::P_S1_POLY_PARAM));
-		addParam(createParamCentered<RoundBlackKnob>(mm2px(Vec(8.929, 77.265)), module, ESplit4::P_S2_NROW_PARAM));
-		addParam(createParamCentered<RoundBlackKnob>(mm2px(Vec(23.745, 77.794)), module, ESplit4::P_S2_POLY_PARAM));
-		addParam(createParamCentered<RoundBlackKnob>(mm2px(Vec(8.929, 96.844)), module, ESplit4::P_S3_NROW_PARAM));
-		addParam(createParamCentered<RoundBlackKnob>(mm2px(Vec(23.745, 97.373)), module, ESplit4::P_S3_POLY_PARAM));
-		addParam(createParamCentered<RoundBlackKnob>(mm2px(Vec(8.929, 115.894)), module, ESplit4::P_S4_NROW_PARAM));
-		addParam(createParamCentered<RoundBlackKnob>(mm2px(Vec(23.745, 116.423)), module, ESplit4::P_S4_POLY_PARAM));
-
-		addInput(createInputCentered<PJ301MPort>(mm2px(Vec(22.763, 32.772)), module, ESplit4::IN_ENABLE_INPUT));
-		addInput(createInputCentered<PJ301MPort>(mm2px(Vec(37.355, 32.772)), module, ESplit4::IN_K_INPUT));
-		addInput(createInputCentered<PJ301MPort>(mm2px(Vec(49.433, 32.772)), module, ESplit4::IN_X_INPUT));
-		addInput(createInputCentered<PJ301MPort>(mm2px(Vec(61.51, 32.772)), module, ESplit4::IN_Y_INPUT));
-		addInput(createInputCentered<PJ301MPort>(mm2px(Vec(73.588, 32.772)), module, ESplit4::IN_Z_INPUT));
-		addInput(createInputCentered<PJ301MPort>(mm2px(Vec(85.195, 32.772)), module, ESplit4::IN_KG_INPUT));
-		addInput(createInputCentered<PJ301MPort>(mm2px(Vec(98.869, 58.215)), module, ESplit4::IN1_LIGHTS_INPUT));
-		addInput(createInputCentered<PJ301MPort>(mm2px(Vec(98.869, 77.794)), module, ESplit4::IN2_LIGHTS_INPUT));
-		addInput(createInputCentered<PJ301MPort>(mm2px(Vec(98.869, 97.373)), module, ESplit4::IN3_LIGHTS_INPUT));
-		addInput(createInputCentered<PJ301MPort>(mm2px(Vec(98.869, 116.423)), module, ESplit4::IN4_LIGHTS_INPUT));
-
-		addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(98.285, 32.772)), module, ESplit4::OUT_LIGHTS_OUTPUT));
-		addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(38.496, 58.215)), module, ESplit4::OUT1_K_OUTPUT));
-		addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(50.574, 58.215)), module, ESplit4::OUT1_X_OUTPUT));
-		addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(62.652, 58.215)), module, ESplit4::OUT1_Y_OUTPUT));
-		addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(74.73, 58.215)), module, ESplit4::OUT1_Z_OUTPUT));
-		addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(85.456, 58.215)), module, ESplit4::OUT1_KG_OUTPUT));
-		addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(38.496, 77.794)), module, ESplit4::OUT2_K_OUTPUT));
-		addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(50.574, 77.794)), module, ESplit4::OUT2_X_OUTPUT));
-		addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(62.652, 77.794)), module, ESplit4::OUT2_Y_OUTPUT));
-		addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(74.73, 77.794)), module, ESplit4::OUT2_Z_OUTPUT));
-		addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(85.742, 77.794)), module, ESplit4::OUT2_KG_OUTPUT));
-		addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(38.496, 97.373)), module, ESplit4::OUT3_K_OUTPUT));
-		addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(50.574, 97.373)), module, ESplit4::OUT3_X_OUTPUT));
-		addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(62.652, 97.373)), module, ESplit4::OUT3_Y_OUTPUT));
-		addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(74.73, 97.373)), module, ESplit4::OUT3_Z_OUTPUT));
-		addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(85.456, 97.373)), module, ESplit4::OUT3_KG_OUTPUT));
-		addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(38.496, 116.423)), module, ESplit4::OUT4_K_OUTPUT));
-		addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(50.574, 116.423)), module, ESplit4::OUT4_X_OUTPUT));
-		addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(62.652, 116.423)), module, ESplit4::OUT4_Y_OUTPUT));
-		addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(74.73, 116.423)), module, ESplit4::OUT4_Z_OUTPUT));
-		addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(85.742, 116.423)), module, ESplit4::OUT4_KG_OUTPUT));
-	}
-};
-
-
-Model* modelESplit4 = createModel<ESplit4, ESplit4Widget>("ESplit4");
