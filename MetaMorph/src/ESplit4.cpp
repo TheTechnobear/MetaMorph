@@ -60,14 +60,14 @@ struct ESplit4 : Module {
 
 	ESplit4() {
 		config(PARAMS_LEN, INPUTS_LEN, OUTPUTS_LEN, LIGHTS_LEN);
-		configParam(P_S1_NROW_PARAM, 0.f, 1.f, 0.f, "");
-		configParam(P_S1_POLY_PARAM, 0.f, 1.f, 0.f, "");
-		configParam(P_S2_NROW_PARAM, 0.f, 1.f, 0.f, "");
-		configParam(P_S2_POLY_PARAM, 0.f, 1.f, 0.f, "");
-		configParam(P_S3_NROW_PARAM, 0.f, 1.f, 0.f, "");
-		configParam(P_S3_POLY_PARAM, 0.f, 1.f, 0.f, "");
-		configParam(P_S4_NROW_PARAM, 0.f, 1.f, 0.f, "");
-		configParam(P_S4_POLY_PARAM, 0.f, 1.f, 0.f, "");
+		configParam(P_S1_NROW_PARAM, 0.f, 24.f, 0.f, "");
+		configParam(P_S1_POLY_PARAM, 0.f, 16.f, 0.f, "");
+		configParam(P_S2_NROW_PARAM, 0.f, 24.f, 0.f, "");
+		configParam(P_S2_POLY_PARAM, 0.f, 16.f, 0.f, "");
+		configParam(P_S3_NROW_PARAM, 0.f, 24.f, 0.f, "");
+		configParam(P_S3_POLY_PARAM, 0.f, 16.f, 0.f, "");
+		configParam(P_S4_NROW_PARAM, 0.f, 24.f, 0.f, "");
+		configParam(P_S4_POLY_PARAM, 0.f, 16.f, 0.f, "");
 		configInput(IN_ENABLE_INPUT, "");
 		configInput(IN_K_INPUT, "");
 		configInput(IN_X_INPUT, "");
@@ -101,10 +101,15 @@ struct ESplit4 : Module {
 		configOutput(OUT4_KG_OUTPUT, "");
 
 
+		paramQuantities[P_S1_NROW_PARAM]->snapEnabled = true;		
+		paramQuantities[P_S2_NROW_PARAM]->snapEnabled = true;				
+		paramQuantities[P_S3_NROW_PARAM]->snapEnabled = true;		
+		paramQuantities[P_S4_NROW_PARAM]->snapEnabled = true;			
 		paramQuantities[P_S1_POLY_PARAM]->snapEnabled = true;		
 		paramQuantities[P_S2_POLY_PARAM]->snapEnabled = true;				
 		paramQuantities[P_S3_POLY_PARAM]->snapEnabled = true;		
-		paramQuantities[P_S4_POLY_PARAM]->snapEnabled = true;			}
+		paramQuantities[P_S4_POLY_PARAM]->snapEnabled = true;			
+	}
 
 	void processBypass (const ProcessArgs &args) override {
 		doProcessBypass(args);
@@ -125,73 +130,31 @@ struct ESplit4 : Module {
 
 		unsigned nChannels = inputs[IN_K_INPUT].getChannels();
 
-		unsigned startR[MAX_SPLIT],startC[MAX_SPLIT];
-		unsigned endR[MAX_SPLIT], endC[MAX_SPLIT];
-		unsigned maxVoices[MAX_SPLIT] = {0,0,0,0};
-
 
 		unsigned splitRow = 0;
-		unsigned e_p_nRow =P_S1_NROW_PARAM;
-		unsigned e_p_poly = P_S1_POLY_PARAM;
-		unsigned e_out_K = OUT1_K_OUTPUT;
-		unsigned e_out_X = OUT1_X_OUTPUT;
-		unsigned e_out_Y = OUT1_Y_OUTPUT;
-		unsigned e_out_Z = OUT1_Z_OUTPUT;
-		unsigned e_in_light = IN1_LIGHTS_INPUT;
-		for(int splitId=0; splitId< MAX_SPLIT; splitId++) {
-			switch (i)
-			{
-			case 0: 
-				e_p_nRow=P_S1_NROW_PARAM;
-				e_p_poly = P_S1_POLY_PARAM;
-				e_out_K = OUT1_K_OUTPUT;
-				e_out_X = OUT1_X_OUTPUT;
-				e_out_Y = OUT1_Y_OUTPUT;
-				e_out_Z = OUT1_Z_OUTPUT;
-				e_in_light = IN1_LIGHTS_INPUT;
-				break;
-			case 1: 
-				e_p_nRow=P_S2_NROW_PARAM;
-				e_p_poly = P_S2_POLY_PARAM;
-				e_out_K = OUT2_K_OUTPUT;
-				e_out_X = OUT2_X_OUTPUT;
-				e_out_Y = OUT2_Y_OUTPUT;
-				e_out_Z = OUT2_Z_OUTPUT;
-				e_in_light = IN2_LIGHTS_INPUT;
-				break;
-			case 2: 
-				e_p_nRow=P_S3_NROW_PARAM;
-				e_p_poly = P_S3_POLY_PARAM;
-				e_out_K = OUT3_K_OUTPUT;
-				e_out_X = OUT3_X_OUTPUT;
-				e_out_Y = OUT3_Y_OUTPUT;
-				e_out_Z = OUT3_Z_OUTPUT;
-				e_in_light = IN3_LIGHTS_INPUT;
-				break;
-			case 3: 
-				e_p_nRow=P_S4_NROW_PARAM;
-				e_p_poly = P_S4_POLY_PARAM;
-				e_out_K = OUT4_K_OUTPUT;
-				e_out_X = OUT4_X_OUTPUT;
-				e_out_Y = OUT4_Y_OUTPUT;
-				e_out_Z = OUT4_Z_OUTPUT;
-				e_in_light = IN4_LIGHTS_INPUT;
-				break;
-			
-			default:
-				break;
-			}
+		// enums are auto sorted, not from svg
+		static constexpr unsigned OUT_N = OUT2_K_OUTPUT - OUT1_K_OUTPUT; 
+		static constexpr unsigned PARAM_N = P_S2_NROW_PARAM  - P_S1_NROW_PARAM;
+		for(unsigned splitId=0; splitId< MAX_SPLIT; splitId++) {
 
-			unsigned nRow = params[e_p_nRow].getValue();
-			maxVoices[splitId] = params[e_p_poly].getValue();
+			unsigned startR,startC;
+			unsigned endR, endC;
+			unsigned nRow = params[P_S1_NROW_PARAM + (splitId * PARAM_N)].getValue();
+			unsigned maxVoices = params[P_S1_POLY_PARAM + (splitId * PARAM_N)].getValue();
 
-			if(nRow>0) {
-				startR[splitId] = splitRow;
-				startC[splitId] = 0;
+			outputs[OUT1_K_OUTPUT + (splitId * OUT_N)].setChannels(maxVoices);
+			outputs[OUT1_X_OUTPUT + (splitId * OUT_N)].setChannels(maxVoices);
+			outputs[OUT1_Y_OUTPUT + (splitId * OUT_N)].setChannels(maxVoices);
+			outputs[OUT1_Z_OUTPUT + (splitId * OUT_N)].setChannels(maxVoices);
+
+			if(maxVoices > 0 && nRow > 0) {
+				startR = splitRow;
+				startC = 0;
 				splitRow += nRow;
-				endR[splitId] = splitRow - 1;
-				endC[splitId] = in_kg_c;
-
+				endR = splitRow - 1;
+				endC = in_kg_c - 1;
+				
+				// for each channel
 				for(unsigned ch=0; ch < nChannels; ch++) {
 					unsigned in_r=0, in_c=0;
 					bool valid= ! (inputs[IN_ENABLE_INPUT].getVoltage()  >= 1.5f);
@@ -203,103 +166,77 @@ struct ESplit4 : Module {
 					float inY = inputs[IN_Y_INPUT].getVoltage(ch);
 					float inZ = inputs[IN_Z_INPUT].getVoltage(ch);
 					
-					auto& voices = splits_[splitId];
+					auto& voices = voices_[splitId];
 					auto v =voices.findVoice(ch);
 					bool inSplit = 
-						(in_r >= startR[splitId] && in_r < endR[splitId]) 
+						(in_r >= startR && in_r <= endR) 
 						&& 
-						(in_c >= startC[splitId] && in_c < endC[splitId])
+						(in_c >= startC && in_c <= endC)
 						;
 					if(valid && inSplit) {
-						unsigned r = in_r - startR[splitId];
-						unsigned c = in_c - startC[splitId];
+						unsigned r = in_r - startR;
+						unsigned c = in_c - startC;
 
 						if(!v) {
-								v = voices.findFreeVoice(maxVoices[splitId]);
+								v = voices.findFreeVoice(maxVoices);
 						}
 
 						if (v)  {
 							v->updateVoice(ch,r,c, valid, inX,inY,inZ);
-							outputs[e_out_K].setVoltage(encodeKey(r,c),v->voiceId_);
-							outputs[e_out_X].setVoltage(inX,v->voiceId_);
-							outputs[e_out_Y].setVoltage(inY,v->voiceId_);
-							outputs[e_out_Z].setVoltage(inZ,v->voiceId_);
+							outputs[OUT1_K_OUTPUT + (splitId * OUT_N)].setVoltage(encodeKey(r,c),v->voiceId_);
+							outputs[OUT1_X_OUTPUT + (splitId * OUT_N)].setVoltage(inX,v->voiceId_);
+							outputs[OUT1_Y_OUTPUT + (splitId * OUT_N)].setVoltage(inY,v->voiceId_);
+							outputs[OUT1_Z_OUTPUT + (splitId * OUT_N)].setVoltage(inZ,v->voiceId_);
 						}
 					} else {
 						// was in this split, but now key is outside
 						if(v) {
 							voices.freeVoice(v);
-							outputs[e_out_K].setVoltage(0.f,v->voiceId_);
-							outputs[e_out_X].setVoltage(0.f,v->voiceId_);
-							outputs[e_out_Y].setVoltage(0.f,v->voiceId_);
-							outputs[e_out_Z].setVoltage(0.f,v->voiceId_);
+							outputs[OUT1_K_OUTPUT + (splitId * OUT_N)].setVoltage(0.f,v->voiceId_);
+							outputs[OUT1_X_OUTPUT + (splitId * OUT_N)].setVoltage(0.f,v->voiceId_);
+							outputs[OUT1_Y_OUTPUT + (splitId * OUT_N)].setVoltage(0.f,v->voiceId_);
+							outputs[OUT1_Z_OUTPUT + (splitId * OUT_N)].setVoltage(0.f,v->voiceId_);
 						}
 					}
 				} // for channel
-				outputs[e_out_K].setChannels(maxVoices[split]);
-				outputs[e_out_X].setChannels(maxVoices[split]);
-				outputs[e_out_Y].setChannels(maxVoices[split]);
-				outputs[e_out_Z].setChannels(maxVoices[split]);
+
+				// forward kg output
+				if(kgMsg > 0.f) {
+					outputs[OUT1_KG_OUTPUT+ (splitId * OUT_N)].setVoltage(
+						encodeKeyGroup(endR - startR + 1 , endC - startC + 1)
+						);
+				} else {
+					outputs[OUT1_KG_OUTPUT+ (splitId * OUT_N)].setVoltage(0);
+				}
+
+				// forward led msgs
+				float ledmsg = inputs[IN1_LIGHTS_INPUT + splitId ].getVoltage();
+				if(ledmsg != 0.0f) {
+					unsigned startr,startc, sizer,sizec;
+					LedMsgType t;
+					decodeLedMsg(ledmsg,t,startr,startc,sizer,sizec);
+					float msg = encodeLedMsg(
+							t,
+							startr + startR,
+							startc + startC,
+							sizer,
+							sizec
+						);
+					ledQueue_.write(msg);
+				}
+
 			} else {
 				// ignore, we are not using this split
+				outputs[OUT1_K_OUTPUT + (splitId * OUT_N)].setChannels(0);
+				outputs[OUT1_X_OUTPUT + (splitId * OUT_N)].setChannels(0);
+				outputs[OUT1_Y_OUTPUT + (splitId * OUT_N)].setChannels(0);
+				outputs[OUT1_Z_OUTPUT + (splitId * OUT_N)].setChannels(0);
+
+				outputs[OUT1_KG_OUTPUT+ (splitId * OUT_N)].setVoltage(0);
 			}
+		} // for each split
 
 
-		}
-
-
-
-
-		float ledmsg[MAX_SPLIT]= {0.f,0.f,0.f,0.f};
-		unsigned split = 0;
-		ledmsg[split] = inputs[IN1_LIGHTS_INPUT].getVoltage();
-		if(kgMsg > 0.f) {
-			outputs[OUT1_KG_OUTPUT].setVoltage(encodeKeyGroup(endR[split] - startR[split], endC[split] - startC[split]));
-		} else {
-			outputs[OUT1_KG_OUTPUT].setVoltage(0);
-		}
-
-		split++;
-		ledmsg[split] = inputs[IN2_LIGHTS_INPUT].getVoltage();
-		if(kgMsg > 0.f) {
-			outputs[OUT2_KG_OUTPUT].setVoltage(encodeKeyGroup(endR[split] - startR[split], endC[split] - startC[split]));
-		} else {
-			outputs[OUT2_KG_OUTPUT].setVoltage(0.f);
-		}
-
-		split++;
-		ledmsg[split] = inputs[IN3_LIGHTS_INPUT].getVoltage();
-		if(kgMsg > 0.f) {
-			outputs[OUT3_KG_OUTPUT].setVoltage(encodeKeyGroup(endR[split] - startR[split], endC[split] - startC[split]));
-		} else {
-			outputs[OUT3_KG_OUTPUT].setVoltage(0.f);
-		}
-
-		split++;
-		ledmsg[split] = inputs[IN4_LIGHTS_INPUT].getVoltage();
-		if(kgMsg > 0.f) {
-			outputs[OUT4_KG_OUTPUT].setVoltage(encodeKeyGroup(endR[split] - startR[split], endC[split] - startC[split]));
-		} else {
-			outputs[OUT4_KG_OUTPUT].setVoltage(0.f);
-		}
-
-
-		for(unsigned s = 0;s<MAX_SPLIT;s++) {
-			if(ledmsg[s] != 0.0f) {
-				unsigned startr,startc, sizer,sizec;
-				LedMsgType t;
-				decodeLedMsg(ledmsg[s],t,startr,startc,sizer,sizec);
-				float msg = encodeLedMsg(
-						t,
-						startr + startR[s],
-						startc + startC[s],
-						sizer,
-						sizec
-					);
-
-				ledQueue_.write(msg);
-			}
-		}
 
 		// dont really need this check as empty queue leaves msg untouched.
 		float msg=0.0f;
@@ -337,7 +274,10 @@ struct ESplit4 : Module {
 		}
 	};
 
-    Voices<SplitVoice> splits_[MAX_SPLIT];
+
+
+
+    Voices<SplitVoice> voices_[MAX_SPLIT];
 
 };
 
