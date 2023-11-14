@@ -12,3 +12,6 @@ extern Model* modelEScaler;
 extern Model* modelESplit;
 extern Model* modelESwitch;
 extern Model* modelEFunction;
+extern Model* modelESplit4;
+extern Model* modelESwitch4;
+extern Model* modelEFunction12;
