@@ -1,5 +1,7 @@
+#include "EHarp.h"
+#include "Encoding.h"
+#include "LightWire.h"
 #include "plugin.hpp"
-
 
 struct ESwitch4 : Module {
 	enum ParamId {
