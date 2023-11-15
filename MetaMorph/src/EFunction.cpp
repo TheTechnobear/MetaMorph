@@ -22,7 +22,7 @@ struct EFunction : Module {
         IN_K_INPUT,
         IN_GATE_INPUT,
         IN_KG_INPUT,
-        IN_ENABLE_INPUT,
+        IN_DISABLE_INPUT,
         INPUTS_LEN
     };
     enum OutputId {
@@ -42,16 +42,16 @@ struct EFunction : Module {
         configSwitch(P_TYPE_PARAM, 0.f, 2.f, 0.f, "Type", {"Gate", "Trig", "Toggle"});
         configParam(P_F1_R_PARAM, 0.f, 24.f, 0.f, "");
         configParam(P_F1_C_PARAM, 0.f, 24.f, 0.f, "");
-        configParam(P_F2_R_PARAM, 0.f, 24.f, 1.f, "");
+        configParam(P_F2_R_PARAM, 0.f, 24.f, 0.f, "");
         configParam(P_F2_C_PARAM, 0.f, 24.f, 0.f, "");
-        configParam(P_F3_R_PARAM, 0.f, 24.f, 2.f, "");
+        configParam(P_F3_R_PARAM, 0.f, 24.f, 0.f, "");
         configParam(P_F3_C_PARAM, 0.f, 24.f, 0.f, "");
-        configParam(P_F4_R_PARAM, 0.f, 24.f, 3.f, "");
+        configParam(P_F4_R_PARAM, 0.f, 24.f, 0.f, "");
         configParam(P_F4_C_PARAM, 0.f, 24.f, 0.f, "");
         configInput(IN_K_INPUT, "");
         configInput(IN_GATE_INPUT, "");
         configInput(IN_KG_INPUT, "");
-        configInput(IN_ENABLE_INPUT, "");
+        configInput(IN_DISABLE_INPUT, "");
         configOutput(OUT_F1_OUTPUT, "");
         configOutput(OUT_F2_OUTPUT, "");
         configOutput(OUT_F3_OUTPUT, "");
@@ -85,10 +85,10 @@ struct EFunction : Module {
         decodeKeyGroup(kgMsg, in_kg_r, in_kg_c);
 
         layoutChanged_ = false;
-        layoutChanged_ |= funcs_[0].updateKey(params[P_F1_R_PARAM].getValue(), params[P_F1_C_PARAM].getValue());
-        layoutChanged_ |= funcs_[1].updateKey(params[P_F2_R_PARAM].getValue(), params[P_F2_C_PARAM].getValue());
-        layoutChanged_ |= funcs_[2].updateKey(params[P_F3_R_PARAM].getValue(), params[P_F3_C_PARAM].getValue());
-        layoutChanged_ |= funcs_[3].updateKey(params[P_F4_R_PARAM].getValue(), params[P_F4_C_PARAM].getValue());
+        layoutChanged_ |= funcs_[0].updateKey(params[P_F1_R_PARAM].getValue() - 1, params[P_F1_C_PARAM].getValue() - 1);
+        layoutChanged_ |= funcs_[1].updateKey(params[P_F2_R_PARAM].getValue() - 1, params[P_F2_C_PARAM].getValue() - 1);
+        layoutChanged_ |= funcs_[2].updateKey(params[P_F3_R_PARAM].getValue() - 1, params[P_F3_C_PARAM].getValue() - 1);
+        layoutChanged_ |= funcs_[3].updateKey(params[P_F4_R_PARAM].getValue() - 1, params[P_F4_C_PARAM].getValue() - 1);
 
         if (in_kg_r != kg_r_ || in_kg_c != kg_c_) {
             layoutChanged_ |= true;
@@ -97,7 +97,7 @@ struct EFunction : Module {
         }
         bool refreshLeds = false;
 
-        bool enabled = !(inputs[IN_ENABLE_INPUT].getVoltage() > 2.0f);
+        bool enabled = !(inputs[IN_DISABLE_INPUT].getVoltage() > 2.0f);
 
         if (enabled_ != enabled) {
             enabled_ = enabled;
@@ -123,7 +123,7 @@ struct EFunction : Module {
                 unsigned r = func.r_;
                 unsigned c = func.c_;
                 LedMsgType t = func.state_ ? LED_SET_ORANGE : LED_SET_GREEN;
-                if (r < kg_r_ && c < kg_c_) {
+                if (func.valid() && r < kg_r_ && c < kg_c_) {
                     // std::cout << "layout led " << r << "," << c << " state" << t << std::endl;
                     float msg = encodeLedMsg(t, r, c, 1, 1);
                     ledQueue_.write(msg);
@@ -144,8 +144,8 @@ struct EFunction : Module {
 
             for (unsigned fk = 0; fk < MAX_FUNCS; fk++) {
                 auto& func = funcs_[fk];
-                if (valid) {
-                    if (in_r == func.r_ && in_c == func.c_) {
+                if (valid && func.valid()) {
+                    if (in_r == (unsigned) func.r_ && in_c == (unsigned) func.c_) {
                         // trig @ 1..2v
                         bool key_state = (inputs[IN_GATE_INPUT].getVoltage(ch) >= 1.5f);
                         if (func.last_key_state_ != key_state) {
@@ -170,7 +170,7 @@ struct EFunction : Module {
 
                             unsigned r = func.r_;
                             unsigned c = func.c_;
-                            if (r < kg_r_ && c < kg_c_) {
+                            if (r < kg_r_ && c < kg_c_ && func.valid()) {
                                 LedMsgType t = func.state_ ? LED_SET_ORANGE : LED_SET_GREEN;
                                 // std::cout << "change led " << in_r << "," << in_c << " state" << t << std::endl;
                                 float msg = encodeLedMsg(t, r, c, 1, 1);
@@ -222,8 +222,9 @@ struct EFunction : Module {
     struct FuncKey {
         bool state_ = false;
         bool last_key_state_ = false;
-        unsigned r_ = 0, c_ = 0;
+        int r_ = -1, c_ = -1;
         unsigned ch_ = 0xff;
+        bool valid_ = false;
 
         unsigned trigCount_ = 0;
         const unsigned TRIG_LEN = 48;
@@ -234,11 +235,15 @@ struct EFunction : Module {
             S_TOGGLE,
             S_MAX
         };
+        bool valid() {
+            return valid_;
+        }
 
-        bool updateKey(unsigned r, unsigned c) {
+        bool updateKey(int r, int c) {
             if (r != r_ || c_ != c) {
                 r_ = r;
                 c_ = c;
+                valid_ = r_ >= 0 && c_ >= 0;
                 return true;
             }
             return false;
@@ -276,7 +281,6 @@ struct EFunction : Module {
             }
             last_key_state_ = keystate;
         }
-
     } funcs_[MAX_FUNCS];
 };
 
@@ -303,7 +307,7 @@ struct EFunctionWidget : ModuleWidget {
         addInput(createInputCentered<PJ301MPort>(mm2px(Vec(6.705, 80.645)), module, EFunction::IN_K_INPUT));
         addInput(createInputCentered<PJ301MPort>(mm2px(Vec(18.782, 80.645)), module, EFunction::IN_GATE_INPUT));
         addInput(createInputCentered<PJ301MPort>(mm2px(Vec(43.217, 80.645)), module, EFunction::IN_KG_INPUT));
-        addInput(createInputCentered<PJ301MPort>(mm2px(Vec(7.275, 118.359)), module, EFunction::IN_ENABLE_INPUT));
+        addInput(createInputCentered<PJ301MPort>(mm2px(Vec(7.275, 118.359)), module, EFunction::IN_DISABLE_INPUT));
 
         addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(7.275, 100.367)), module, EFunction::OUT_F1_OUTPUT));
         addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(19.353, 100.367)), module, EFunction::OUT_F2_OUTPUT));
