@@ -16,7 +16,7 @@ struct ESplit4 : Module {
         PARAMS_LEN
     };
     enum InputId {
-        IN_ENABLE_INPUT,
+        IN_DISABLE_INPUT,
         IN_K_INPUT,
         IN_X_INPUT,
         IN_Y_INPUT,
@@ -64,7 +64,7 @@ struct ESplit4 : Module {
         configParam(P_S3_POLY_PARAM, 0.f, 16.f, 0.f, "");
         configParam(P_S4_NROW_PARAM, 0.f, 24.f, 0.f, "");
         configParam(P_S4_POLY_PARAM, 0.f, 16.f, 0.f, "");
-        configInput(IN_ENABLE_INPUT, "");
+        configInput(IN_DISABLE_INPUT, "");
         configInput(IN_K_INPUT, "");
         configInput(IN_X_INPUT, "");
         configInput(IN_Y_INPUT, "");
@@ -149,12 +149,12 @@ struct ESplit4 : Module {
         void active(bool a) { active_ = a; }
 
         void setStart(unsigned r, unsigned c) {
-            startR_ = r < MAX_R ? r : MAX_R - 1;
-            startC_ = c < MAX_C ? c : MAX_C - 1;
+            startR_ = r < (MAX_R - 1) ? r : MAX_R - 1;
+            startC_ = c < (MAX_C - 1) ? c : MAX_C - 1;
         }
         void setSize(unsigned r, unsigned c) {
-            sizeR_ = r < MAX_R ? r : MAX_R - 1;
-            sizeC_ = c < MAX_C ? c : MAX_C - 1;
+            sizeR_ = r < MAX_R ? r : MAX_R;
+            sizeC_ = c < MAX_C ? c : MAX_C;
         }
 
         void setLed(LedMsgType t, unsigned startr, unsigned startc, unsigned sizer, unsigned sizec) {
@@ -205,7 +205,7 @@ struct ESplit4Widget : ModuleWidget {
         addParam(createParamCentered<RoundBlackKnob>(mm2px(Vec(8.929, 115.894)), module, ESplit4::P_S4_NROW_PARAM));
         addParam(createParamCentered<RoundBlackKnob>(mm2px(Vec(23.745, 116.423)), module, ESplit4::P_S4_POLY_PARAM));
 
-        addInput(createInputCentered<PJ301MPort>(mm2px(Vec(22.763, 32.772)), module, ESplit4::IN_ENABLE_INPUT));
+        addInput(createInputCentered<PJ301MPort>(mm2px(Vec(22.763, 32.772)), module, ESplit4::IN_DISABLE_INPUT));
         addInput(createInputCentered<PJ301MPort>(mm2px(Vec(37.355, 32.772)), module, ESplit4::IN_K_INPUT));
         addInput(createInputCentered<PJ301MPort>(mm2px(Vec(49.433, 32.772)), module, ESplit4::IN_X_INPUT));
         addInput(createInputCentered<PJ301MPort>(mm2px(Vec(61.51, 32.772)), module, ESplit4::IN_Y_INPUT));
@@ -262,11 +262,6 @@ void ESplit4::doProcess(const ProcessArgs &args) {
         unsigned nRow = params[P_S1_NROW_PARAM + (splitId * PARAM_N)].getValue();
         unsigned maxVoices = params[P_S1_POLY_PARAM + (splitId * PARAM_N)].getValue();
 
-        outputs[OUT1_K_OUTPUT + (splitId * OUT_N)].setChannels(maxVoices);
-        outputs[OUT1_X_OUTPUT + (splitId * OUT_N)].setChannels(maxVoices);
-        outputs[OUT1_Y_OUTPUT + (splitId * OUT_N)].setChannels(maxVoices);
-        outputs[OUT1_Z_OUTPUT + (splitId * OUT_N)].setChannels(maxVoices);
-
         auto &split = splits_[splitId];
         auto &voices = voices_[splitId];
 
@@ -278,17 +273,24 @@ void ESplit4::doProcess(const ProcessArgs &args) {
         }
         splitRow += nRow;
 
-        if (maxVoices > 0 && nRow > 0) {
+        bool splitValid = maxVoices > 0 && nRow > 0;
+
+        outputs[OUT1_K_OUTPUT + (splitId * OUT_N)].setChannels(maxVoices);
+        outputs[OUT1_X_OUTPUT + (splitId * OUT_N)].setChannels(maxVoices);
+        outputs[OUT1_Y_OUTPUT + (splitId * OUT_N)].setChannels(maxVoices);
+        outputs[OUT1_Z_OUTPUT + (splitId * OUT_N)].setChannels(maxVoices);
+
+        if (splitValid) {
             unsigned startR, startC, endR, endC;
             startR = split.startR_;
-            startC = 0;
+            startC = split.startC_;
             endR = split.startR_ + split.sizeR_ - 1;
             endC = split.startC_ + split.sizeC_ - 1;
 
             // for each channel
             for (unsigned ch = 0; ch < nChannels; ch++) {
                 unsigned in_r = 0, in_c = 0;
-                bool valid = !(inputs[IN_ENABLE_INPUT].getVoltage() >= 1.5f);
+                bool valid = !(inputs[IN_DISABLE_INPUT].getVoltage() >= 1.5f);
                 if (valid) {
                     decodeKey(inputs[IN_K_INPUT].getVoltage(ch), valid, in_r, in_c);
                 }
