@@ -54,9 +54,9 @@
       ]
     },
     {
-      "slug": "ESplit4",
-      "name": "ESplit4",
-      "description": "Basic 4 Split",
+      "slug": "ERSplit",
+      "name": "ERSplit",
+      "description": "Row Splitter",
       "tags": [
         "polyphonic"
       ]
@@ -65,14 +65,6 @@
       "slug": "EFunction12",
       "name": "EFunction12",
       "description": "12 function buttons",
-      "tags": [
-        "polyphonic"
-      ]
-    },
-    {
-      "slug": "ESwitch4",
-      "name": "ESwitch4",
-      "description": "4 switch layers",
       "tags": [
         "polyphonic"
       ]

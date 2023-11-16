@@ -7,11 +7,13 @@ struct ESwitch : Module {
     enum ParamId {
         P_S1_POLY_PARAM,
         P_S2_POLY_PARAM,
+        P_S3_POLY_PARAM,
+        P_S4_POLY_PARAM,
         PARAMS_LEN
     };
     enum InputId {
         IN_SELECT_INPUT,
-        IN_ENABLE_INPUT,
+        IN_DISABLE_INPUT,
         IN_K_INPUT,
         IN_X_INPUT,
         IN_Y_INPUT,
@@ -19,6 +21,8 @@ struct ESwitch : Module {
         IN_KG_INPUT,
         IN1_LIGHTS_INPUT,
         IN2_LIGHTS_INPUT,
+        IN3_LIGHTS_INPUT,
+        IN4_LIGHTS_INPUT,
         INPUTS_LEN
     };
     enum OutputId {
@@ -33,6 +37,16 @@ struct ESwitch : Module {
         OUT2_Y_OUTPUT,
         OUT2_Z_OUTPUT,
         OUT2_KG_OUTPUT,
+        OUT3_K_OUTPUT,
+        OUT3_X_OUTPUT,
+        OUT3_Y_OUTPUT,
+        OUT3_Z_OUTPUT,
+        OUT3_KG_OUTPUT,
+        OUT4_K_OUTPUT,
+        OUT4_X_OUTPUT,
+        OUT4_Y_OUTPUT,
+        OUT4_Z_OUTPUT,
+        OUT4_KG_OUTPUT,
         OUTPUTS_LEN
     };
     enum LightId {
@@ -41,10 +55,12 @@ struct ESwitch : Module {
 
     ESwitch() {
         config(PARAMS_LEN, INPUTS_LEN, OUTPUTS_LEN, LIGHTS_LEN);
-        configParam(P_S1_POLY_PARAM, 1.f, 16.f, 8.f, "");
-        configParam(P_S2_POLY_PARAM, 1.f, 16.f, 8.f, "");
+        configParam(P_S1_POLY_PARAM, 0.f, 16.f, 8.f, "");
+        configParam(P_S2_POLY_PARAM, 0.f, 16.f, 8.f, "");
+        configParam(P_S3_POLY_PARAM, 0.f, 16.f, 0.f, "");
+        configParam(P_S4_POLY_PARAM, 0.f, 16.f, 0.f, "");
         configInput(IN_SELECT_INPUT, "");
-        configInput(IN_ENABLE_INPUT, "");
+        configInput(IN_DISABLE_INPUT, "");
         configInput(IN_K_INPUT, "");
         configInput(IN_X_INPUT, "");
         configInput(IN_Y_INPUT, "");
@@ -52,6 +68,8 @@ struct ESwitch : Module {
         configInput(IN_KG_INPUT, "");
         configInput(IN1_LIGHTS_INPUT, "");
         configInput(IN2_LIGHTS_INPUT, "");
+        configInput(IN3_LIGHTS_INPUT, "");
+        configInput(IN4_LIGHTS_INPUT, "");
         configOutput(OUT_LIGHTS_OUTPUT, "");
         configOutput(OUT1_K_OUTPUT, "");
         configOutput(OUT1_X_OUTPUT, "");
@@ -63,6 +81,16 @@ struct ESwitch : Module {
         configOutput(OUT2_Y_OUTPUT, "");
         configOutput(OUT2_Z_OUTPUT, "");
         configOutput(OUT2_KG_OUTPUT, "");
+        configOutput(OUT3_K_OUTPUT, "");
+        configOutput(OUT3_X_OUTPUT, "");
+        configOutput(OUT3_Y_OUTPUT, "");
+        configOutput(OUT3_Z_OUTPUT, "");
+        configOutput(OUT3_KG_OUTPUT, "");
+        configOutput(OUT4_K_OUTPUT, "");
+        configOutput(OUT4_X_OUTPUT, "");
+        configOutput(OUT4_Y_OUTPUT, "");
+        configOutput(OUT4_Z_OUTPUT, "");
+        configOutput(OUT4_KG_OUTPUT, "");
 
         paramQuantities[P_S1_POLY_PARAM]->snapEnabled = true;
         paramQuantities[P_S2_POLY_PARAM]->snapEnabled = true;
@@ -79,121 +107,7 @@ struct ESwitch : Module {
     void doProcessBypass(const ProcessArgs& args) {
     }
 
-    void doProcess(const ProcessArgs& args) {
-        unsigned maxVoices[2] = {0, 0};
-        maxVoices[0] = params[P_S1_POLY_PARAM].getValue();
-        maxVoices[1] = params[P_S2_POLY_PARAM].getValue();
-
-        unsigned in_kg_r, in_kg_c;
-        float kgMsg = inputs[IN_KG_INPUT].getVoltage();
-        decodeKeyGroup(kgMsg, in_kg_r, in_kg_c);
-
-        // todo, we will need to revoice this, once we have poly param
-        unsigned nChannels = inputs[IN_K_INPUT].getChannels();
-
-        float selector = inputs[IN_SELECT_INPUT].getVoltage();
-        unsigned activeSplit = selector >= 1.5f;
-
-        for (unsigned ch = 0; ch < nChannels; ch++) {
-            unsigned in_r = 0, in_c = 0;
-            bool valid = !(inputs[IN_ENABLE_INPUT].getVoltage() >= 1.5f);
-            if (valid) {
-                decodeKey(inputs[IN_K_INPUT].getVoltage(ch), valid, in_r, in_c);
-            }
-
-            float inX = inputs[IN_X_INPUT].getVoltage(ch);
-            float inY = inputs[IN_Y_INPUT].getVoltage(ch);
-            float inZ = inputs[IN_Z_INPUT].getVoltage(ch);
-
-            unsigned splitId;
-            {
-                splitId = 0;
-                auto& voices = splits_[splitId];
-                auto v = voices.findVoice(ch);
-                bool inSplit = splitId == activeSplit;
-
-                if (valid && inSplit) {
-                    unsigned r = in_r;
-                    unsigned c = in_c;
-
-                    if (!v) {
-                        v = voices.findFreeVoice(maxVoices[splitId]);
-                    }
-
-                    if (v) {
-                        v->updateVoice(ch, r, c, valid, inX, inY, inZ);
-                        outputs[OUT1_K_OUTPUT].setVoltage(encodeKey(r, c), v->voiceId_);
-                        outputs[OUT1_X_OUTPUT].setVoltage(inX, v->voiceId_);
-                        outputs[OUT1_Y_OUTPUT].setVoltage(inY, v->voiceId_);
-                        outputs[OUT1_Z_OUTPUT].setVoltage(inZ, v->voiceId_);
-                    }
-                } else {
-                    // was in this split, but now key is outside
-                    if (v) {
-                        voices.freeVoice(v);
-                        outputs[OUT1_K_OUTPUT].setVoltage(0.f, v->voiceId_);
-                        outputs[OUT1_X_OUTPUT].setVoltage(0.f, v->voiceId_);
-                        outputs[OUT1_Y_OUTPUT].setVoltage(0.f, v->voiceId_);
-                        outputs[OUT1_Z_OUTPUT].setVoltage(0.f, v->voiceId_);
-                    }
-                }
-            }
-
-            {
-                splitId = 1;
-                auto& voices = splits_[splitId];
-                auto v = voices.findVoice(ch);
-                bool inSplit = splitId == activeSplit;
-                if (valid && inSplit) {
-                    unsigned r = in_r;
-                    unsigned c = in_c;
-
-                    if (!v) {
-                        v = voices.findFreeVoice(maxVoices[splitId]);
-                    }
-
-                    if (v) {
-                        v->updateVoice(ch, r, c, valid, inX, inY, inZ);
-                        outputs[OUT2_K_OUTPUT].setVoltage(encodeKey(r, c), v->voiceId_);
-                        outputs[OUT2_X_OUTPUT].setVoltage(inX, v->voiceId_);
-                        outputs[OUT2_Y_OUTPUT].setVoltage(inY, v->voiceId_);
-                        outputs[OUT2_Z_OUTPUT].setVoltage(inZ, v->voiceId_);
-                    }
-                } else {
-                    // was in this split, but now key is outside
-                    if (v) {
-                        voices.freeVoice(v);
-                        outputs[OUT2_K_OUTPUT].setVoltage(0.f, v->voiceId_);
-                        outputs[OUT2_X_OUTPUT].setVoltage(0.f, v->voiceId_);
-                        outputs[OUT2_Y_OUTPUT].setVoltage(0.f, v->voiceId_);
-                        outputs[OUT2_Z_OUTPUT].setVoltage(0.f, v->voiceId_);
-                    }
-                }
-            }
-        }  // for channel
-
-        outputs[OUT1_K_OUTPUT].setChannels(maxVoices[0]);
-        outputs[OUT1_X_OUTPUT].setChannels(maxVoices[0]);
-        outputs[OUT1_Y_OUTPUT].setChannels(maxVoices[0]);
-        outputs[OUT1_Z_OUTPUT].setChannels(maxVoices[0]);
-
-        outputs[OUT2_K_OUTPUT].setChannels(maxVoices[1]);
-        outputs[OUT2_X_OUTPUT].setChannels(maxVoices[1]);
-        outputs[OUT2_Y_OUTPUT].setChannels(maxVoices[1]);
-        outputs[OUT2_Z_OUTPUT].setChannels(maxVoices[1]);
-
-        if (activeSplit == 0) {
-            outputs[OUT1_KG_OUTPUT].setVoltage(kgMsg);
-            outputs[OUT2_KG_OUTPUT].setVoltage(0.f);
-            outputs[OUT_LIGHTS_OUTPUT].setVoltage(inputs[IN1_LIGHTS_INPUT].getVoltage());
-        } else {
-            outputs[OUT1_KG_OUTPUT].setVoltage(0.f);
-            outputs[OUT2_KG_OUTPUT].setVoltage(kgMsg);
-            outputs[OUT_LIGHTS_OUTPUT].setVoltage(inputs[IN2_LIGHTS_INPUT].getVoltage());
-        }
-    }
-
-    MsgQueue<float> ledQueue_;
+    void doProcess(const ProcessArgs& args);
 
     struct SplitVoice : public Voice {
         unsigned r_ = 0;
@@ -217,7 +131,53 @@ struct ESwitch : Module {
         }
     };
 
-    Voices<SplitVoice> splits_[2];
+    struct Split {
+        unsigned startR_ = 0, startC_ = 0;
+        unsigned sizeR_ = 0, sizeC_ = 0;
+        bool active_ = false;
+
+        Split() {
+            clearLeds();
+        }
+
+        void active(bool a) { active_ = a; }
+
+        void setStart(unsigned r, unsigned c) {
+            startR_ = r < (MAX_R - 1) ? r : MAX_R - 1;
+            startC_ = c < (MAX_C - 1) ? c : MAX_C - 1;
+        }
+        void setSize(unsigned r, unsigned c) {
+            sizeR_ = r < MAX_R ? r : MAX_R;
+            sizeC_ = c < MAX_C ? c : MAX_C;
+        }
+
+        void setLed(LedMsgType t, unsigned startr, unsigned startc, unsigned sizer, unsigned sizec) {
+            unsigned r = 0, c = 0;
+            for (r = startr; r < sizeR_ && r < (startr + sizer); r++) {
+                for (c = startc; c < sizeC_ && c < (startc + sizec); c++) {
+                    ledState_[r][c] = t;
+                }
+            }
+        }
+
+        void clearLeds() {
+            for (unsigned r = 0; r < MAX_R; r++) {
+                for (unsigned c = 0; c < MAX_R; c++) {
+                    ledState_[r][c] = LED_SET_OFF;
+                }
+            }
+        }
+
+        static constexpr unsigned MAX_R = 24;
+        static constexpr unsigned MAX_C = 5;
+        LedMsgType ledState_[MAX_R][MAX_C];
+    };
+
+    static constexpr unsigned MAX_SPLIT = 4;
+    Split splits_[MAX_SPLIT];
+    Voices<SplitVoice> voices_[MAX_SPLIT];
+    MsgQueue<float> ledQueue_;
+    unsigned activeSplit_ = MAX_SPLIT;  // invalid
 };
 
 struct ESwitchWidget : ModuleWidget {
@@ -230,31 +190,174 @@ struct ESwitchWidget : ModuleWidget {
         addChild(createWidget<ScrewSilver>(Vec(RACK_GRID_WIDTH, RACK_GRID_HEIGHT - RACK_GRID_WIDTH)));
         addChild(createWidget<ScrewSilver>(Vec(box.size.x - 2 * RACK_GRID_WIDTH, RACK_GRID_HEIGHT - RACK_GRID_WIDTH)));
 
-        addParam(createParamCentered<RoundBlackKnob>(mm2px(Vec(9.458, 91.023)), module, ESwitch::P_S1_POLY_PARAM));
-        addParam(createParamCentered<RoundBlackKnob>(mm2px(Vec(9.458, 112.719)), module, ESwitch::P_S2_POLY_PARAM));
+        addParam(createParamCentered<RoundBlackKnob>(mm2px(Vec(9.458, 60.332)), module, ESwitch::P_S1_POLY_PARAM));
+        addParam(createParamCentered<RoundBlackKnob>(mm2px(Vec(9.458, 79.911)), module, ESwitch::P_S2_POLY_PARAM));
+        addParam(createParamCentered<RoundBlackKnob>(mm2px(Vec(8.929, 99.49)), module, ESwitch::P_S3_POLY_PARAM));
+        addParam(createParamCentered<RoundBlackKnob>(mm2px(Vec(8.929, 119.069)), module, ESwitch::P_S4_POLY_PARAM));
 
-        addInput(createInputCentered<PJ301MPort>(mm2px(Vec(46.078, 29.499)), module, ESwitch::IN_SELECT_INPUT));
-        addInput(createInputCentered<PJ301MPort>(mm2px(Vec(9.046, 61.951)), module, ESwitch::IN_ENABLE_INPUT));
-        addInput(createInputCentered<PJ301MPort>(mm2px(Vec(23.638, 61.951)), module, ESwitch::IN_K_INPUT));
-        addInput(createInputCentered<PJ301MPort>(mm2px(Vec(35.716, 61.951)), module, ESwitch::IN_X_INPUT));
-        addInput(createInputCentered<PJ301MPort>(mm2px(Vec(47.794, 61.951)), module, ESwitch::IN_Y_INPUT));
-        addInput(createInputCentered<PJ301MPort>(mm2px(Vec(59.871, 61.951)), module, ESwitch::IN_Z_INPUT));
-        addInput(createInputCentered<PJ301MPort>(mm2px(Vec(71.478, 61.951)), module, ESwitch::IN_KG_INPUT));
-        addInput(createInputCentered<PJ301MPort>(mm2px(Vec(84.581, 91.023)), module, ESwitch::IN1_LIGHTS_INPUT));
-        addInput(createInputCentered<PJ301MPort>(mm2px(Vec(84.581, 112.719)), module, ESwitch::IN2_LIGHTS_INPUT));
+        addInput(createInputCentered<PJ301MPort>(mm2px(Vec(46.078, 21.032)), module, ESwitch::IN_SELECT_INPUT));
+        addInput(createInputCentered<PJ301MPort>(mm2px(Vec(7.988, 34.963)), module, ESwitch::IN_DISABLE_INPUT));
+        addInput(createInputCentered<PJ301MPort>(mm2px(Vec(22.58, 34.963)), module, ESwitch::IN_K_INPUT));
+        addInput(createInputCentered<PJ301MPort>(mm2px(Vec(34.657, 34.963)), module, ESwitch::IN_X_INPUT));
+        addInput(createInputCentered<PJ301MPort>(mm2px(Vec(46.735, 34.963)), module, ESwitch::IN_Y_INPUT));
+        addInput(createInputCentered<PJ301MPort>(mm2px(Vec(58.813, 34.963)), module, ESwitch::IN_Z_INPUT));
+        addInput(createInputCentered<PJ301MPort>(mm2px(Vec(70.42, 34.963)), module, ESwitch::IN_KG_INPUT));
+        addInput(createInputCentered<PJ301MPort>(mm2px(Vec(84.581, 60.332)), module, ESwitch::IN1_LIGHTS_INPUT));
+        addInput(createInputCentered<PJ301MPort>(mm2px(Vec(84.581, 79.911)), module, ESwitch::IN2_LIGHTS_INPUT));
+        addInput(createInputCentered<PJ301MPort>(mm2px(Vec(84.052, 99.49)), module, ESwitch::IN3_LIGHTS_INPUT));
+        addInput(createInputCentered<PJ301MPort>(mm2px(Vec(84.052, 119.069)), module, ESwitch::IN4_LIGHTS_INPUT));
 
-        addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(84.568, 61.951)), module, ESwitch::OUT_LIGHTS_OUTPUT));
-        addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(24.209, 91.023)), module, ESwitch::OUT1_K_OUTPUT));
-        addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(36.286, 91.023)), module, ESwitch::OUT1_X_OUTPUT));
-        addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(48.364, 91.023)), module, ESwitch::OUT1_Y_OUTPUT));
-        addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(60.442, 91.023)), module, ESwitch::OUT1_Z_OUTPUT));
-        addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(71.169, 91.023)), module, ESwitch::OUT1_KG_OUTPUT));
-        addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(24.209, 112.719)), module, ESwitch::OUT2_K_OUTPUT));
-        addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(36.286, 112.719)), module, ESwitch::OUT2_X_OUTPUT));
-        addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(48.364, 112.719)), module, ESwitch::OUT2_Y_OUTPUT));
-        addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(60.442, 112.719)), module, ESwitch::OUT2_Z_OUTPUT));
-        addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(71.454, 112.719)), module, ESwitch::OUT2_KG_OUTPUT));
+        addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(83.51, 34.963)), module, ESwitch::OUT_LIGHTS_OUTPUT));
+        addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(24.209, 60.332)), module, ESwitch::OUT1_K_OUTPUT));
+        addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(36.286, 60.332)), module, ESwitch::OUT1_X_OUTPUT));
+        addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(48.364, 60.332)), module, ESwitch::OUT1_Y_OUTPUT));
+        addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(60.442, 60.332)), module, ESwitch::OUT1_Z_OUTPUT));
+        addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(71.169, 60.332)), module, ESwitch::OUT1_KG_OUTPUT));
+        addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(24.209, 79.911)), module, ESwitch::OUT2_K_OUTPUT));
+        addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(36.286, 79.911)), module, ESwitch::OUT2_X_OUTPUT));
+        addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(48.364, 79.911)), module, ESwitch::OUT2_Y_OUTPUT));
+        addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(60.442, 79.911)), module, ESwitch::OUT2_Z_OUTPUT));
+        addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(71.454, 79.911)), module, ESwitch::OUT2_KG_OUTPUT));
+        addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(23.679, 99.49)), module, ESwitch::OUT3_K_OUTPUT));
+        addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(35.757, 99.49)), module, ESwitch::OUT3_X_OUTPUT));
+        addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(47.835, 99.49)), module, ESwitch::OUT3_Y_OUTPUT));
+        addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(59.913, 99.49)), module, ESwitch::OUT3_Z_OUTPUT));
+        addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(70.64, 99.49)), module, ESwitch::OUT3_KG_OUTPUT));
+        addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(23.679, 119.069)), module, ESwitch::OUT4_K_OUTPUT));
+        addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(35.757, 119.069)), module, ESwitch::OUT4_X_OUTPUT));
+        addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(47.835, 119.069)), module, ESwitch::OUT4_Y_OUTPUT));
+        addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(59.913, 119.069)), module, ESwitch::OUT4_Z_OUTPUT));
+        addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(70.925, 119.069)), module, ESwitch::OUT4_KG_OUTPUT));
     }
 };
 
 Model* modelESwitch = createModel<ESwitch, ESwitchWidget>("ESwitch");
+
+/////////////////////////////////////////////////////////////////////////////////////
+
+void ESwitch::doProcess(const ProcessArgs& args) {
+    unsigned in_kg_r, in_kg_c;
+    float kgMsg = inputs[IN_KG_INPUT].getVoltage();
+    decodeKeyGroup(kgMsg, in_kg_r, in_kg_c);
+
+    static constexpr unsigned OUT_N = OUT2_K_OUTPUT - OUT1_K_OUTPUT;
+    static constexpr unsigned PARAM_N = P_S2_POLY_PARAM - P_S1_POLY_PARAM;
+
+    unsigned nChannels = inputs[IN_K_INPUT].getChannels();
+    bool enabled = !(inputs[IN_DISABLE_INPUT].getVoltage() >= 1.5f);
+
+    float selector = inputs[IN_SELECT_INPUT].getVoltage();
+    unsigned activeSplit = (int)selector;
+
+    if (activeSplit > (MAX_SPLIT - 1)) activeSplit = (MAX_SPLIT - 1);
+    bool refreshLeds = activeSplit_ != activeSplit;
+
+    activeSplit_ = activeSplit;
+
+    for (unsigned splitId = 0; splitId < MAX_SPLIT; splitId++) {
+        auto& voices = voices_[splitId];
+        auto& split = splits_[splitId];
+
+        unsigned maxVoices = params[P_S1_POLY_PARAM + (splitId * PARAM_N)].getValue();
+        if (maxVoices > nChannels) maxVoices = nChannels;
+
+        bool inSplit = (splitId == activeSplit_);
+
+        if (in_kg_r != split.sizeR_ || in_kg_c != split.sizeC_) {
+            split.setStart(0, 0);
+            split.setSize(in_kg_r, in_kg_c);
+            refreshLeds = refreshLeds || inSplit;
+        }
+
+        // forward led msgs
+        float ledmsg = inputs[IN1_LIGHTS_INPUT + splitId].getVoltage();
+        if (ledmsg != 0.0f) {
+            unsigned startr, startc, sizer, sizec;
+            LedMsgType t;
+            decodeLedMsg(ledmsg, t, startr, startc, sizer, sizec);
+            split.setLed(t, startr, startc, sizer, sizec);
+
+            if (inSplit) {
+                ledQueue_.write(ledmsg);
+            }
+        }
+
+        outputs[OUT1_KG_OUTPUT + (splitId * OUT_N)].setVoltage(kgMsg);
+
+        bool splitValid = enabled && maxVoices > 0;
+        if (splitValid) {
+            outputs[OUT1_K_OUTPUT + (splitId * OUT_N)].setChannels(maxVoices);
+            outputs[OUT1_X_OUTPUT + (splitId * OUT_N)].setChannels(maxVoices);
+            outputs[OUT1_Y_OUTPUT + (splitId * OUT_N)].setChannels(maxVoices);
+            outputs[OUT1_Z_OUTPUT + (splitId * OUT_N)].setChannels(maxVoices);
+            // outputs[OUT1_KG_OUTPUT + (splitId * OUT_N)].setVoltage(kgMsg);
+
+            for (unsigned ch = 0; ch < nChannels; ch++) {
+                auto v = voices.findVoice(ch);
+                unsigned in_r = 0, in_c = 0;
+                bool valid = enabled;
+                if (valid) {
+                    decodeKey(inputs[IN_K_INPUT].getVoltage(ch), valid, in_r, in_c);
+                }
+
+                float inX = inputs[IN_X_INPUT].getVoltage(ch);
+                float inY = inputs[IN_Y_INPUT].getVoltage(ch);
+                float inZ = inputs[IN_Z_INPUT].getVoltage(ch);
+
+                if (valid && inSplit) {
+                    unsigned r = in_r;
+                    unsigned c = in_c;
+                    if (!v) {
+                        v = voices.findFreeVoice(maxVoices);
+                    }
+
+                    if (v) {
+                        v->updateVoice(ch, r, c, valid, inX, inY, inZ);
+                        outputs[OUT1_K_OUTPUT + (splitId * OUT_N)].setVoltage(encodeKey(r, c), v->voiceId_);
+                        outputs[OUT1_X_OUTPUT + (splitId * OUT_N)].setVoltage(inX, v->voiceId_);
+                        outputs[OUT1_Y_OUTPUT + (splitId * OUT_N)].setVoltage(inY, v->voiceId_);
+                        outputs[OUT1_Z_OUTPUT + (splitId * OUT_N)].setVoltage(inZ, v->voiceId_);
+                    }
+                } else {
+                    if (v) {
+                        // was in this split, but now key is outside
+                        voices.freeVoice(v);
+                        outputs[OUT1_K_OUTPUT + (splitId * OUT_N)].setVoltage(0.f, v->voiceId_);
+                        outputs[OUT1_X_OUTPUT + (splitId * OUT_N)].setVoltage(0.f, v->voiceId_);
+                        outputs[OUT1_Y_OUTPUT + (splitId * OUT_N)].setVoltage(0.f, v->voiceId_);
+                        outputs[OUT1_Z_OUTPUT + (splitId * OUT_N)].setVoltage(0.f, v->voiceId_);
+                    }
+                }
+            }  // for channel
+        } else {
+            outputs[OUT1_K_OUTPUT + (splitId * OUT_N)].setChannels(0);
+            outputs[OUT1_X_OUTPUT + (splitId * OUT_N)].setChannels(0);
+            outputs[OUT1_Y_OUTPUT + (splitId * OUT_N)].setChannels(0);
+            outputs[OUT1_Z_OUTPUT + (splitId * OUT_N)].setChannels(0);
+            // outputs[OUT1_KG_OUTPUT + (splitId * OUT_N)].setVoltage(0);
+        }
+
+        if (refreshLeds) {
+            float msg = encodeLedMsg(LED_SET_OFF, 0, 0, in_kg_r, in_kg_c);
+            ledQueue_.write(msg);
+            unsigned splitId = activeSplit_;
+            auto& split = splits_[splitId];
+            for (unsigned r = 0; r < split.sizeR_; r++) {
+                for (unsigned c = 0; c < split.sizeC_; c++) {
+                    LedMsgType t = split.ledState_[r][c];
+                    if (t != LED_SET_OFF) {
+                        msg = encodeLedMsg(t, split.startR_ + r, split.startC_ + c, 1, 1);
+                        ledQueue_.write(msg);
+                    }
+                }
+            }
+        }
+    }
+    // dont really need this check as empty queue leaves msg untouched.
+    float msg = 0.0f;
+    if (ledQueue_.read(msg)) {
+        outputs[OUT_LIGHTS_OUTPUT].setVoltage(msg);
+    } else {
+        outputs[OUT_LIGHTS_OUTPUT].setVoltage(0.f);
+    }
+}

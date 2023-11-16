@@ -91,3 +91,23 @@ class MsgQueue {
 
     unsigned readPtr_ = 0, writePtr_ = 0;
 };
+
+
+
+
+#include <iostream>
+
+#if TRUE
+// #define DEBUG_LIGHT_MSG( x, msg) 
+
+#else 
+    #define DEBUG_LIGHT_MSG( x, msg) debugLightMsg(x,msg)
+    inline void debugLightMsg(const std::string& x, float msg) {
+        if(msg!=0.0f) {
+            unsigned startr, startc, sizer, sizec;
+            LedMsgType t;
+            decodeLedMsg(msg, t, startr, startc, sizer, sizec);
+            std::cerr << x << " : " << (unsigned) t << " : " << startr << " , " << startc << "    ( " << sizer << " , " << sizec << " )" << std::endl;
+        }
+    }
+#endif

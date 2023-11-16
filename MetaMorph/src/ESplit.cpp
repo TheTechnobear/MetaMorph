@@ -88,7 +88,6 @@ struct ESplit : Module {
         paramQuantities[P_S2_START_C_PARAM]->snapEnabled = true;
         paramQuantities[P_S2_SIZE_R_PARAM]->snapEnabled = true;
         paramQuantities[P_S2_SIZE_C_PARAM]->snapEnabled = true;
-
     }
 
     void processBypass(const ProcessArgs &args) override {
@@ -165,7 +164,6 @@ struct ESplit : Module {
     };
 
     static constexpr unsigned MAX_SPLIT = 2;
-
     Split splits_[MAX_SPLIT];
     Voices<SplitVoice> voices_[MAX_SPLIT];
     MsgQueue<float> ledQueue_;
@@ -225,6 +223,7 @@ void ESplit::doProcess(const ProcessArgs &args) {
     decodeKeyGroup(kgMsg, in_kg_r, in_kg_c);
 
     unsigned nChannels = inputs[IN_K_INPUT].getChannels();
+    bool enabled = !(inputs[IN_DISABLE_INPUT].getVoltage() >= 1.5f);
 
     static constexpr unsigned OUT_N = OUT2_K_OUTPUT - OUT1_K_OUTPUT;
     static constexpr unsigned PARAM_N = P_S2_POLY_PARAM - P_S1_POLY_PARAM;
@@ -232,17 +231,19 @@ void ESplit::doProcess(const ProcessArgs &args) {
     bool refreshLeds = false;
 
     for (unsigned splitId = 0; splitId < MAX_SPLIT; splitId++) {
+        auto &split = splits_[splitId];
+        auto &voices = voices_[splitId];
+
         unsigned maxVoices = params[P_S1_POLY_PARAM + (splitId * PARAM_N)].getValue();
+        if (maxVoices > nChannels) maxVoices = nChannels;
+
         unsigned pStartR = params[P_S1_START_R_PARAM + (splitId * PARAM_N)].getValue() - 1;
         unsigned pStartC = params[P_S1_START_C_PARAM + (splitId * PARAM_N)].getValue() - 1;
         unsigned pSizeR = params[P_S1_SIZE_R_PARAM + (splitId * PARAM_N)].getValue();
         unsigned pSizeC = params[P_S1_SIZE_C_PARAM + (splitId * PARAM_N)].getValue();
 
-        if(pSizeR > in_kg_r) pSizeR = in_kg_r;
-        if(pSizeC > in_kg_c) pSizeC = in_kg_c;
-
-        auto &split = splits_[splitId];
-        auto &voices = voices_[splitId];
+        if (pSizeR > in_kg_r) pSizeR = in_kg_r;
+        if (pSizeC > in_kg_c) pSizeC = in_kg_c;
 
         // just check startR since no others change
         if (pStartR != split.startR_ || pStartC != split.startC_ || pSizeR != split.sizeR_ || pSizeC != split.sizeC_) {
@@ -251,14 +252,14 @@ void ESplit::doProcess(const ProcessArgs &args) {
             refreshLeds = true;
         }
 
-        bool splitValid = maxVoices > 0 && pSizeC > 0 && pSizeR > 0;
-
-        outputs[OUT1_K_OUTPUT + (splitId * OUT_N)].setChannels(maxVoices);
-        outputs[OUT1_X_OUTPUT + (splitId * OUT_N)].setChannels(maxVoices);
-        outputs[OUT1_Y_OUTPUT + (splitId * OUT_N)].setChannels(maxVoices);
-        outputs[OUT1_Z_OUTPUT + (splitId * OUT_N)].setChannels(maxVoices);
+        bool splitValid = enabled && maxVoices > 0 && pSizeC > 0 && pSizeR > 0;
 
         if (splitValid) {
+            outputs[OUT1_K_OUTPUT + (splitId * OUT_N)].setChannels(maxVoices);
+            outputs[OUT1_X_OUTPUT + (splitId * OUT_N)].setChannels(maxVoices);
+            outputs[OUT1_Y_OUTPUT + (splitId * OUT_N)].setChannels(maxVoices);
+            outputs[OUT1_Z_OUTPUT + (splitId * OUT_N)].setChannels(maxVoices);
+
             unsigned startR, startC, endR, endC;
             startR = split.startR_;
             startC = split.startC_;
@@ -268,7 +269,7 @@ void ESplit::doProcess(const ProcessArgs &args) {
             // for each channel
             for (unsigned ch = 0; ch < nChannels; ch++) {
                 unsigned in_r = 0, in_c = 0;
-                bool valid = !(inputs[IN_DISABLE_INPUT].getVoltage() >= 1.5f);
+                bool valid = enabled;
                 if (valid) {
                     decodeKey(inputs[IN_K_INPUT].getVoltage(ch), valid, in_r, in_c);
                 }

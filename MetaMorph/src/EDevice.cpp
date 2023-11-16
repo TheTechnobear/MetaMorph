@@ -190,7 +190,8 @@ struct EDevice : Module {
 
             float ledmsg = inputs[IN_MAIN_LIGHTS_INPUT].getVoltage();
 
-            ledQueue_[EHarp::KeyGroup::KG_MAIN].write(ledmsg);
+            // DEBUG_LIGHT_MSG("read device", ledmsg);
+            if (ledmsg != 0.f) ledQueue_[EHarp::KeyGroup::KG_MAIN].write(ledmsg);
             // handleLedInput(ledmsg, EHarp::KeyGroup::KG_MAIN);
         }
 
@@ -224,7 +225,7 @@ struct EDevice : Module {
             outputs[OUT_KG_PERC_OUTPUT].setVoltage(encodeKeyGroup(kg.r_, kg.c_));
 
             float ledmsg = inputs[IN_PERC_LIGHTS_INPUT].getVoltage();
-            ledQueue_[EHarp::KeyGroup::KG_PERC].write(ledmsg);
+            if (ledmsg != 0.f) ledQueue_[EHarp::KeyGroup::KG_PERC].write(ledmsg);
             // handleLedInput(ledmsg, EHarp::KeyGroup::KG_PERC);
         }
 
@@ -250,7 +251,7 @@ struct EDevice : Module {
             auto& kg = harpData_.keygroups_[EHarp::KeyGroup::KG_FUNC];
             outputs[OUT_KG_FUNC_OUTPUT].setVoltage(encodeKeyGroup(kg.r_, kg.c_));
             float ledmsg = inputs[IN_FUNC_LIGHTS_INPUT].getVoltage();
-            ledQueue_[EHarp::KeyGroup::KG_FUNC].write(ledmsg);
+            if (ledmsg != 0.f) ledQueue_[EHarp::KeyGroup::KG_FUNC].write(ledmsg);
             // handleLedInput(ledmsg, EHarp::KeyGroup::KG_FUNC);
         }
 

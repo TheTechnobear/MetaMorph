@@ -145,16 +145,17 @@ struct EFunction : Module {
             for (unsigned fk = 0; fk < MAX_FUNCS; fk++) {
                 auto& func = funcs_[fk];
                 if (valid && func.valid()) {
-                    if (in_r == (unsigned) func.r_ && in_c == (unsigned) func.c_) {
+                    if (in_r == (unsigned)func.r_ && in_c == (unsigned)func.c_) {
                         // trig @ 1..2v
                         bool key_state = (inputs[IN_GATE_INPUT].getVoltage(ch) >= 1.5f);
                         if (func.last_key_state_ != key_state) {
-                            func.changeState(switch_type, key_state);
-
-                            LedMsgType t = func.state_ ? LED_SET_ORANGE : LED_SET_GREEN;
-                            // std::cout << "change led " << in_r << "," << in_c << " state" << t << std::endl;
-                            float msg = encodeLedMsg(t, in_r, in_c, 1, 1);
-                            ledQueue_.write(msg);
+                            bool changed = func.changeState(switch_type, key_state);
+                            if (changed) {
+                                LedMsgType t = func.state_ ? LED_SET_ORANGE : LED_SET_GREEN;
+                                // std::cout << "change led " << in_r << "," << in_c << " state" << t << std::endl;
+                                float msg = encodeLedMsg(t, in_r, in_c, 1, 1);
+                                ledQueue_.write(msg);
+                            }
                         }
                         func.ch_ = ch;
                     }
@@ -249,7 +250,8 @@ struct EFunction : Module {
             return false;
         }
 
-        void changeState(unsigned switch_type, bool keystate) {
+        bool changeState(unsigned switch_type, bool keystate) {
+            bool preState = state_;
             switch (switch_type) {
                 case S_GATE: {
                     state_ = keystate;
@@ -280,7 +282,10 @@ struct EFunction : Module {
                 }
             }
             last_key_state_ = keystate;
+
+            return preState != state_;
         }
+
     } funcs_[MAX_FUNCS];
 };
 
