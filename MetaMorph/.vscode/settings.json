@@ -74,6 +74,7 @@
         "deque": "cpp",
         "numeric": "cpp",
         "random": "cpp",
-        "charconv": "cpp"
+        "charconv": "cpp",
+        "fstream": "cpp"
     }
 }

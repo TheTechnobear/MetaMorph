@@ -91,8 +91,20 @@ EIGENHARP_SRC += \
         ${EL_DIR}/picross/src/pic_tool_win32.cpp
 endif
 
+# libscala-file
+
+LS_DIR = libscala-file/src
+CFLAGS += -I ${LS_DIR}
+CXXFLAGS += -I ${LS_DIR}
+
+LS_SRC = \
+    ${LS_DIR}/scala_scl.cpp\
+    ${LS_DIR}/scala_kbm.cpp
+
+
 # Add .cpp files to the build
 SOURCES += ${EIGENHARP_SRC}
+SOURCES += ${LS_SRC}
 SOURCES += $(wildcard src/*.cpp)
 
 # Add files to the ZIP package when running `make dist`
