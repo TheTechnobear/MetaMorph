@@ -70,26 +70,36 @@ struct EScaler : Module {
         paramQuantities[P_LED2_COLOUR_PARAM]->snapEnabled = true;
         paramQuantities[P_LED3_COLOUR_PARAM]->snapEnabled = true;
 
-        auto scales_dir = asset::plugin(pluginInstance, "res/scales");
-        auto scales = system::getEntries(scales_dir);
-        for (auto& f : scales) {
+        auto dir = asset::plugin(pluginInstance, "res/scales");
+        auto files = system::getEntries(dir);
+
+        scala::scale chromaticScale;
+        for(int i=0;i<12;i++) {
+            chromaticScale.add_degree(scala::degree((i + 1) * 100.f));
+        }
+
+        scaleNames_.push_back("None");
+        scales_.push_back(chromaticScale);
+        scaleIdx_ = 0;
+
+        for (auto& f : files) {
             std::ifstream str(f);
             if (str.is_open()) {
-                std::string scalename = system::getStem(f);
+                std::string name = system::getStem(f);
                 scala::scale scale = scala::read_scl(str);
-                scaleNames_.push_back(scalename);
+                scaleNames_.push_back(name);
                 scales_.push_back(scale);
             }
         }
 
-        // for (unsigned i = 0; i < scaleNames_.size(); i++) {
-        //     auto& scalename = scaleNames_[i];
-        //     auto& scale = scales_[i];
-        //     std::cerr << "scale : " << scalename << std::endl;
-        //     for (unsigned i = 0; i < scale.get_scale_length(); i++) {
-        //         std::cerr << "Degree:  " << i << " Ratio: " << scale.get_ratio(i) << std::endl;
-        //     };
-        // }
+        for (unsigned i = 0; i < scaleNames_.size(); i++) {
+            auto& scalename = scaleNames_[i];
+            auto& scale = scales_[i];
+            std::cerr << "scale : " << scalename << std::endl;
+            for (unsigned i = 0; i < scale.get_scale_length(); i++) {
+                std::cerr << "Degree:  " << i << " Ratio: " << scale.get_ratio(i) << std::endl;
+            };
+        }
     }
 
     void processBypass(const ProcessArgs& args) override {

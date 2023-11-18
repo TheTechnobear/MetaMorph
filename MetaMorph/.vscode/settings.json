@@ -75,6 +75,8 @@
         "numeric": "cpp",
         "random": "cpp",
         "charconv": "cpp",
-        "fstream": "cpp"
+        "fstream": "cpp",
+        "regex": "cpp",
+        "__memory": "cpp"
     }
 }
