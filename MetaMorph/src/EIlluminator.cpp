@@ -85,8 +85,8 @@ struct EIlluminator : Module {
                 json_array_foreach(ledsJ, index, rcpair) {
                     if (json_is_array(rcpair) && json_array_size(rcpair) == 2) {
                         LedMsg ledmsg;
-                        ledmsg.row_ = json_integer_value(json_array_get(rcpair, 0));
-                        ledmsg.col_ = json_integer_value(json_array_get(rcpair, 1));
+                        ledmsg.row_ = json_integer_value(json_array_get(rcpair, 0)) - 1;
+                        ledmsg.col_ = json_integer_value(json_array_get(rcpair, 1)) - 1;
                         ledmsg.colour_ = LED_SET_RED;
                         pattern.msgs_.push_back(ledmsg);
                     }
@@ -102,8 +102,8 @@ struct EIlluminator : Module {
                 json_array_foreach(ledsJ, index, rcpair) {
                     if (json_is_array(rcpair) && json_array_size(rcpair) == 2) {
                         LedMsg ledmsg;
-                        ledmsg.row_ = json_integer_value(json_array_get(rcpair, 0));
-                        ledmsg.col_ = json_integer_value(json_array_get(rcpair, 1));
+                        ledmsg.row_ = json_integer_value(json_array_get(rcpair, 0)) - 1;
+                        ledmsg.col_ = json_integer_value(json_array_get(rcpair, 1)) - 1;
                         ledmsg.colour_ = LED_SET_GREEN;
                         pattern.msgs_.push_back(ledmsg);
                     }
@@ -120,8 +120,8 @@ struct EIlluminator : Module {
                 json_array_foreach(ledsJ, index, rcpair) {
                     if (json_is_array(rcpair) && json_array_size(rcpair) == 2) {
                         LedMsg ledmsg;
-                        ledmsg.row_ = json_integer_value(json_array_get(rcpair, 0));
-                        ledmsg.col_ = json_integer_value(json_array_get(rcpair, 1));
+                        ledmsg.row_ = json_integer_value(json_array_get(rcpair, 0)) - 1;
+                        ledmsg.col_ = json_integer_value(json_array_get(rcpair, 1)) - 1;
                         ledmsg.colour_ = LED_SET_ORANGE;
                         pattern.msgs_.push_back(ledmsg);
                     }
