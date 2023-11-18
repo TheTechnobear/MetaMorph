@@ -123,156 +123,7 @@ struct EDevice : Module {
         }
     }
 
-    void doProcess(const ProcessArgs& args) {
-        maxMainVoices_ = params[P_BASEPOLY_PARAM].getValue();
-        maxPercVoices_ = params[P_PERCPOLY_PARAM].getValue();
-        maxFuncVoices_ = params[P_FUNCPOLY_PARAM].getValue();
-
-        if (params[P_FILTERTYPE_PARAM].getValue() != filterType_ || params[P_FILTERNUMBER_PARAM].getValue() != filterDeviceNum_) {
-            filterType_ = params[P_FILTERTYPE_PARAM].getValue();
-            filterDeviceNum_ = params[P_FILTERNUMBER_PARAM].getValue();
-
-            switch (filterType_) {
-                case 0: {
-                    harp_->setDeviceFilter(false, 0);
-                    break;
-                }
-                case 1: {
-                    harp_->setDeviceFilter(false, filterDeviceNum_);
-                    break;
-                }
-                case 2: {
-                    harp_->setDeviceFilter(true, filterDeviceNum_);
-                    break;
-                }
-                default:
-                    break;
-            }
-        }
-
-        int rate = args.sampleRate / 1000;  // really should be 2k, lets do a bit more
-        float iRate = 1.0f / float(rate);
-        if ((args.frame % rate) == 0) {
-            harp_->process();  // will hit callbacks
-        }
-
-        {  // main voices
-            unsigned nChannels = maxMainVoices_ < EHarp::MAX_VOICE ? maxMainVoices_ : EHarp::MAX_VOICE;
-            auto& keys = harpData_.mainVoices_;
-
-            for (unsigned voice = 0; voice < nChannels; voice++) {
-                auto& vdata = keys.voices_[voice];
-
-                if (vdata.active_) {
-                    float pV = vdata.pV_.next(iRate);
-                    lights[voice].setBrightness(pV / 10.0f);
-
-                    float key = encodeKeyId(vdata.key_);
-                    outputs[OUT_K_OUTPUT].setVoltage(key, voice);
-                    outputs[OUT_X_OUTPUT].setVoltage(vdata.rV_.next(iRate), voice);
-                    outputs[OUT_Y_OUTPUT].setVoltage(vdata.yV_.next(iRate), voice);
-                    outputs[OUT_Z_OUTPUT].setVoltage(pV, voice);
-                } else {
-                    outputs[OUT_K_OUTPUT].setVoltage(0.f, voice);
-                    outputs[OUT_X_OUTPUT].setVoltage(0.f, voice);
-                    outputs[OUT_Y_OUTPUT].setVoltage(0.f, voice);
-                    outputs[OUT_Z_OUTPUT].setVoltage(0.f, voice);
-                }
-            }
-
-            outputs[OUT_K_OUTPUT].setChannels(nChannels);
-            outputs[OUT_X_OUTPUT].setChannels(nChannels);
-            outputs[OUT_Y_OUTPUT].setChannels(nChannels);
-            outputs[OUT_Z_OUTPUT].setChannels(nChannels);
-
-            auto& kg = harpData_.keygroups_[EHarp::KeyGroup::KG_MAIN];
-            outputs[OUT_KG_MAIN_OUTPUT].setVoltage(encodeKeyGroup(kg.r_, kg.c_));
-
-            float ledmsg = inputs[IN_MAIN_LIGHTS_INPUT].getVoltage();
-
-            // DEBUG_LIGHT_MSG("read device", ledmsg);
-            if (ledmsg != 0.f) ledQueue_[EHarp::KeyGroup::KG_MAIN].write(ledmsg);
-            // handleLedInput(ledmsg, EHarp::KeyGroup::KG_MAIN);
-        }
-
-        {  // perc voices
-            unsigned nChannels = maxPercVoices_ < EHarp::MAX_VOICE ? maxPercVoices_ : EHarp::MAX_VOICE;
-            auto& keys = harpData_.percVoices_;
-
-            for (unsigned voice = 0; voice < nChannels; voice++) {
-                auto& vdata = keys.voices_[voice];
-
-                if (vdata.active_) {
-                    float key = encodeKeyId(vdata.key_);
-                    outputs[OUT_PK_OUTPUT].setVoltage(key, voice);
-                    outputs[OUT_PX_OUTPUT].setVoltage(vdata.rV_.next(iRate), voice);
-                    outputs[OUT_PY_OUTPUT].setVoltage(vdata.yV_.next(iRate), voice);
-                    outputs[OUT_PZ_OUTPUT].setVoltage(vdata.pV_.next(iRate), voice);
-                } else {
-                    outputs[OUT_PK_OUTPUT].setVoltage(0.f, voice);
-                    outputs[OUT_PX_OUTPUT].setVoltage(0.f, voice);
-                    outputs[OUT_PY_OUTPUT].setVoltage(0.f, voice);
-                    outputs[OUT_PZ_OUTPUT].setVoltage(0.f, voice);
-                }
-            }
-
-            outputs[OUT_PK_OUTPUT].setChannels(nChannels);
-            outputs[OUT_PX_OUTPUT].setChannels(nChannels);
-            outputs[OUT_PY_OUTPUT].setChannels(nChannels);
-            outputs[OUT_PZ_OUTPUT].setChannels(nChannels);
-
-            auto& kg = harpData_.keygroups_[EHarp::KeyGroup::KG_PERC];
-            outputs[OUT_KG_PERC_OUTPUT].setVoltage(encodeKeyGroup(kg.r_, kg.c_));
-
-            float ledmsg = inputs[IN_PERC_LIGHTS_INPUT].getVoltage();
-            if (ledmsg != 0.f) ledQueue_[EHarp::KeyGroup::KG_PERC].write(ledmsg);
-            // handleLedInput(ledmsg, EHarp::KeyGroup::KG_PERC);
-        }
-
-        {  // func voices
-            unsigned nChannels = maxFuncVoices_ < EHarp::MAX_VOICE ? maxFuncVoices_ : EHarp::MAX_VOICE;
-            auto& keys = harpData_.funcVoices_;
-
-            for (unsigned voice = 0; voice < nChannels; voice++) {
-                auto& vdata = keys.voices_[voice];
-                float key = encodeKeyId(vdata.key_);
-                if (vdata.active_) {
-                    outputs[OUT_FK_OUTPUT].setVoltage(key, voice);
-                    outputs[OUT_FG_OUTPUT].setVoltage(vdata.actV_.next(iRate), voice);
-                } else {
-                    outputs[OUT_FK_OUTPUT].setVoltage(0.f, voice);
-                    outputs[OUT_FG_OUTPUT].setVoltage(0.f, voice);
-                }
-            }
-
-            outputs[OUT_FK_OUTPUT].setChannels(nChannels);
-            outputs[OUT_FG_OUTPUT].setChannels(nChannels);
-
-            auto& kg = harpData_.keygroups_[EHarp::KeyGroup::KG_FUNC];
-            outputs[OUT_KG_FUNC_OUTPUT].setVoltage(encodeKeyGroup(kg.r_, kg.c_));
-            float ledmsg = inputs[IN_FUNC_LIGHTS_INPUT].getVoltage();
-            if (ledmsg != 0.f) ledQueue_[EHarp::KeyGroup::KG_FUNC].write(ledmsg);
-            // handleLedInput(ledmsg, EHarp::KeyGroup::KG_FUNC);
-        }
-
-        // throttle the number of leds changes.
-        float ledmsg = 0.f;
-        unsigned throttle = LED_THROTTLE;
-        for (unsigned q = 0; q < 3; q++) {
-            while (throttle > 0 && ledQueue_[q].read(ledmsg)) {
-                handleLedInput(ledmsg, q);
-                throttle--;
-            }
-        }
-
-        outputs[OUT_BREATH_OUTPUT].setVoltage(harpData_.breathV_.next(iRate));
-
-        outputs[OUT_S1_OUTPUT].setVoltage(harpData_.stripV_[0].next(iRate));
-        outputs[OUT_S2_OUTPUT].setVoltage(harpData_.stripV_[1].next(iRate));
-
-        outputs[OUT_P1_OUTPUT].setVoltage(harpData_.pedalV_[0].next(iRate));
-        outputs[OUT_P2_OUTPUT].setVoltage(harpData_.pedalV_[1].next(iRate));
-    }
+    void doProcess(const ProcessArgs& args);
 
     void handleLedInput(float msg, unsigned kg) {
         if (msg != 0.0f) {
@@ -365,22 +216,159 @@ struct EDeviceWidget : ModuleWidget {
         addChild(createLightCentered<MediumLight<RedLight>>(mm2px(Vec(60.717, 49.906)), module, EDevice::LED15_LIGHT));
         addChild(createLightCentered<MediumLight<RedLight>>(mm2px(Vec(66.896, 49.906)), module, EDevice::LED16_LIGHT));
     }
-
-    void appendContextMenu(Menu* menu) override {
-        // EDevice* module = getModule<EDevice>();
-
-        // menu->addChild(new MenuSeparator);
-
-        // // Controls int Module::mode
-        // menu->addChild(
-        // 	createIndexPtrSubmenuItem("Max Voices",
-        // 	{
-        // 		"1","2","3","4","5", "6", "7", "8",
-        // 		"9","10","11","12","13","14","15","16"
-        // 	},
-        // 	&module->maxVoices_
-        // ));
-    }
 };
 
 Model* modelEDevice = createModel<EDevice, EDeviceWidget>("EigenHarp");
+
+///////////////////////////////////////////////////////////////////////////////////////////////
+
+void EDevice::doProcess(const ProcessArgs& args) {
+    maxMainVoices_ = params[P_BASEPOLY_PARAM].getValue();
+    maxPercVoices_ = params[P_PERCPOLY_PARAM].getValue();
+    maxFuncVoices_ = params[P_FUNCPOLY_PARAM].getValue();
+
+    if (params[P_FILTERTYPE_PARAM].getValue() != filterType_ || params[P_FILTERNUMBER_PARAM].getValue() != filterDeviceNum_) {
+        filterType_ = params[P_FILTERTYPE_PARAM].getValue();
+        filterDeviceNum_ = params[P_FILTERNUMBER_PARAM].getValue();
+
+        switch (filterType_) {
+            case 0: {
+                harp_->setDeviceFilter(false, 0);
+                break;
+            }
+            case 1: {
+                harp_->setDeviceFilter(false, filterDeviceNum_);
+                break;
+            }
+            case 2: {
+                harp_->setDeviceFilter(true, filterDeviceNum_);
+                break;
+            }
+            default:
+                break;
+        }
+    }
+
+    int rate = args.sampleRate / 1000;  // really should be 2k, lets do a bit more
+    float iRate = 1.0f / float(rate);
+    if ((args.frame % rate) == 0) {
+        harp_->process();  // will hit callbacks
+    }
+
+    {  // main voices
+        unsigned nChannels = maxMainVoices_ < EHarp::MAX_VOICE ? maxMainVoices_ : EHarp::MAX_VOICE;
+        auto& keys = harpData_.mainVoices_;
+
+        for (unsigned voice = 0; voice < nChannels; voice++) {
+            auto& vdata = keys.voices_[voice];
+
+            if (vdata.active_) {
+                float pV = vdata.pV_.next(iRate);
+                lights[voice].setBrightness(pV / 10.0f);
+
+                float key = encodeKeyId(vdata.key_);
+                outputs[OUT_K_OUTPUT].setVoltage(key, voice);
+                outputs[OUT_X_OUTPUT].setVoltage(vdata.rV_.next(iRate), voice);
+                outputs[OUT_Y_OUTPUT].setVoltage(vdata.yV_.next(iRate), voice);
+                outputs[OUT_Z_OUTPUT].setVoltage(pV, voice);
+            } else {
+                outputs[OUT_K_OUTPUT].setVoltage(0.f, voice);
+                outputs[OUT_X_OUTPUT].setVoltage(0.f, voice);
+                outputs[OUT_Y_OUTPUT].setVoltage(0.f, voice);
+                outputs[OUT_Z_OUTPUT].setVoltage(0.f, voice);
+            }
+        }
+
+        outputs[OUT_K_OUTPUT].setChannels(nChannels);
+        outputs[OUT_X_OUTPUT].setChannels(nChannels);
+        outputs[OUT_Y_OUTPUT].setChannels(nChannels);
+        outputs[OUT_Z_OUTPUT].setChannels(nChannels);
+
+        auto& kg = harpData_.keygroups_[EHarp::KeyGroup::KG_MAIN];
+        outputs[OUT_KG_MAIN_OUTPUT].setVoltage(encodeKeyGroup(kg.r_, kg.c_));
+
+        float ledmsg = inputs[IN_MAIN_LIGHTS_INPUT].getVoltage();
+
+        // DEBUG_LIGHT_MSG("read device", ledmsg);
+        if (ledmsg != 0.f) ledQueue_[EHarp::KeyGroup::KG_MAIN].write(ledmsg);
+        // handleLedInput(ledmsg, EHarp::KeyGroup::KG_MAIN);
+    }
+
+    {  // perc voices
+        unsigned nChannels = maxPercVoices_ < EHarp::MAX_VOICE ? maxPercVoices_ : EHarp::MAX_VOICE;
+        auto& keys = harpData_.percVoices_;
+
+        for (unsigned voice = 0; voice < nChannels; voice++) {
+            auto& vdata = keys.voices_[voice];
+
+            if (vdata.active_) {
+                float key = encodeKeyId(vdata.key_);
+                outputs[OUT_PK_OUTPUT].setVoltage(key, voice);
+                outputs[OUT_PX_OUTPUT].setVoltage(vdata.rV_.next(iRate), voice);
+                outputs[OUT_PY_OUTPUT].setVoltage(vdata.yV_.next(iRate), voice);
+                outputs[OUT_PZ_OUTPUT].setVoltage(vdata.pV_.next(iRate), voice);
+            } else {
+                outputs[OUT_PK_OUTPUT].setVoltage(0.f, voice);
+                outputs[OUT_PX_OUTPUT].setVoltage(0.f, voice);
+                outputs[OUT_PY_OUTPUT].setVoltage(0.f, voice);
+                outputs[OUT_PZ_OUTPUT].setVoltage(0.f, voice);
+            }
+        }
+
+        outputs[OUT_PK_OUTPUT].setChannels(nChannels);
+        outputs[OUT_PX_OUTPUT].setChannels(nChannels);
+        outputs[OUT_PY_OUTPUT].setChannels(nChannels);
+        outputs[OUT_PZ_OUTPUT].setChannels(nChannels);
+
+        auto& kg = harpData_.keygroups_[EHarp::KeyGroup::KG_PERC];
+        outputs[OUT_KG_PERC_OUTPUT].setVoltage(encodeKeyGroup(kg.r_, kg.c_));
+
+        float ledmsg = inputs[IN_PERC_LIGHTS_INPUT].getVoltage();
+        if (ledmsg != 0.f) ledQueue_[EHarp::KeyGroup::KG_PERC].write(ledmsg);
+        // handleLedInput(ledmsg, EHarp::KeyGroup::KG_PERC);
+    }
+
+    {  // func voices
+        unsigned nChannels = maxFuncVoices_ < EHarp::MAX_VOICE ? maxFuncVoices_ : EHarp::MAX_VOICE;
+        auto& keys = harpData_.funcVoices_;
+
+        for (unsigned voice = 0; voice < nChannels; voice++) {
+            auto& vdata = keys.voices_[voice];
+            float key = encodeKeyId(vdata.key_);
+            if (vdata.active_) {
+                outputs[OUT_FK_OUTPUT].setVoltage(key, voice);
+                outputs[OUT_FG_OUTPUT].setVoltage(vdata.actV_.next(iRate), voice);
+            } else {
+                outputs[OUT_FK_OUTPUT].setVoltage(0.f, voice);
+                outputs[OUT_FG_OUTPUT].setVoltage(0.f, voice);
+            }
+        }
+
+        outputs[OUT_FK_OUTPUT].setChannels(nChannels);
+        outputs[OUT_FG_OUTPUT].setChannels(nChannels);
+
+        auto& kg = harpData_.keygroups_[EHarp::KeyGroup::KG_FUNC];
+        outputs[OUT_KG_FUNC_OUTPUT].setVoltage(encodeKeyGroup(kg.r_, kg.c_));
+        float ledmsg = inputs[IN_FUNC_LIGHTS_INPUT].getVoltage();
+        if (ledmsg != 0.f) ledQueue_[EHarp::KeyGroup::KG_FUNC].write(ledmsg);
+        // handleLedInput(ledmsg, EHarp::KeyGroup::KG_FUNC);
+    }
+
+    // throttle the number of leds changes.
+    float ledmsg = 0.f;
+    unsigned throttle = LED_THROTTLE;
+    for (unsigned q = 0; q < 3; q++) {
+        while (throttle > 0 && ledQueue_[q].read(ledmsg)) {
+            handleLedInput(ledmsg, q);
+            throttle--;
+        }
+    }
+
+    outputs[OUT_BREATH_OUTPUT].setVoltage(harpData_.breathV_.next(iRate));
+
+    outputs[OUT_S1_OUTPUT].setVoltage(harpData_.stripV_[0].next(iRate));
+    outputs[OUT_S2_OUTPUT].setVoltage(harpData_.stripV_[1].next(iRate));
+
+    outputs[OUT_P1_OUTPUT].setVoltage(harpData_.pedalV_[0].next(iRate));
+    outputs[OUT_P2_OUTPUT].setVoltage(harpData_.pedalV_[1].next(iRate));
+}

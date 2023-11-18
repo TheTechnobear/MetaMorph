@@ -68,6 +68,12 @@
       "tags": [
         "polyphonic"
       ]
+    },
+    {
+      "slug": "EIlluminator",
+      "name": "EIlluminator",
+      "description": "add light patterns",
+      "tags": []
     }
   ]
 }

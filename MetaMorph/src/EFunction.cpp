@@ -79,139 +79,7 @@ struct EFunction : Module {
     void doProcessBypass(const ProcessArgs& args) {
     }
 
-    void doProcess(const ProcessArgs& args) {
-        unsigned in_kg_r, in_kg_c;
-        float kgMsg = inputs[IN_KG_INPUT].getVoltage();
-        decodeKeyGroup(kgMsg, in_kg_r, in_kg_c);
-
-        layoutChanged_ = false;
-        layoutChanged_ |= funcs_[0].updateKey(params[P_F1_R_PARAM].getValue() - 1, params[P_F1_C_PARAM].getValue() - 1);
-        layoutChanged_ |= funcs_[1].updateKey(params[P_F2_R_PARAM].getValue() - 1, params[P_F2_C_PARAM].getValue() - 1);
-        layoutChanged_ |= funcs_[2].updateKey(params[P_F3_R_PARAM].getValue() - 1, params[P_F3_C_PARAM].getValue() - 1);
-        layoutChanged_ |= funcs_[3].updateKey(params[P_F4_R_PARAM].getValue() - 1, params[P_F4_C_PARAM].getValue() - 1);
-
-        if (in_kg_r != kg_r_ || in_kg_c != kg_c_) {
-            layoutChanged_ |= true;
-            kg_r_ = in_kg_r;
-            kg_c_ = in_kg_c;
-        }
-        bool refreshLeds = false;
-
-        bool enabled = !(inputs[IN_DISABLE_INPUT].getVoltage() > 2.0f);
-
-        if (enabled_ != enabled) {
-            enabled_ = enabled;
-            if (enabled_) {
-                refreshLeds = true;
-            } else {
-                // being disabled, nul op?
-            }
-        }
-
-        if (layoutChanged_) {
-            refreshLeds = true;
-            layoutChanged_ = false;
-        }
-
-        if (refreshLeds) {
-            float msg = encodeLedMsg(LED_SET_OFF, 0, 0, kg_r_, kg_c_);
-            // std::cout << "layout clear leds " << kg_r_ << "," << kg_c_ << std::endl;
-            ledQueue_.write(msg);
-
-            for (unsigned fk = 0; fk < MAX_FUNCS; fk++) {
-                auto& func = funcs_[fk];
-                unsigned r = func.r_;
-                unsigned c = func.c_;
-                LedMsgType t = func.state_ ? LED_SET_ORANGE : LED_SET_GREEN;
-                if (func.valid() && r < kg_r_ && c < kg_c_) {
-                    // std::cout << "layout led " << r << "," << c << " state" << t << std::endl;
-                    float msg = encodeLedMsg(t, r, c, 1, 1);
-                    ledQueue_.write(msg);
-                }
-            }
-        }
-
-        unsigned switch_type = (unsigned)params[P_TYPE_PARAM].getValue();
-
-        unsigned nChannels = inputs[IN_K_INPUT].getChannels();
-        for (unsigned ch = 0; ch < nChannels; ch++) {
-            unsigned in_r = 0, in_c = 0;
-            bool valid = enabled_;
-
-            if (valid) {
-                decodeKey(inputs[IN_K_INPUT].getVoltage(ch), valid, in_r, in_c);
-            }
-
-            for (unsigned fk = 0; fk < MAX_FUNCS; fk++) {
-                auto& func = funcs_[fk];
-                if (valid && func.valid()) {
-                    if (in_r == (unsigned)func.r_ && in_c == (unsigned)func.c_) {
-                        // trig @ 1..2v
-                        bool key_state = (inputs[IN_GATE_INPUT].getVoltage(ch) >= 1.5f);
-                        if (func.last_key_state_ != key_state) {
-                            bool changed = func.changeState(switch_type, key_state);
-                            if (changed) {
-                                LedMsgType t = func.state_ ? LED_SET_ORANGE : LED_SET_GREEN;
-                                // std::cout << "change led " << in_r << "," << in_c << " state" << t << std::endl;
-                                float msg = encodeLedMsg(t, in_r, in_c, 1, 1);
-                                ledQueue_.write(msg);
-                            }
-                        }
-                        func.ch_ = ch;
-                    }
-                } else {
-                    if (enabled_) {
-                        if (func.ch_ == ch) {
-                            // key now not active
-                            func.ch_ = 0xff;
-                            bool key_state = false;
-                            if (func.last_key_state_ != key_state) {
-                                func.changeState(switch_type, key_state);
-                            }
-
-                            unsigned r = func.r_;
-                            unsigned c = func.c_;
-                            if (r < kg_r_ && c < kg_c_ && func.valid()) {
-                                LedMsgType t = func.state_ ? LED_SET_ORANGE : LED_SET_GREEN;
-                                // std::cout << "change led " << in_r << "," << in_c << " state" << t << std::endl;
-                                float msg = encodeLedMsg(t, r, c, 1, 1);
-                                ledQueue_.write(msg);
-                            }
-                        } else {
-                            // clear trig state
-                            if (switch_type == FuncKey::S_TRIG && func.state_) {
-                                if (func.trigCount_ > 0) func.trigCount_--;
-
-                                if (func.trigCount_ == 0) {
-                                    unsigned r = func.r_;
-                                    unsigned c = func.c_;
-                                    func.state_ = false;
-                                    if (r < kg_r_ && c < kg_c_) {
-                                        LedMsgType t = func.state_ ? LED_SET_ORANGE : LED_SET_GREEN;
-                                        // std::cout << "change led " << in_r << "," << in_c << " state" << t << std::endl;
-                                        float msg = encodeLedMsg(t, r, c, 1, 1);
-                                        ledQueue_.write(msg);
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        }  // channel
-
-        for (unsigned fk = 0; fk < MAX_FUNCS; fk++) {
-            auto& func = funcs_[fk];
-            outputs[OUT_F1_OUTPUT + fk].setVoltage(func.state_ * 10.f);  //  gate @ 10v
-        }
-
-        float msg = 0.0f;
-        if (ledQueue_.read(msg)) {
-            outputs[OUT_LIGHTS_OUTPUT].setVoltage(msg);
-        } else {
-            outputs[OUT_LIGHTS_OUTPUT].setVoltage(0.f);
-        }
-    }
+    void doProcess(const ProcessArgs& args);
 
     MsgQueue<float> ledQueue_;
 
@@ -323,3 +191,138 @@ struct EFunctionWidget : ModuleWidget {
 };
 
 Model* modelEFunction = createModel<EFunction, EFunctionWidget>("EFunction");
+
+////////////////////////////////////////////////////////////////////////////////////
+void EFunction::doProcess(const ProcessArgs& args) {
+    unsigned in_kg_r, in_kg_c;
+    float kgMsg = inputs[IN_KG_INPUT].getVoltage();
+    decodeKeyGroup(kgMsg, in_kg_r, in_kg_c);
+
+    layoutChanged_ = false;
+    layoutChanged_ |= funcs_[0].updateKey(params[P_F1_R_PARAM].getValue() - 1, params[P_F1_C_PARAM].getValue() - 1);
+    layoutChanged_ |= funcs_[1].updateKey(params[P_F2_R_PARAM].getValue() - 1, params[P_F2_C_PARAM].getValue() - 1);
+    layoutChanged_ |= funcs_[2].updateKey(params[P_F3_R_PARAM].getValue() - 1, params[P_F3_C_PARAM].getValue() - 1);
+    layoutChanged_ |= funcs_[3].updateKey(params[P_F4_R_PARAM].getValue() - 1, params[P_F4_C_PARAM].getValue() - 1);
+
+    if (in_kg_r != kg_r_ || in_kg_c != kg_c_) {
+        layoutChanged_ |= true;
+        kg_r_ = in_kg_r;
+        kg_c_ = in_kg_c;
+    }
+    bool refreshLeds = false;
+
+    bool enabled = !(inputs[IN_DISABLE_INPUT].getVoltage() > 2.0f);
+
+    if (enabled_ != enabled) {
+        enabled_ = enabled;
+        if (enabled_) {
+            refreshLeds = true;
+        } else {
+            // being disabled, nul op?
+        }
+    }
+
+    if (layoutChanged_) {
+        refreshLeds = true;
+        layoutChanged_ = false;
+    }
+
+    if (refreshLeds) {
+        float msg = encodeLedMsg(LED_SET_OFF, 0, 0, kg_r_, kg_c_);
+        // std::cout << "layout clear leds " << kg_r_ << "," << kg_c_ << std::endl;
+        ledQueue_.write(msg);
+
+        for (unsigned fk = 0; fk < MAX_FUNCS; fk++) {
+            auto& func = funcs_[fk];
+            unsigned r = func.r_;
+            unsigned c = func.c_;
+            LedMsgType t = func.state_ ? LED_SET_ORANGE : LED_SET_GREEN;
+            if (func.valid() && r < kg_r_ && c < kg_c_) {
+                // std::cout << "layout led " << r << "," << c << " state" << t << std::endl;
+                float msg = encodeLedMsg(t, r, c, 1, 1);
+                ledQueue_.write(msg);
+            }
+        }
+    }
+
+    unsigned switch_type = (unsigned)params[P_TYPE_PARAM].getValue();
+
+    unsigned nChannels = inputs[IN_K_INPUT].getChannels();
+    for (unsigned ch = 0; ch < nChannels; ch++) {
+        unsigned in_r = 0, in_c = 0;
+        bool valid = enabled_;
+
+        if (valid) {
+            decodeKey(inputs[IN_K_INPUT].getVoltage(ch), valid, in_r, in_c);
+        }
+
+        for (unsigned fk = 0; fk < MAX_FUNCS; fk++) {
+            auto& func = funcs_[fk];
+            if (valid && func.valid()) {
+                if (in_r == (unsigned)func.r_ && in_c == (unsigned)func.c_) {
+                    // trig @ 1..2v
+                    bool key_state = (inputs[IN_GATE_INPUT].getVoltage(ch) >= 1.5f);
+                    if (func.last_key_state_ != key_state) {
+                        bool changed = func.changeState(switch_type, key_state);
+                        if (changed) {
+                            LedMsgType t = func.state_ ? LED_SET_ORANGE : LED_SET_GREEN;
+                            // std::cout << "change led " << in_r << "," << in_c << " state" << t << std::endl;
+                            float msg = encodeLedMsg(t, in_r, in_c, 1, 1);
+                            ledQueue_.write(msg);
+                        }
+                    }
+                    func.ch_ = ch;
+                }
+            } else {
+                if (enabled_) {
+                    if (func.ch_ == ch) {
+                        // key now not active
+                        func.ch_ = 0xff;
+                        bool key_state = false;
+                        if (func.last_key_state_ != key_state) {
+                            func.changeState(switch_type, key_state);
+                        }
+
+                        unsigned r = func.r_;
+                        unsigned c = func.c_;
+                        if (r < kg_r_ && c < kg_c_ && func.valid()) {
+                            LedMsgType t = func.state_ ? LED_SET_ORANGE : LED_SET_GREEN;
+                            // std::cout << "change led " << in_r << "," << in_c << " state" << t << std::endl;
+                            float msg = encodeLedMsg(t, r, c, 1, 1);
+                            ledQueue_.write(msg);
+                        }
+                    } else {
+                        // clear trig state
+                        if (switch_type == FuncKey::S_TRIG && func.state_) {
+                            if (func.trigCount_ > 0) func.trigCount_--;
+
+                            if (func.trigCount_ == 0) {
+                                unsigned r = func.r_;
+                                unsigned c = func.c_;
+                                func.state_ = false;
+                                if (r < kg_r_ && c < kg_c_) {
+                                    LedMsgType t = func.state_ ? LED_SET_ORANGE : LED_SET_GREEN;
+                                    // std::cout << "change led " << in_r << "," << in_c << " state" << t << std::endl;
+                                    float msg = encodeLedMsg(t, r, c, 1, 1);
+                                    ledQueue_.write(msg);
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }  // channel
+
+    for (unsigned fk = 0; fk < MAX_FUNCS; fk++) {
+        auto& func = funcs_[fk];
+        outputs[OUT_F1_OUTPUT + fk].setVoltage(func.state_ * 10.f);  //  gate @ 10v
+    }
+
+    float msg = 0.0f;
+    if (ledQueue_.read(msg)) {
+        outputs[OUT_LIGHTS_OUTPUT].setVoltage(msg);
+    } else {
+        outputs[OUT_LIGHTS_OUTPUT].setVoltage(0.f);
+    }
+}
