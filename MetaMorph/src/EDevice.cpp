@@ -137,7 +137,7 @@ struct EDevice : Module {
                 for (c = startc; c < (startc + sizec); c++) {
                     if (harpData_.translateRCtoK(kg, r, c, course, k)) {
                         // LED enum matches setLED
-                        harp_->setLED(harpData_.lastDevice_.c_str(), course, k, t);
+                        harp_->setLED(harpData_.lastDevice_.c_str(), course, k, EigenApi::Eigenharp::LedColour(t));
                     }
                 }
             }

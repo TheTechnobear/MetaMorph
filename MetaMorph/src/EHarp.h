@@ -24,7 +24,7 @@ class bipolarValue {
    public:
     bipolarValue(float x) : cur_(x), tar_(x) {}
     inline void set(int x) {
-        tar_ = float(x * 5) / 4096.0f;
+        tar_ = x;
     }
     inline float next(float stepPct_) {
         cur_ += (tar_ - cur_) * stepPct_;
@@ -39,8 +39,8 @@ class bipolarValue {
 class unipolarValue {
    public:
     unipolarValue(float x) : cur_(x), tar_(x) {}
-    inline void set(unsigned x) {
-        tar_ = float(x * 10) / 4096.0f;
+    inline void set(float x) {
+        tar_ = x;
     }
     inline float next(float stepPct_) {
         cur_ += (tar_ - cur_) * stepPct_;
@@ -113,7 +113,7 @@ struct FullVoice : public Voice {
     bipolarValue rV_ = 0.0f;
     bipolarValue yV_ = 0.0f;
 
-    void updateVoice(unsigned key, bool a, unsigned p, int r, int y) {
+    void updateVoice(unsigned key, bool a, float p, float r, float y) {
         active_ = a;
         key_ = key;
         keyV_.set(key_);
@@ -135,7 +135,7 @@ struct FunctionVoice : public Voice {
         key_ = key;
         keyV_.set(key_);
         active_ = a;
-        actV_.set(a ? 4096 : 0);
+        actV_.set(a ? 1.0f : 0);
     }
     void freeVoice() override {
         updateVoice(0, false);
@@ -283,7 +283,7 @@ class EHarpCallback : public EigenApi::Callback {
         harpData_.lastDevice_ = "";
     }
 
-    void key(const char* dev, unsigned long long t, unsigned course, unsigned k, bool a, unsigned p, int r, int y) override {
+    void key(const char* dev, unsigned long long t, unsigned course, unsigned k, bool a, float p, float r, float y) override {
         if (harpData_.lastDevice_ != dev) return;
 
         bool percKey = false;
@@ -373,21 +373,13 @@ class EHarpCallback : public EigenApi::Callback {
         }
     }
 
-    void breath(const char* dev, unsigned long long t, unsigned val) override {
+    void breath(const char* dev, unsigned long long t, float val) override {
         if (harpData_.lastDevice_ != dev) return;
 
-        // ! this should be EigenLite
-        if (breathZeroPoint_ < 0) breathZeroPoint_ = val;
-        int iVal = int(val) - breathZeroPoint_;
-        if (iVal > 0) {
-            iVal = (float(iVal) / (4096 - breathZeroPoint_)) * 4096;
-        } else {
-            iVal = (float(iVal) / breathZeroPoint_) * 4096;
-        }
-        harpData_.breathV_.set(iVal);
+        harpData_.breathV_.set(val);
     }
 
-    void strip(const char* dev, unsigned long long t, unsigned strip, unsigned val, bool a) override {
+    void strip(const char* dev, unsigned long long t, unsigned strip, float val, bool a) override {
         if (harpData_.lastDevice_ != dev) return;
 
         if (strip > EHarp::MAX_STRIP) return;
@@ -400,14 +392,12 @@ class EHarpCallback : public EigenApi::Callback {
         // }
     }
 
-    void pedal(const char* dev, unsigned long long t, unsigned pedal, unsigned val) override {
+    void pedal(const char* dev, unsigned long long t, unsigned pedal, float val) override {
         if (harpData_.lastDevice_ != dev) return;
 
         if (pedal > EHarp::MAX_PEDAL) return;
         harpData_.pedalV_[pedal - 1].set(val);
     }
-
-    int breathZeroPoint_ = -1;
 
     EHarp& harpData_;
 };
