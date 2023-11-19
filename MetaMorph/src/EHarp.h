@@ -17,39 +17,48 @@ class keyValue {
     }
 
    private:
-    float tar_ = 1.0f;
+    float tar_ = 0.f;
 };
 
 class bipolarValue {
    public:
-    bipolarValue(float x) : cur_(x), tar_(x) {}
-    inline void set(int x) {
-        tar_ = x;
+    bipolarValue(float x) {
+        set(x);
+        cur_ = tar_;
+    }
+
+    inline void set(float x) {
+        tar_ = x * 10.f;
     }
     inline float next(float stepPct_) {
         cur_ += (tar_ - cur_) * stepPct_;
+        if(cur_ > -0.0001f && cur_ < 0.0001f) cur_ = 0.0f;
         return cur_;
     }
 
    private:
-    float cur_ = 1.0f;
-    float tar_ = 1.0f;
+    float cur_ = 0.f;
+    float tar_ = 0.f;
 };
 
 class unipolarValue {
    public:
-    unipolarValue(float x) : cur_(x), tar_(x) {}
+    unipolarValue(float x) {
+        set(x);
+        cur_ = tar_;
+    }
     inline void set(float x) {
-        tar_ = x;
+        tar_ = x * 10.f;
     }
     inline float next(float stepPct_) {
         cur_ += (tar_ - cur_) * stepPct_;
+        if(cur_ < 0.0001f) cur_ = 0.0f;
         return cur_;
     }
 
    private:
-    float cur_ = 1.0f;
-    float tar_ = 1.0f;
+    float cur_ = 0.f;
+    float tar_ = 0.f;
 };
 
 class Voice {
