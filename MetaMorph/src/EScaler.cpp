@@ -74,7 +74,7 @@ struct EScaler : Module {
         auto files = system::getEntries(dir);
 
         scala::scale chromaticScale;
-        for(int i=0;i<12;i++) {
+        for (int i = 0; i < 12; i++) {
             chromaticScale.add_degree(scala::degree((i + 1) * 100.f));
         }
 
@@ -140,7 +140,7 @@ struct EScaler : Module {
     bool refreshLeds_ = false;
     unsigned kg_c_ = 0, kg_r_ = 0;
 
-    int rowM_ = 0, colM_ = 0, offset_;
+    int rowM_ = 0, colM_ = 0;
 
     MsgQueue<float> ledQueue_;
     std::vector<std::string> scaleNames_;
@@ -154,10 +154,14 @@ struct EScaler : Module {
     } scaleLeds_[MAX_LED_DEG];
 
     struct {
+        int offset_ = -1;
         int scaleIdx_ = -1;
         int note_ = -1;
         float voct_ = 0;
     } freqCache_[16];
+
+    int offset_ = 3;
+    float baseFreq_ = 440.f;
 };
 
 struct EScalerWidget : ModuleWidget {
@@ -237,7 +241,12 @@ void EScaler::doProcess(const ProcessArgs& args) {
         layoutChanged_ = true;
         colM_ = colM;
         rowM_ = rowM;
-        offset_ = offset;
+        if (offset_ != offset) {
+            offset_ = offset;
+            const float A440_REF_FREQ = 440.f;
+            // offset - = C, since this C=0v in VCV
+            baseFreq_ = A440_REF_FREQ * pow(2.f, ((offset_ - 9) / 12.0));
+        }
     }
 
     float xPBR = params[P_KEYPBR_PARAM].getValue() / 12.0f;  // v/oct
@@ -264,11 +273,11 @@ void EScaler::doProcess(const ProcessArgs& args) {
         decodeKey(inKey, valid, r, c);
 
         if (valid) {
-            int note = (r * rowM) + (c * colM) + offset;
+            int note = (r * rowM) + (c * colM);
             auto& freqCache = freqCache_[ch];
 
             float voct = 0.0f;
-            if (freqCache.note_ != note || freqCache.scaleIdx_ != scaleIdx_) {
+            if (freqCache.scaleIdx_ != scaleIdx_ || freqCache.offset_ != offset_ || freqCache.note_ != note) {
                 int deg = 0;
                 int oct = 0.0f;
                 if (note >= 0) {
@@ -279,15 +288,17 @@ void EScaler::doProcess(const ProcessArgs& args) {
                     deg = abs(oct) * nDeg + note;
                 }
 
-                const float REF_FREQ = 261.626f;
                 float baseNoteRatio = 1.0f;
-                float rootFreq = pow(scale.get_ratio(nDeg), oct) * REF_FREQ;
+                float rootFreq = pow(scale.get_ratio(nDeg), oct) * baseFreq_;
                 float fracFreq = (scale.get_ratio(deg) - baseNoteRatio) * rootFreq;
                 float freq = rootFreq + fracFreq;
-                voct = log2(freq / REF_FREQ);
+
+                const float VOCT_C_0V_REF_FREQ = 261.626f;
+                voct = log2(freq / VOCT_C_0V_REF_FREQ);
 
                 freqCache.note_ = note;
                 freqCache.scaleIdx_ = scaleIdx_;
+                freqCache.offset_ = offset_;
                 freqCache.voct_ = voct;
 
                 // std::cerr << "midi " << note + 69 << " note " << note
@@ -325,7 +336,7 @@ void EScaler::doProcess(const ProcessArgs& args) {
 
         for (unsigned r = 0; r < kg_r_; r++) {
             for (unsigned c = 0; c < kg_c_; c++) {
-                int note = (r * rowM) + (c * colM) + offset;
+                int note = (r * rowM) + (c * colM);
                 int oct = 0;
                 int deg = 0;
                 if (note >= 0) {
