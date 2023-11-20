@@ -309,9 +309,8 @@ void EScaler::doProcess(const ProcessArgs& args) {
                 voct = freqCache.voct_;
             }
 
-            // float voct = float(note) / 12.0f;
-            float inX = (inputs[IN_NOTE_PB_INPUT].getVoltage(ch) / 5.0f);  // +-5v
-            float xPb = (inX * inX) * (xPBR / 12.0f);
+            float inX = (inputs[IN_NOTE_PB_INPUT].getVoltage(ch) / 10.0f);  // +-10v
+            float xPb = (inX * inX) * xPBR ;
             voct += xPb + globalPb;
 
             outputs[OUT_VOCT_OUTPUT].setVoltage(voct, ch);
