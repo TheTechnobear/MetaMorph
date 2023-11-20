@@ -310,7 +310,7 @@ void EScaler::doProcess(const ProcessArgs& args) {
             }
 
             float inX = (inputs[IN_NOTE_PB_INPUT].getVoltage(ch) / 10.0f);  // +-10v
-            float xPb = (inX * inX) * xPBR ;
+            float xPb = (inX * abs(inX)) * xPBR ;
             voct += xPb + globalPb;
 
             outputs[OUT_VOCT_OUTPUT].setVoltage(voct, ch);
