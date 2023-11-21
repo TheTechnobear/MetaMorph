@@ -269,7 +269,7 @@ void EFunction::doProcess(const ProcessArgs& args) {
             auto& func = funcs_[fk];
             unsigned r = func.r_;
             unsigned c = func.c_;
-            LedMsgType t = connectedFuncs_[fk] ? (func.state_ ? LED_SET_ORANGE : LED_SET_GREEN) : LED_SET_OFF;
+            LedMsgType t = connectedFuncs_[fk] ? (func.state_ ? LED_SET_RED : LED_SET_GREEN) : LED_SET_OFF;
             if (func.valid() && r < kg_r_ && c < kg_c_) {
                 // std::cout << "layout led " << r << "," << c << " state" << t << std::endl;
                 float msg = encodeLedMsg(t, r, c, 1, 1);
@@ -298,7 +298,7 @@ void EFunction::doProcess(const ProcessArgs& args) {
                     if (func.last_key_state_ != key_state) {
                         bool changed = func.changeState(switch_type, key_state);
                         if (changed) {
-                            LedMsgType t = connectedFuncs_[fk] ? (func.state_ ? LED_SET_ORANGE : LED_SET_GREEN) : LED_SET_OFF;
+                            LedMsgType t = connectedFuncs_[fk] ? (func.state_ ? LED_SET_RED : LED_SET_GREEN) : LED_SET_OFF;
                             // std::cout << "change led " << in_r << "," << in_c << " state" << t << std::endl;
                             float msg = encodeLedMsg(t, in_r, in_c, 1, 1);
                             ledQueue_.write(msg);
@@ -319,7 +319,7 @@ void EFunction::doProcess(const ProcessArgs& args) {
                         unsigned r = func.r_;
                         unsigned c = func.c_;
                         if (r < kg_r_ && c < kg_c_ && func.valid()) {
-                            LedMsgType t = connectedFuncs_[fk] ? (func.state_ ? LED_SET_ORANGE : LED_SET_GREEN) : LED_SET_OFF;
+                            LedMsgType t = connectedFuncs_[fk] ? (func.state_ ? LED_SET_RED : LED_SET_GREEN) : LED_SET_OFF;
                             // std::cout << "change led " << in_r << "," << in_c << " state" << t << std::endl;
                             float msg = encodeLedMsg(t, r, c, 1, 1);
                             ledQueue_.write(msg);
@@ -334,7 +334,7 @@ void EFunction::doProcess(const ProcessArgs& args) {
                                 unsigned c = func.c_;
                                 func.state_ = false;
                                 if (r < kg_r_ && c < kg_c_) {
-                                    LedMsgType t = connectedFuncs_[fk] ? (func.state_ ? LED_SET_ORANGE : LED_SET_GREEN) : LED_SET_OFF;
+                                    LedMsgType t = connectedFuncs_[fk] ? (func.state_ ? LED_SET_RED : LED_SET_GREEN) : LED_SET_OFF;
                                     // std::cout << "change led " << in_r << "," << in_c << " state" << t << std::endl;
                                     float msg = encodeLedMsg(t, r, c, 1, 1);
                                     ledQueue_.write(msg);
