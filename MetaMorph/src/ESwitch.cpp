@@ -104,6 +104,54 @@ struct ESwitch : Module {
         doProcess(args);
     }
 
+    void onPortChange(const PortChangeEvent& e) override {
+        if (e.connecting) {
+            switch (e.type) {
+                case Port::INPUT: {
+                    switch (e.portId) {
+                        case IN_KG_INPUT: {
+                            layoutChanged_ = true;
+                            break;
+                        }
+                        default:
+                            break;
+                    }
+                    break;
+                }
+                case Port::OUTPUT: {
+                    switch (e.portId) {
+                        case OUT_LIGHTS_OUTPUT: {
+                            refreshLeds_ = true;
+                            break;
+                        }
+                        default:
+                            break;
+                    }
+                }
+            }
+        } else {
+            switch (e.type) {
+                case Port::INPUT: {
+                    switch (e.portId) {
+                        case IN1_LIGHTS_INPUT:
+                        case IN2_LIGHTS_INPUT:
+                        case IN3_LIGHTS_INPUT:
+                        case IN4_LIGHTS_INPUT: {
+                            splits_[e.portId - IN1_LIGHTS_INPUT].clearLeds();
+                            refreshLeds_ = true;
+                            break;
+                        }
+                        default:
+                            break;
+                    }
+                    break;
+                }
+                default:
+                    break;
+            }
+        }
+    }
+
     void doProcessBypass(const ProcessArgs& args) {
     }
 
@@ -173,6 +221,8 @@ struct ESwitch : Module {
         LedMsgType ledState_[MAX_R][MAX_C];
     };
 
+    bool refreshLeds_ = false;
+    bool layoutChanged_ = false;
     static constexpr unsigned MAX_SPLIT = 4;
     Split splits_[MAX_SPLIT];
     Voices<SplitVoice> voices_[MAX_SPLIT];
@@ -250,7 +300,8 @@ void ESwitch::doProcess(const ProcessArgs& args) {
     unsigned activeSplit = (int)selector;
 
     if (activeSplit > (MAX_SPLIT - 1)) activeSplit = (MAX_SPLIT - 1);
-    bool refreshLeds = activeSplit_ != activeSplit;
+
+    refreshLeds_ |= (activeSplit_ != activeSplit);
 
     activeSplit_ = activeSplit;
 
@@ -266,7 +317,7 @@ void ESwitch::doProcess(const ProcessArgs& args) {
         if (in_kg_r != split.sizeR_ || in_kg_c != split.sizeC_) {
             split.setStart(0, 0);
             split.setSize(in_kg_r, in_kg_c);
-            refreshLeds = refreshLeds || inSplit;
+            layoutChanged_ |= inSplit;
         }
 
         // forward led msgs
@@ -337,7 +388,12 @@ void ESwitch::doProcess(const ProcessArgs& args) {
             // outputs[OUT1_KG_OUTPUT + (splitId * OUT_N)].setVoltage(0);
         }
 
-        if (refreshLeds) {
+        if (layoutChanged_) {
+            layoutChanged_ = false;
+            refreshLeds_ = true;
+        }
+
+        if (refreshLeds_) {
             float msg = encodeLedMsg(LED_SET_OFF, 0, 0, in_kg_r, in_kg_c);
             ledQueue_.write(msg);
             unsigned splitId = activeSplit_;
@@ -351,6 +407,7 @@ void ESwitch::doProcess(const ProcessArgs& args) {
                     }
                 }
             }
+            refreshLeds_ = false;
         }
     }
     // dont really need this check as empty queue leaves msg untouched.

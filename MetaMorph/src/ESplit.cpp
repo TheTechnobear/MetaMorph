@@ -96,6 +96,52 @@ struct ESplit : Module {
 
     void process(const ProcessArgs &args) override { doProcess(args); }
 
+    void onPortChange(const PortChangeEvent &e) override {
+        if (e.connecting) {
+            switch (e.type) {
+                case Port::INPUT: {
+                    switch (e.portId) {
+                        case IN_KG_INPUT: {
+                            layoutChanged_ = true;
+                            break;
+                        }
+                        default:
+                            break;
+                    }
+                    break;
+                }
+                case Port::OUTPUT: {
+                    switch (e.portId) {
+                        case OUT_LIGHTS_OUTPUT: {
+                            refreshLeds_ = true;
+                            break;
+                        }
+                        default:
+                            break;
+                    }
+                }
+            }
+        } else {
+            switch (e.type) {
+                case Port::INPUT: {
+                    switch (e.portId) {
+                        case IN1_LIGHTS_INPUT:
+                        case IN2_LIGHTS_INPUT: {
+                            splits_[e.portId - IN1_LIGHTS_INPUT].clearLeds();
+                            refreshLeds_ = true;
+                            break;
+                        }
+                        default:
+                            break;
+                    }
+                    break;
+                }
+                default:
+                    break;
+            }
+        }
+    }    
+
     void doProcessBypass(const ProcessArgs &args) {}
 
     void doProcess(const ProcessArgs &args);
@@ -163,6 +209,8 @@ struct ESplit : Module {
         LedMsgType ledState_[MAX_R][MAX_C];
     };
 
+    bool refreshLeds_ = false;
+    bool layoutChanged_ = false;
     static constexpr unsigned MAX_SPLIT = 2;
     Split splits_[MAX_SPLIT];
     Voices<SplitVoice> voices_[MAX_SPLIT];
@@ -228,8 +276,6 @@ void ESplit::doProcess(const ProcessArgs &args) {
     static constexpr unsigned OUT_N = OUT2_K_OUTPUT - OUT1_K_OUTPUT;
     static constexpr unsigned PARAM_N = P_S2_POLY_PARAM - P_S1_POLY_PARAM;
 
-    bool refreshLeds = false;
-
     for (unsigned splitId = 0; splitId < MAX_SPLIT; splitId++) {
         auto &split = splits_[splitId];
         auto &voices = voices_[splitId];
@@ -249,7 +295,7 @@ void ESplit::doProcess(const ProcessArgs &args) {
         if (pStartR != split.startR_ || pStartC != split.startC_ || pSizeR != split.sizeR_ || pSizeC != split.sizeC_) {
             split.setStart(pStartR, pStartC);
             split.setSize(pSizeR, pSizeC);
-            refreshLeds = true;
+            layoutChanged_ = true;
         }
 
         bool splitValid = enabled && maxVoices > 0 && pSizeC > 0 && pSizeR > 0;
@@ -336,7 +382,12 @@ void ESplit::doProcess(const ProcessArgs &args) {
         }
     }  // for each split
 
-    if (refreshLeds) {
+    if (layoutChanged_) {
+        layoutChanged_ = false;
+        refreshLeds_ = true;
+    }
+
+    if (refreshLeds_) {
         float msg = encodeLedMsg(LED_SET_OFF, 0, 0, in_kg_r, in_kg_c);
         ledQueue_.write(msg);
         for (unsigned splitId = 0; splitId < MAX_SPLIT; splitId++) {
@@ -351,6 +402,7 @@ void ESplit::doProcess(const ProcessArgs &args) {
                 }
             }
         }
+        refreshLeds_ = false;
     }
 
     // dont really need this check as empty queue leaves msg untouched.

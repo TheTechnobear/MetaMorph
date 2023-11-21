@@ -26,47 +26,69 @@ pay careful attention to LIGHT, KG and KEY inputs, these are kind of 'special' a
 do NOT expect to see visible voltages on LIGHT, KG, KEY in VCV , for varios reasons, often they will appear as zero volts.
 this is to be expected, and is not a bug/issue.
 
+
+## demo presets 
+these are considered examples, so I dont really plan to 'fix' them, nor want to log issues here with them
+hopefully these will naturally evolve as the community builds on them and improves. 
+
+
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+# Known issues
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 
-# Known issues
+known issues that I intend to resolve/fix, see below for 'limitations'
 
-## General: Light refresh 
-generally there are occasions where the LEDS will not refresh as expected.
-related : order you plug in cables will affect this... so pls test this.
+## General: Disable input
+this has not been tested throughly, so may not work at all or partially.
+report specific issues with details
 
-report specific issues
-*workround*:: changing a parameter on light source module will often fix this.
-
-## General: Cable add/remove
-removing or plugging cables result in unexpected behaviour.
-related : order you plug in cables will affect this... so pls test this.
-
-report specific issues
-*workround*:: reload patch, change upstream module
-
+## General: No note stealing
+polyphony is currently a hard limit, if its set to 4, a 5th note will NOT sound.
+we could instead 'steal' the (oldest) note, this generally 'feels' better to most players.
+not really a bug/issue, rather a planned improvement.
 
 ## Module : Eigenharp  (low priority)
-Eigenharp connection does not switch when you filter type
-(only necessary for multiple eigenharps)
+Eigenharp connection does not switch when you filter type - only necessary for multiple eigenharps
 *workround*: reload patch, use new instance of Eigenharp module
 
-## Module : Eigenharp polyphony
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+## Limitations
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+limitations are unlikely to be fixed due to stated reasons, often out of my control.
+often, I will have ideas on how to improve the situation if not resolve it.
+
+## Module : Eigenharp
 polyphony does not appear to be respected/ lost note
 example: poly = 4
 you play 4 notes, then release one note, and QUICKLY play another note.
 the new note does not sound.
 
-this appears to be an underlying firmware issue with Eigenharps reporting key off.
+
 usually its not noticed when using higher polyphony. e.g. 16 notes.
 this is exaggerated as Im currently **not** note stealing ... see below
-however this would NOT fix the issue, just change its behaviour.
+however this would **not** fix the issue, just change/improve its behaviour.
 
-## General: No Note stealing
-polyphony is currently a hard limit, if its set to 4, a 5th note will NOT sound.
-we could instead 'steal' the (oldest) note.
-this generally 'feels' better to most players.
+reason: this appears to be a firmware issue on eigenharps of 'late reporting'
+workaround: use more polyphony
 
-## General: Disable input
-this has not been tested throughly, so may not work at all or partially.
-report specific issues with details
+## No linux/windows supprt 
+MacOs is being used for intial release, other platforms will be tackled when this is considered stable.
+Linux is likely to be added first as its pretty much just compilation/release.
+Windows needs more thought/work so is a lower priority.
+
+
+## 64 bit only
+there are no plans to support 32 bit platform
+
+
+## Demo patches
+Ideally I'd like to replicated some of the existing EigenD patches and have similar functionality.
+however, the this is not possible (with very complex patching) using the VCV factory modules.
+e.g. creating a octave up/down button is difficult with factory modules but trivial with 3rd party modules.
+
+this is a limitation of these demos...
+later, the community can create more 'functional' patches using 3rd party modules that are closer to EigenD presets.

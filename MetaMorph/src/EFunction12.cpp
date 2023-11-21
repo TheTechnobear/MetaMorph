@@ -65,6 +65,40 @@ struct EFunction12 : Module {
         doProcess(args);
     }
 
+    void onPortChange(const PortChangeEvent& e) override {
+        if (e.connecting) {
+            switch (e.type) {
+                case Port::INPUT: {
+                    switch (e.portId) {
+                        case IN_KG_INPUT: {
+                            layoutChanged_ = true;
+                            break;
+                        }
+                        default:
+                            break;
+                    }
+                    break;
+                }
+                case Port::OUTPUT: {
+                    switch (e.portId) {
+                        case OUT_LIGHTS_OUTPUT: {
+                            refreshLeds_ = true;
+                            break;
+                        }
+                        default:
+                            break;
+                    }
+                }
+            }
+        } else {
+        }
+
+        if (e.type == Port::OUTPUT && e.portId >= OUT_F1_OUTPUT && e.portId <= OUT_F12_OUTPUT) {
+            connectedFuncs_[e.portId - OUT_F1_OUTPUT] = e.connecting;
+            refreshLeds_ = true;
+        }
+    }
+
     void doProcessBypass(const ProcessArgs& args) {
     }
 
@@ -73,10 +107,16 @@ struct EFunction12 : Module {
     MsgQueue<float> ledQueue_;
 
     bool layoutChanged_ = false;
+    bool refreshLeds_ = false;
     bool enabled_ = true;
     unsigned kg_r_ = 0, kg_c_ = 0;
 
     static constexpr unsigned MAX_FUNCS = 12;
+    bool connectedFuncs_[MAX_FUNCS] = {
+        false, false, false, false,
+        false, false, false, false,
+        false, false, false, false};
+
     struct FuncKey {
         bool state_ = false;
         bool last_key_state_ = false;
@@ -189,7 +229,6 @@ void EFunction12::doProcess(const ProcessArgs& args) {
     float kgMsg = inputs[IN_KG_INPUT].getVoltage();
     decodeKeyGroup(kgMsg, in_kg_r, in_kg_c);
 
-    layoutChanged_ = false;
     for (unsigned i = 0; i < MAX_FUNCS; i++) {
         int r = i / in_kg_c;
         int c = i % in_kg_c;
@@ -207,25 +246,23 @@ void EFunction12::doProcess(const ProcessArgs& args) {
             funcs_[i].updateKey(r, c);
         }
     }
-    bool refreshLeds = false;
-
     bool enabled = !(inputs[IN_DISABLE_INPUT].getVoltage() > 2.0f);
 
     if (enabled_ != enabled) {
         enabled_ = enabled;
         if (enabled_) {
-            refreshLeds = true;
+            refreshLeds_ = true;
         } else {
             // being disabled, nul op?
         }
     }
 
     if (layoutChanged_) {
-        refreshLeds = true;
+        refreshLeds_ = true;
         layoutChanged_ = false;
     }
 
-    if (refreshLeds) {
+    if (refreshLeds_) {
         float msg = encodeLedMsg(LED_SET_OFF, 0, 0, kg_r_, kg_c_);
         // std::cout << "layout clear leds " << kg_r_ << "," << kg_c_ << std::endl;
         ledQueue_.write(msg);
@@ -234,13 +271,14 @@ void EFunction12::doProcess(const ProcessArgs& args) {
             auto& func = funcs_[fk];
             unsigned r = func.r_;
             unsigned c = func.c_;
-            LedMsgType t = func.state_ ? LED_SET_ORANGE : LED_SET_GREEN;
+            LedMsgType t = connectedFuncs_[fk] ? (func.state_ ? LED_SET_ORANGE : LED_SET_GREEN) : LED_SET_OFF;
             if (func.valid() && r < kg_r_ && c < kg_c_) {
                 // std::cout << "layout led " << r << "," << c << " state" << t << std::endl;
                 float msg = encodeLedMsg(t, r, c, 1, 1);
                 ledQueue_.write(msg);
             }
         }
+        refreshLeds_ = false;
     }
 
     unsigned switch_type = (unsigned)params[P_TYPE_PARAM].getValue();
@@ -263,7 +301,7 @@ void EFunction12::doProcess(const ProcessArgs& args) {
                     if (func.last_key_state_ != key_state) {
                         bool changed = func.changeState(switch_type, key_state);
                         if (changed) {
-                            LedMsgType t = func.state_ ? LED_SET_ORANGE : LED_SET_GREEN;
+                            LedMsgType t = connectedFuncs_[fk] ? (func.state_ ? LED_SET_ORANGE : LED_SET_GREEN) : LED_SET_OFF;
                             // std::cout << "change led " << in_r << "," << in_c << " state" << t << std::endl;
                             float msg = encodeLedMsg(t, in_r, in_c, 1, 1);
                             ledQueue_.write(msg);
@@ -284,7 +322,7 @@ void EFunction12::doProcess(const ProcessArgs& args) {
                         unsigned r = func.r_;
                         unsigned c = func.c_;
                         if (r < kg_r_ && c < kg_c_ && func.valid()) {
-                            LedMsgType t = func.state_ ? LED_SET_ORANGE : LED_SET_GREEN;
+                            LedMsgType t = connectedFuncs_[fk] ? (func.state_ ? LED_SET_ORANGE : LED_SET_GREEN) : LED_SET_OFF;
                             // std::cout << "change led " << in_r << "," << in_c << " state" << t << std::endl;
                             float msg = encodeLedMsg(t, r, c, 1, 1);
                             ledQueue_.write(msg);
@@ -299,7 +337,7 @@ void EFunction12::doProcess(const ProcessArgs& args) {
                                 unsigned c = func.c_;
                                 func.state_ = false;
                                 if (r < kg_r_ && c < kg_c_) {
-                                    LedMsgType t = func.state_ ? LED_SET_ORANGE : LED_SET_GREEN;
+                                    LedMsgType t = connectedFuncs_[fk] ? (func.state_ ? LED_SET_ORANGE : LED_SET_GREEN) : LED_SET_OFF;
                                     // std::cout << "change led " << in_r << "," << in_c << " state" << t << std::endl;
                                     float msg = encodeLedMsg(t, r, c, 1, 1);
                                     ledQueue_.write(msg);

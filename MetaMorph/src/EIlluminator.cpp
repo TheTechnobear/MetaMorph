@@ -48,6 +48,35 @@ struct EIlluminator : Module {
         doProcess(args);
     }
 
+    void onPortChange(const PortChangeEvent& e) override {
+        if (e.connecting) {
+            switch (e.type) {
+                case Port::INPUT: {
+                    switch (e.portId) {
+                        case IN_KG_INPUT: {
+                            layoutChanged_ = true;
+                            break;
+                        }
+                        default:
+                            break;
+                    }
+                    break;
+                }
+                case Port::OUTPUT: {
+                    switch (e.portId) {
+                        case OUT_LIGHTS_OUTPUT: {
+                            refreshLeds_ = true;
+                            break;
+                        }
+                        default:
+                            break;
+                    }
+                }
+            }
+        } else {
+        }
+    }    
+    
     void doProcessBypass(const ProcessArgs& args) {}
     void doProcess(const ProcessArgs& args);
 

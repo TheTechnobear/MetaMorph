@@ -116,6 +116,45 @@ struct EDevice : Module {
         doProcess(args);
     }
 
+    /////////////////////////////////////////////////////////////////////////////////////////
+
+    void onPortChange(const PortChangeEvent& e) override {
+        if (e.connecting) return;  // only interested in disconnecting
+
+        switch (e.type) {
+            case Port::INPUT: {
+                switch (e.portId) {
+                    case IN_FUNC_LIGHTS_INPUT: {
+                        auto& q = ledQueue_[EHarp::KeyGroup::KG_FUNC];
+                        q.clear();
+                        auto& kg = harpData_.keygroups_[EHarp::KeyGroup::KG_FUNC];
+                        q.write(encodeLedMsg(LED_SET_OFF, 0, 0, kg.r_, kg.c_));
+                        break;
+                    }
+                    case IN_MAIN_LIGHTS_INPUT: {
+                        auto& q = ledQueue_[EHarp::KeyGroup::KG_MAIN];
+                        q.clear();
+                        auto& kg = harpData_.keygroups_[EHarp::KeyGroup::KG_MAIN];
+                        q.write(encodeLedMsg(LED_SET_OFF, 0, 0, kg.r_, kg.c_));
+                        break;
+                    }
+                    case IN_PERC_LIGHTS_INPUT: {
+                        auto& q = ledQueue_[EHarp::KeyGroup::KG_PERC];
+                        q.clear();
+                        auto& kg = harpData_.keygroups_[EHarp::KeyGroup::KG_PERC];
+                        q.write(encodeLedMsg(LED_SET_OFF, 0, 0, kg.r_, kg.c_));
+                        break;
+                    }
+                    default:
+                        break;
+                }
+                case Port::OUTPUT: {
+                    break;
+                }
+            }
+        }
+    }
+
     void doProcessBypass(const ProcessArgs& args) {
         int rate = args.sampleRate / 1000;  // really should be 2k, lets do a bit more
         if ((args.frame % rate) == 0) {
