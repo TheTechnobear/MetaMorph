@@ -11,21 +11,6 @@ aka observations about how to get this working !
 things like polyphony can be implemented as context menu
 however, this requires using custom json
 
-### disconnect keygroup / lights
-if we have device->splitter->scaler
-with lights and keygroup
-user expectation: disconnect KG or Lights -> LEDS all turn off
-
-but this doesn't happen...
-
-a) disconnect keygroup... 
-reason: leds off uses a region, defined by kg!
-solution: we could theoretically use kg_r,kg_c BEFORE change i.e. last voltage.
-b) disconnect lights 
-reason: once disconnected we dont have message!
-solution: always send a voltage on led... so 0v = disconnected.
-... then we can clear region when not present.
-(similar to valid key using high bit to indicate on)
 
 -----------------------------------------------------
 
@@ -34,16 +19,11 @@ LightMerge - merge multipe light sources
 becareful with KG... as we need translation?
 main purpose is multiple function modules from one split
 
-FixedLights - allow fixed lighting 
-
-
 
 -----------------------------------------------------
 
-## module - eigenHarp 
 
 ### EigenLite
-- move to using floats, so that things like breath can be bipolar, and also have calibrations
 - reduce calls to msg flush from poll? 
 
 it seems reasonable that we update leds less frequently.
@@ -65,6 +45,10 @@ bool EF_BaseStation::poll(long long t)
     return true;
 }
 
+
+
+-----------------------------------------------------
+## module - eigenHarp 
 
 
 ### fix module to one eigenharp?
@@ -92,20 +76,10 @@ custom lighting - currently fixed to root, 5th , 7th
 -----------------------------------------------------
 
 # module - function 
-looks at 4 keys, and generate gate if true
-... we may want to specify trig/gate/toggle as output
-(per output)
-
-toggle is useful for when selecting rigs/keygroups
-gate is a momentary switch
-trig cause actions e.g. increase/decrease octave
 
 
 -----------------------------------------------------
 
 # module - switch 
-very simlar to Split but switch between groups... based on selector
-
-
 
 -----------------------------------------------------
