@@ -288,7 +288,8 @@ void EDevice::doProcess(const ProcessArgs& args) {
         }
     }
 
-    int rate = args.sampleRate / 1000;  // really should be 2k, lets do a bit more
+    static constexpr int ESAMPERATE = 2000;
+    int rate = args.sampleRate / ESAMPERATE;  // 48000k = 24
     float iRate = 1.0f / float(rate);
     if ((args.frame % rate) == 0) {
         harp_->process();  // will hit callbacks
