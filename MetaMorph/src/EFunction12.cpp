@@ -230,9 +230,13 @@ void EFunction12::doProcess(const ProcessArgs& args) {
     decodeKeyGroup(kgMsg, in_kg_r, in_kg_c);
 
     for (unsigned i = 0; i < MAX_FUNCS; i++) {
-        int r = i / in_kg_c;
-        int c = i % in_kg_c;
-        layoutChanged_ |= funcs_[i].updateKey(r, c);
+        int r = -1;
+        int c = -1;
+        if (in_kg_c > 0) {
+            r = i / in_kg_c;
+            c = i % in_kg_c;
+        }
+       layoutChanged_ |= funcs_[i].updateKey(r, c);
     }
 
     if (in_kg_r != kg_r_ || in_kg_c != kg_c_) {
@@ -241,8 +245,12 @@ void EFunction12::doProcess(const ProcessArgs& args) {
         kg_c_ = in_kg_c;
 
         for (unsigned i = 0; i < MAX_FUNCS; i++) {
-            int r = i / in_kg_c;
-            int c = i % in_kg_c;
+            int r = -1;
+            int c = -1;
+            if (in_kg_c > 0) {
+                r = i / in_kg_c;
+                c = i % in_kg_c;
+            }
             funcs_[i].updateKey(r, c);
         }
     }

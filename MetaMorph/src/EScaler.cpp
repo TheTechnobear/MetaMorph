@@ -9,7 +9,7 @@ struct EScaler : Module {
     enum ParamId {
         P_ROW_MULT_PARAM,
         P_COL_MULT_PARAM,
-        P_OFFSET_PARAM,
+        P_REF_NOTE_PARAM,
         P_KEYPBR_PARAM,
         P_GLOBALPBR_PARAM,
         P_LED1_IDX_PARAM,
@@ -40,7 +40,7 @@ struct EScaler : Module {
         config(PARAMS_LEN, INPUTS_LEN, OUTPUTS_LEN, LIGHTS_LEN);
         configParam(P_ROW_MULT_PARAM, -24.f, 24.f, 1.f, "xRow");
         configParam(P_COL_MULT_PARAM, -24.0f, 24.f, 4.f, "xCol");
-        configParam(P_OFFSET_PARAM, -60.f, 60.f, 0.f, "Offset");
+        configParam(P_REF_NOTE_PARAM, -60.f, 60.f, 0.f, "Ref Note");
         configParam(P_KEYPBR_PARAM, 0.f, 48.f, 1.f, "");
         configParam(P_GLOBALPBR_PARAM, 0.f, 48.f, 12.f, "");
         configParam(P_LED1_IDX_PARAM, 0.f, 24.f, 0.f, "");
@@ -58,7 +58,7 @@ struct EScaler : Module {
 
         paramQuantities[P_ROW_MULT_PARAM]->snapEnabled = true;
         paramQuantities[P_COL_MULT_PARAM]->snapEnabled = true;
-        paramQuantities[P_OFFSET_PARAM]->snapEnabled = true;
+        paramQuantities[P_REF_NOTE_PARAM]->snapEnabled = true;
 
         paramQuantities[P_KEYPBR_PARAM]->snapEnabled = true;
         paramQuantities[P_GLOBALPBR_PARAM]->snapEnabled = true;
@@ -137,7 +137,7 @@ struct EScaler : Module {
             }
         } else {
         }
-    }    
+    }
 
     void doProcessBypass(const ProcessArgs& args) {
     }
@@ -183,13 +183,13 @@ struct EScaler : Module {
     } scaleLeds_[MAX_LED_DEG];
 
     struct {
-        int offset_ = -1;
+        int ref_note_ = -1;
         int scaleIdx_ = -1;
         int note_ = -1;
         float voct_ = 0;
     } freqCache_[16];
 
-    int offset_ = 3;
+    int ref_note_ = 3;
     float baseFreq_ = 440.f;
 };
 
@@ -205,7 +205,7 @@ struct EScalerWidget : ModuleWidget {
 
         addParam(createParamCentered<RoundBlackKnob>(mm2px(Vec(10.128, 23.806)), module, EScaler::P_ROW_MULT_PARAM));
         addParam(createParamCentered<RoundBlackKnob>(mm2px(Vec(25.725, 23.806)), module, EScaler::P_COL_MULT_PARAM));
-        addParam(createParamCentered<RoundBlackKnob>(mm2px(Vec(41.321, 23.806)), module, EScaler::P_OFFSET_PARAM));
+        addParam(createParamCentered<RoundBlackKnob>(mm2px(Vec(41.321, 23.806)), module, EScaler::P_REF_NOTE_PARAM));
         addParam(createParamCentered<RoundBlackKnob>(mm2px(Vec(18.107, 44.826)), module, EScaler::P_KEYPBR_PARAM));
         addParam(createParamCentered<RoundBlackKnob>(mm2px(Vec(33.704, 44.826)), module, EScaler::P_GLOBALPBR_PARAM));
         addParam(createParamCentered<RoundBlackKnob>(mm2px(Vec(10.128, 65.081)), module, EScaler::P_LED1_IDX_PARAM));
@@ -247,11 +247,13 @@ Model* modelEScaler = createModel<EScaler, EScalerWidget>("Scaler");
 ////////////////////////////////////////////////////////////////////////
 
 void EScaler::doProcess(const ProcessArgs& args) {
+    static constexpr float maxVoltPbV = 5.f;
+
     unsigned nChannels = std::max(1, inputs[IN_K_INPUT].getChannels());
 
     int rowM = params[P_ROW_MULT_PARAM].getValue();
     int colM = params[P_COL_MULT_PARAM].getValue();
-    int offset = params[P_OFFSET_PARAM].getValue();
+    int ref_note = params[P_REF_NOTE_PARAM].getValue();
 
     static constexpr unsigned P_LED_N = P_LED2_IDX_PARAM - P_LED1_IDX_PARAM;
 
@@ -266,15 +268,15 @@ void EScaler::doProcess(const ProcessArgs& args) {
         scaleLeds_[i].colour_ = colour;
     }
 
-    if (colM_ != colM || rowM_ != rowM || offset != offset_) {
+    if (colM_ != colM || rowM_ != rowM || ref_note != ref_note_) {
         layoutChanged_ = true;
         colM_ = colM;
         rowM_ = rowM;
-        if (offset_ != offset) {
-            offset_ = offset;
+        if (ref_note_ != ref_note) {
+            ref_note_ = ref_note;
             const float A440_REF_FREQ = 440.f;
             // offset - = C, since this C=0v in VCV
-            baseFreq_ = A440_REF_FREQ * pow(2.f, ((offset_ - 9) / 12.0));
+            baseFreq_ = A440_REF_FREQ * pow(2.f, ((ref_note - 9) / 12.0));
         }
     }
 
@@ -282,7 +284,7 @@ void EScaler::doProcess(const ProcessArgs& args) {
     float gPBR = params[P_GLOBALPBR_PARAM].getValue() / 12.0f;
 
     // assume a unipolar 10v scale?
-    float global = (inputs[IN_G_PB_INPUT].getVoltage() - 5.0f) / 5.0f;
+    float global = inputs[IN_G_PB_INPUT].getVoltage() / maxVoltPbV;
     float globalPb = global * gPBR;
 
     float kg = inputs[IN_KG_INPUT].getVoltage();
@@ -306,7 +308,7 @@ void EScaler::doProcess(const ProcessArgs& args) {
             auto& freqCache = freqCache_[ch];
 
             float voct = 0.0f;
-            if (freqCache.scaleIdx_ != scaleIdx_ || freqCache.offset_ != offset_ || freqCache.note_ != note) {
+            if (freqCache.scaleIdx_ != scaleIdx_ || freqCache.ref_note_ != ref_note_ || freqCache.note_ != note) {
                 int deg = 0;
                 int oct = 0.0f;
                 if (note >= 0) {
@@ -327,7 +329,7 @@ void EScaler::doProcess(const ProcessArgs& args) {
 
                 freqCache.note_ = note;
                 freqCache.scaleIdx_ = scaleIdx_;
-                freqCache.offset_ = offset_;
+                freqCache.ref_note_ = ref_note_;
                 freqCache.voct_ = voct;
 
                 // std::cerr << "midi " << note + 69 << " note " << note
@@ -337,9 +339,8 @@ void EScaler::doProcess(const ProcessArgs& args) {
             } else {
                 voct = freqCache.voct_;
             }
-
-            float inX = (inputs[IN_NOTE_PB_INPUT].getVoltage(ch) / 10.0f);  // +-10v
-            float xPb = (inX * abs(inX)) * xPBR ;
+            float inX = inputs[IN_NOTE_PB_INPUT].getVoltage(ch) / maxVoltPbV;  // +-5v
+            float xPb = (inX * abs(inX)) * xPBR;
             voct += xPb + globalPb;
 
             outputs[OUT_VOCT_OUTPUT].setVoltage(voct, ch);

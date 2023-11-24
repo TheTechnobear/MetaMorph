@@ -156,7 +156,8 @@ struct EDevice : Module {
     }
 
     void doProcessBypass(const ProcessArgs& args) {
-        int rate = args.sampleRate / 1000;  // really should be 2k, lets do a bit more
+        static constexpr int ESAMPERATE = 2000;
+        int rate = args.sampleRate / ESAMPERATE;  // 48000k = 24
         if ((args.frame % rate) == 0) {
             harp_->process();  // will hit callbacks
         }
@@ -209,51 +210,51 @@ struct EDeviceWidget : ModuleWidget {
         addChild(createWidget<ScrewSilver>(Vec(RACK_GRID_WIDTH, RACK_GRID_HEIGHT - RACK_GRID_WIDTH)));
         addChild(createWidget<ScrewSilver>(Vec(box.size.x - 2 * RACK_GRID_WIDTH, RACK_GRID_HEIGHT - RACK_GRID_WIDTH)));
 
-        addParam(createParamCentered<RoundBlackKnob>(mm2px(Vec(11.3, 36.87)), module, EDevice::P_FILTERTYPE_PARAM));
-        addParam(createParamCentered<RoundBlackKnob>(mm2px(Vec(28.635, 36.87)), module, EDevice::P_FILTERNUMBER_PARAM));
-        addParam(createParamCentered<RoundBlackKnob>(mm2px(Vec(11.617, 85.257)), module, EDevice::P_FUNCPOLY_PARAM));
-        addParam(createParamCentered<RoundBlackKnob>(mm2px(Vec(11.047, 101.235)), module, EDevice::P_BASEPOLY_PARAM));
-        addParam(createParamCentered<RoundBlackKnob>(mm2px(Vec(11.047, 117.11)), module, EDevice::P_PERCPOLY_PARAM));
+		addParam(createParamCentered<RoundBlackKnob>(mm2px(Vec(11.3, 26.287)), module, EDevice::P_FILTERTYPE_PARAM));
+		addParam(createParamCentered<RoundBlackKnob>(mm2px(Vec(28.635, 26.287)), module, EDevice::P_FILTERNUMBER_PARAM));
+		addParam(createParamCentered<RoundBlackKnob>(mm2px(Vec(11.088, 77.319)), module, EDevice::P_FUNCPOLY_PARAM));
+		addParam(createParamCentered<RoundBlackKnob>(mm2px(Vec(11.047, 97.531)), module, EDevice::P_BASEPOLY_PARAM));
+		addParam(createParamCentered<RoundBlackKnob>(mm2px(Vec(11.047, 118.169)), module, EDevice::P_PERCPOLY_PARAM));
 
-        addInput(createInputCentered<PJ301MPort>(mm2px(Vec(63.211, 85.891)), module, EDevice::IN_FUNC_LIGHTS_INPUT));
-        addInput(createInputCentered<PJ301MPort>(mm2px(Vec(93.453, 101.582)), module, EDevice::IN_MAIN_LIGHTS_INPUT));
-        addInput(createInputCentered<PJ301MPort>(mm2px(Vec(93.453, 117.457)), module, EDevice::IN_PERC_LIGHTS_INPUT));
+		addInput(createInputCentered<PJ301MPort>(mm2px(Vec(63.211, 77.953)), module, EDevice::IN_FUNC_LIGHTS_INPUT));
+		addInput(createInputCentered<PJ301MPort>(mm2px(Vec(93.453, 97.878)), module, EDevice::IN_MAIN_LIGHTS_INPUT));
+		addInput(createInputCentered<PJ301MPort>(mm2px(Vec(93.453, 118.516)), module, EDevice::IN_PERC_LIGHTS_INPUT));
 
-        addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(27.656, 68.006)), module, EDevice::OUT_S1_OUTPUT));
-        addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(39.734, 68.006)), module, EDevice::OUT_S2_OUTPUT));
-        addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(51.812, 68.006)), module, EDevice::OUT_P1_OUTPUT));
-        addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(63.889, 68.006)), module, EDevice::OUT_P2_OUTPUT));
-        addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(78.379, 67.864)), module, EDevice::OUT_BREATH_OUTPUT));
-        addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(27.371, 85.768)), module, EDevice::OUT_FK_OUTPUT));
-        addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(39.449, 85.768)), module, EDevice::OUT_FG_OUTPUT));
-        addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(49.805, 85.768)), module, EDevice::OUT_KG_FUNC_OUTPUT));
-        addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(27.085, 101.282)), module, EDevice::OUT_K_OUTPUT));
-        addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(39.163, 101.282)), module, EDevice::OUT_X_OUTPUT));
-        addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(51.241, 101.282)), module, EDevice::OUT_Y_OUTPUT));
-        addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(63.319, 101.282)), module, EDevice::OUT_Z_OUTPUT));
-        addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(79.171, 101.853)), module, EDevice::OUT_KG_MAIN_OUTPUT));
-        addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(27.085, 117.157)), module, EDevice::OUT_PK_OUTPUT));
-        addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(39.163, 117.157)), module, EDevice::OUT_PX_OUTPUT));
-        addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(51.241, 117.157)), module, EDevice::OUT_PY_OUTPUT));
-        addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(63.319, 117.157)), module, EDevice::OUT_PZ_OUTPUT));
-        addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(79.023, 117.259)), module, EDevice::OUT_KG_PERC_OUTPUT));
+		addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(27.656, 55.306)), module, EDevice::OUT_S1_OUTPUT));
+		addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(39.734, 55.306)), module, EDevice::OUT_S2_OUTPUT));
+		addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(51.812, 55.306)), module, EDevice::OUT_P1_OUTPUT));
+		addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(63.889, 55.306)), module, EDevice::OUT_P2_OUTPUT));
+		addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(78.379, 55.164)), module, EDevice::OUT_BREATH_OUTPUT));
+		addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(27.371, 77.831)), module, EDevice::OUT_FK_OUTPUT));
+		addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(39.449, 77.831)), module, EDevice::OUT_FG_OUTPUT));
+		addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(49.805, 77.831)), module, EDevice::OUT_KG_FUNC_OUTPUT));
+		addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(27.085, 97.578)), module, EDevice::OUT_K_OUTPUT));
+		addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(39.163, 97.578)), module, EDevice::OUT_X_OUTPUT));
+		addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(51.241, 97.578)), module, EDevice::OUT_Y_OUTPUT));
+		addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(63.319, 97.578)), module, EDevice::OUT_Z_OUTPUT));
+		addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(79.171, 98.149)), module, EDevice::OUT_KG_MAIN_OUTPUT));
+		addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(27.085, 118.216)), module, EDevice::OUT_PK_OUTPUT));
+		addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(39.163, 118.216)), module, EDevice::OUT_PX_OUTPUT));
+		addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(51.241, 118.216)), module, EDevice::OUT_PY_OUTPUT));
+		addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(63.319, 118.216)), module, EDevice::OUT_PZ_OUTPUT));
+		addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(79.023, 118.318)), module, EDevice::OUT_KG_PERC_OUTPUT));
 
-        addChild(createLightCentered<MediumLight<RedLight>>(mm2px(Vec(48.359, 31.369)), module, EDevice::LED1_LIGHT));
-        addChild(createLightCentered<MediumLight<RedLight>>(mm2px(Vec(54.538, 31.369)), module, EDevice::LED2_LIGHT));
-        addChild(createLightCentered<MediumLight<RedLight>>(mm2px(Vec(60.717, 31.369)), module, EDevice::LED3_LIGHT));
-        addChild(createLightCentered<MediumLight<RedLight>>(mm2px(Vec(66.896, 31.369)), module, EDevice::LED4_LIGHT));
-        addChild(createLightCentered<MediumLight<RedLight>>(mm2px(Vec(48.359, 37.548)), module, EDevice::LED5_LIGHT));
-        addChild(createLightCentered<MediumLight<RedLight>>(mm2px(Vec(54.538, 37.548)), module, EDevice::LED6_LIGHT));
-        addChild(createLightCentered<MediumLight<RedLight>>(mm2px(Vec(60.717, 37.548)), module, EDevice::LED7_LIGHT));
-        addChild(createLightCentered<MediumLight<RedLight>>(mm2px(Vec(66.896, 37.548)), module, EDevice::LED8_LIGHT));
-        addChild(createLightCentered<MediumLight<RedLight>>(mm2px(Vec(48.359, 43.727)), module, EDevice::LED9_LIGHT));
-        addChild(createLightCentered<MediumLight<RedLight>>(mm2px(Vec(54.538, 43.727)), module, EDevice::LED10_LIGHT));
-        addChild(createLightCentered<MediumLight<RedLight>>(mm2px(Vec(60.717, 43.727)), module, EDevice::LED11_LIGHT));
-        addChild(createLightCentered<MediumLight<RedLight>>(mm2px(Vec(66.896, 43.727)), module, EDevice::LED12_LIGHT));
-        addChild(createLightCentered<MediumLight<RedLight>>(mm2px(Vec(48.359, 49.906)), module, EDevice::LED13_LIGHT));
-        addChild(createLightCentered<MediumLight<RedLight>>(mm2px(Vec(54.538, 49.906)), module, EDevice::LED14_LIGHT));
-        addChild(createLightCentered<MediumLight<RedLight>>(mm2px(Vec(60.717, 49.906)), module, EDevice::LED15_LIGHT));
-        addChild(createLightCentered<MediumLight<RedLight>>(mm2px(Vec(66.896, 49.906)), module, EDevice::LED16_LIGHT));
+		addChild(createLightCentered<MediumLight<RedLight>>(mm2px(Vec(72.7, 20.786)), module, EDevice::LED1_LIGHT));
+		addChild(createLightCentered<MediumLight<RedLight>>(mm2px(Vec(78.88, 20.786)), module, EDevice::LED2_LIGHT));
+		addChild(createLightCentered<MediumLight<RedLight>>(mm2px(Vec(85.059, 20.786)), module, EDevice::LED3_LIGHT));
+		addChild(createLightCentered<MediumLight<RedLight>>(mm2px(Vec(91.238, 20.786)), module, EDevice::LED4_LIGHT));
+		addChild(createLightCentered<MediumLight<RedLight>>(mm2px(Vec(72.7, 26.965)), module, EDevice::LED5_LIGHT));
+		addChild(createLightCentered<MediumLight<RedLight>>(mm2px(Vec(78.88, 26.965)), module, EDevice::LED6_LIGHT));
+		addChild(createLightCentered<MediumLight<RedLight>>(mm2px(Vec(85.059, 26.965)), module, EDevice::LED7_LIGHT));
+		addChild(createLightCentered<MediumLight<RedLight>>(mm2px(Vec(91.238, 26.965)), module, EDevice::LED8_LIGHT));
+		addChild(createLightCentered<MediumLight<RedLight>>(mm2px(Vec(72.7, 33.144)), module, EDevice::LED9_LIGHT));
+		addChild(createLightCentered<MediumLight<RedLight>>(mm2px(Vec(78.88, 33.144)), module, EDevice::LED10_LIGHT));
+		addChild(createLightCentered<MediumLight<RedLight>>(mm2px(Vec(85.059, 33.144)), module, EDevice::LED11_LIGHT));
+		addChild(createLightCentered<MediumLight<RedLight>>(mm2px(Vec(91.238, 33.144)), module, EDevice::LED12_LIGHT));
+		addChild(createLightCentered<MediumLight<RedLight>>(mm2px(Vec(72.7, 39.323)), module, EDevice::LED13_LIGHT));
+		addChild(createLightCentered<MediumLight<RedLight>>(mm2px(Vec(78.88, 39.323)), module, EDevice::LED14_LIGHT));
+		addChild(createLightCentered<MediumLight<RedLight>>(mm2px(Vec(85.059, 39.323)), module, EDevice::LED15_LIGHT));
+		addChild(createLightCentered<MediumLight<RedLight>>(mm2px(Vec(91.238, 39.323)), module, EDevice::LED16_LIGHT));
     }
 };
 
@@ -312,6 +313,7 @@ void EDevice::doProcess(const ProcessArgs& args) {
                 outputs[OUT_Y_OUTPUT].setVoltage(vdata.yV_.next(iRate), voice);
                 outputs[OUT_Z_OUTPUT].setVoltage(pV, voice);
             } else {
+                lights[voice].setBrightness(0.f);
                 outputs[OUT_K_OUTPUT].setVoltage(0.f, voice);
                 outputs[OUT_X_OUTPUT].setVoltage(0.f, voice);
                 outputs[OUT_Y_OUTPUT].setVoltage(0.f, voice);

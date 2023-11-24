@@ -21,6 +21,8 @@ class keyValue {
 };
 
 class bipolarValue {
+    static constexpr float maxVolt = 5.f;
+
    public:
     bipolarValue(float x) {
         set(x);
@@ -28,11 +30,11 @@ class bipolarValue {
     }
 
     inline void set(float x) {
-        tar_ = x * 10.f;
+        tar_ = x * maxVolt;
     }
     inline float next(float stepPct_) {
         cur_ += (tar_ - cur_) * stepPct_;
-        if(cur_ > -0.0001f && cur_ < 0.0001f) cur_ = 0.0f;
+        if (cur_ > -0.0001f && cur_ < 0.0001f) cur_ = 0.0f;
         return cur_;
     }
 
@@ -42,17 +44,19 @@ class bipolarValue {
 };
 
 class unipolarValue {
+    static constexpr float maxVolt = 10.f;
+
    public:
     unipolarValue(float x) {
         set(x);
         cur_ = tar_;
     }
     inline void set(float x) {
-        tar_ = x * 10.f;
+        tar_ = x * maxVolt;
     }
     inline float next(float stepPct_) {
         cur_ += (tar_ - cur_) * stepPct_;
-        if(cur_ < 0.0001f) cur_ = 0.0f;
+        if (cur_ < 0.0001f) cur_ = 0.0f;
         return cur_;
     }
 
@@ -163,7 +167,7 @@ struct EHarp {
     static constexpr unsigned MAX_PEDAL = 2;
 
     bipolarValue breathV_ = 0.0f;
-    unipolarValue stripV_[2] = {0.0f, 0.0f};
+    bipolarValue stripV_[2] = {0.0f, 0.0f};
     unipolarValue pedalV_[2] = {0.0f, 0.0f};
     Voices<FullVoice> mainVoices_;
     Voices<FullVoice> percVoices_;
@@ -181,51 +185,64 @@ struct EHarp {
     bool translateRCtoK(unsigned kg, unsigned r, unsigned c, unsigned& course, unsigned& k) {
         unsigned kg_r = keygroups_[kg].r_;
         unsigned kg_c = keygroups_[kg].c_;
-        if (type_ == TAU) {
-            switch (kg) {
-                case KeyGroup::KG_MAIN: {
-                    // special handling for tau main group
-                    // where we have 'faked' some extra keys
-                    course = 0;
-                    if (c < 2) {
-                        if (r < 16) {
-                            k = c * 16 + r;
+
+        switch (type_) {
+            case TAU: {
+                switch (kg) {
+                    case KeyGroup::KG_MAIN: {
+                        // special handling for tau main group
+                        // where we have 'faked' some extra keys
+                        course = 0;
+                        if (c < 2) {
+                            if (r < 16) {
+                                k = c * 16 + r;
+                                return true;
+                            }
+                            // else out of range
+                        } else {
+                            if (c < kg_c && r < kg_r) {
+                                k = 32 + ((c - 2)) * 20 + r;
+                                return true;
+                            }
+                            // else out of range
+                        }
+                        break;
+                    }  // main
+                    case KeyGroup::KG_PERC: {
+                        course = 1;
+                        if (r < kg_r && c < kg_c) {
+                            k = c * kg_r + r;
+                            // k = c * kg_r + r + 72;
                             return true;
                         }
-                        // else out of range
-                    } else {
-                        if (c < kg_c && r < kg_r) {
-                            k = 32 + ((c - 2)) * 20 + r;
+                        break;
+                    }
+                    case KeyGroup::KG_FUNC: {
+                        course = 2;
+                        if (r < kg_r && c < kg_c) {
+                            k = c * kg_r + r;
                             return true;
                         }
-                        // else out of range
+                        break;
                     }
-                    break;
-                }  // main
-                case KeyGroup::KG_PERC: {
-                    course = 0;
-                    if (r < kg_r && c < kg_c) {
-                        k = c * kg_r + r + 72;
-                        return true;
-                    }
-                    break;
                 }
-                case KeyGroup::KG_FUNC: {
-                    course = 1;
-                    if (r < kg_r && c < kg_c) {
-                        k = c * kg_r + r;
-                        return true;
-                    }
-                    break;
+                break;
+            }
+            case ALPHA: {
+                if (r < kg_r && c < kg_c) {
+                    k = c * kg_r + r;
+                    course = (kg == KeyGroup::KG_PERC);
+                    return true;
+                }
+                break;
+            }
+            case PICO: {
+                if (r < kg_r && c < kg_c) {
+                    k = c * kg_r + r;
+                    course = (kg == KeyGroup::KG_FUNC);
+                    return true;
                 }
             }
-        } else {
-            if (r < kg_r && c < kg_c) {
-                k = c * kg_r + r;
-                course = (kg == KeyGroup::KG_FUNC);
-                return true;
-            }
-            // else out of range
         }
         return false;
     }
@@ -315,32 +332,43 @@ class EHarpCallback : public EigenApi::Callback {
             }
 
             case EHarp::TAU: {
-                if (course > 0) {
-                    funcKey = true;
-                    keyId = makeKeyId(key % 8, 0);
-                } else {
-                    if (key >= 72) {
-                        percKey = true;
-                        key = key - 72;
-                        keyId = makeKeyId(key % 12, 0);
-                    } else {
+                switch (course) {
+                    case 0: {
                         mainKey = true;
                         // 16,16,20,20
                         int row = key < 32 ? key % 16 : (key - 32) % 20;
                         int col = key < 32 ? key / 16 : ((key - 32) / 20) + 2;
                         keyId = makeKeyId(row, col);
+                        break;
+                    }
+                    case 1: {
+                        percKey = true;
+                        keyId = makeKeyId(key % 12, 0);
+                        break;
+                    }
+                    case 2: {
+                        funcKey = true;
+                        keyId = makeKeyId(key % 8, 0);
+                        break;
                     }
                 }
                 break;
             }
             case EHarp::ALPHA: {
-                if (key >= 120) {
-                    percKey = true;
-                    key = key - 120;
-                    keyId = makeKeyId(key % 12, 0);
-                } else {
-                    mainKey = true;
-                    keyId = makeKeyId(key % 24, key / 24);
+                switch (course) {
+                    case 0: {
+                        mainKey = true;
+                        keyId = makeKeyId(key % 24, key / 24);
+                        break;
+                    }
+                    case 1: {
+                        percKey = true;
+                        keyId = makeKeyId(key % 12, 0);
+                        break;
+                    }
+                    case 2: {
+                        break;
+                    }
                 }
                 break;
             }
@@ -394,11 +422,9 @@ class EHarpCallback : public EigenApi::Callback {
         if (strip > EHarp::MAX_STRIP) return;
         if (a) {
             harpData_.stripV_[strip - 1].set(val);
+        } else {
+            harpData_.stripV_[strip - 1].set(0.0f);
         }
-        // } else {
-        // 	// todo: abilty to hold value... rather than assume reset to 0.?
-        // 	harpData_.stripV_[strip - 1].set(0);
-        // }
     }
 
     void pedal(const char* dev, unsigned long long t, unsigned pedal, float val) override {
