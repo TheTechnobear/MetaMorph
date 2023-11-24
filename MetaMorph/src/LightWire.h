@@ -12,7 +12,7 @@ inline float encodeLedMsg(
     unsigned startr, unsigned startc,
     unsigned sizer, unsigned sizec) {
     float msg;
-    long lmsg = 0;
+    long lmsg = 7; // puts something in exp of float
     lmsg = (lmsg << 6) + (startr & 0x3f);
     lmsg = (lmsg << 6) + (startc & 0x3f);
     lmsg = (lmsg << 6) + (sizer & 0x3f);

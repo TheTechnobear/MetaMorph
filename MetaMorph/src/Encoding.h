@@ -4,7 +4,7 @@ inline float encodeKey(unsigned r, unsigned c) {
     float msg;
     char* stream = (char*)(&msg);
     stream[0] = (char)0x01;
-    stream[1] = (char)0;
+    stream[1] = (char)0x00;
     stream[2] = (char)r;
     stream[3] = (char)c;
     return msg;
@@ -36,8 +36,8 @@ inline long makeKeyId(unsigned r, unsigned c) {
 inline float encodeKeyGroup(unsigned kg_r, unsigned kg_c) {
     float msg;
     char* stream = (char*)(&msg);
-    stream[0] = (char)0;
-    stream[1] = (char)0;
+    stream[0] = (char)0x01; 
+    stream[1] = (char)0x00;
     stream[2] = (char)kg_r;
     stream[3] = (char)kg_c;
     return msg;

@@ -307,6 +307,8 @@ void ERSplit::doProcess(const ProcessArgs &args) {
     static constexpr unsigned PARAM_N = P_S2_NROW_PARAM - P_S1_NROW_PARAM;
 
     for (unsigned splitId = 0; splitId < MAX_SPLIT; splitId++) {
+        if(splitRow >= in_kg_r) continue; 
+
         auto &split = splits_[splitId];
         auto &voices = voices_[splitId];
 

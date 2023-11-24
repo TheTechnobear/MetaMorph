@@ -92,14 +92,14 @@ struct EScaler : Module {
             }
         }
 
-        for (unsigned i = 0; i < scaleNames_.size(); i++) {
-            auto& scalename = scaleNames_[i];
-            auto& scale = scales_[i];
-            std::cerr << "scale : " << scalename << std::endl;
-            for (unsigned i = 0; i < scale.get_scale_length(); i++) {
-                std::cerr << "Degree:  " << i << " Ratio: " << scale.get_ratio(i) << std::endl;
-            };
-        }
+        // for (unsigned i = 0; i < scaleNames_.size(); i++) {
+        //     auto& scalename = scaleNames_[i];
+        //     auto& scale = scales_[i];
+        //     std::cerr << "scale : " << scalename << std::endl;
+        //     for (unsigned i = 0; i < scale.get_scale_length(); i++) {
+        //         std::cerr << "Degree:  " << i << " Ratio: " << scale.get_ratio(i) << std::endl;
+        //     };
+        // }
     }
 
     void processBypass(const ProcessArgs& args) override {
