@@ -1,6 +1,6 @@
-[submodule "MetaMorph/EigenLite"]
-	path = MetaMorph/EigenLite
+[submodule "EigenLite"]
+	path =EigenLite
 	url = https://github.com/thetechnobear/EigenLite
-[submodule "MetaMorph/libscala-file"]
-	path = MetaMorph/libscala-file
+[submodule "libscala-file"]
+	path =libscala-file
 	url = https://github.com/MarkCWirt/libscala-file.git
