@@ -12,8 +12,8 @@ these are data cables, only connect to same name inputs
 encoded row/column - bit is set when valid key
 0v = not active !
 
-downstream modules can see a voice is turning off,   (*) 
-by looking for transition from valid key (high bit) to invalid (0v) 
+downstream modules can see a voice is turning off,   ( * ) 
+by looking for transition from valid key (high bit) to invalid ( 0v) 
 
 
 KEY IS NOT V/OCT.. you need SCALER to convert to V/OCT

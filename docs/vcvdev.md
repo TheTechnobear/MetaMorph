@@ -3,6 +3,11 @@ https://vcvrack.com/manual/Building
 
 you can either just use the SDK dylib or build and use your own RACK standalone build.
 
+
+
+if you are using RACK then ensure you set RACK_DIR
+
+
 build is based on make
 
 ```
@@ -42,6 +47,12 @@ brand is used for selecting/grouping in browser and on store.
 plugin is a compilation unit, so collection of modules, user does not realy see this much.
 module is what we place on canvas etc.
 
+
+
+# releasing
+for some reason building on latest macOS will cause issues on older macOS versions.
+this is being handled by releasing via github actions, which builds on older (and compatible) macOS.
+see below for more details on this
 
 # development process 
 
@@ -118,6 +129,37 @@ notes:
 the svg is used 'as is' you only need to regenerate wth createmodule if you add new components.
 ... but this is a destructive process as re-writes module.cpp
 workaround : you could write to a temp cpp file and then copy paste generated code to the 'real' module.cpp
+
+
+## using vscode
+
+setup RACK_DIR 
+code . in main directory
+
+in $RACK_DIR
+```
+cd plugins 
+ln -s "MetaMorph project directory " MetaMorph
+
+```
+
+launch task is using
+cd $RACK_DIR
+./Rack -d . 
+
+so is using MetaMorph plugin  from plugins/MetaMorph
+which you have linked with ln above, to the built version!
+
+
+## git action
+this is setup in .github/workflows/build-plugin.yml
+
+notes: 
+it uses the RackSDK which is donloaded from vcvrack.com
+it cross compiles for various targets 
+using an older version of macOS for compatiblity.
+
+its CI, a release is created when a tag is used of the for  v1.2.3
 
 
 
