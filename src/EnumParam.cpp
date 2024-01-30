@@ -85,7 +85,6 @@ void EnumParam::onDragStart(const DragStartEvent& e) {
 		return;
 
 	ParamWidget::onDragStart(e);
-	engine::ParamQuantity* pq = getParamQuantity();
 }
 
 void EnumParam::onDragEnd(const DragEndEvent& e) {
