@@ -4,74 +4,68 @@
 #include "LightWire.h"
 #include "plugin.hpp"
 
+#include "EComponents.h"
+
 struct EDevice : Module {
-    enum ParamId {
-        P_FILTERTYPE_PARAM,
-        P_FILTERNUMBER_PARAM,
-        P_FUNCPOLY_PARAM,
-        P_BASEPOLY_PARAM,
-        P_PERCPOLY_PARAM,
-        PARAMS_LEN
-    };
-    enum InputId {
-        IN_FUNC_LIGHTS_INPUT,
-        IN_MAIN_LIGHTS_INPUT,
-        IN_PERC_LIGHTS_INPUT,
-        INPUTS_LEN
-    };
-    enum OutputId {
-        OUT_S1_OUTPUT,
-        OUT_S2_OUTPUT,
-        OUT_P1_OUTPUT,
-        OUT_P2_OUTPUT,
-        OUT_BREATH_OUTPUT,
-        OUT_FK_OUTPUT,
-        OUT_FG_OUTPUT,
-        OUT_KG_FUNC_OUTPUT,
-        OUT_K_OUTPUT,
-        OUT_X_OUTPUT,
-        OUT_Y_OUTPUT,
-        OUT_Z_OUTPUT,
-        OUT_KG_MAIN_OUTPUT,
-        OUT_PK_OUTPUT,
-        OUT_PX_OUTPUT,
-        OUT_PY_OUTPUT,
-        OUT_PZ_OUTPUT,
-        OUT_KG_PERC_OUTPUT,
-        OUTPUTS_LEN
-    };
-    enum LightId {
-        LED1_LIGHT,
-        LED2_LIGHT,
-        LED3_LIGHT,
-        LED4_LIGHT,
-        LED5_LIGHT,
-        LED6_LIGHT,
-        LED7_LIGHT,
-        LED8_LIGHT,
-        LED9_LIGHT,
-        LED10_LIGHT,
-        LED11_LIGHT,
-        LED12_LIGHT,
-        LED13_LIGHT,
-        LED14_LIGHT,
-        LED15_LIGHT,
-        LED16_LIGHT,
-        LIGHTS_LEN
-    };
+	enum ParamId {
+		P_FUNCPOLY_PARAM,
+		P_BASEPOLY_PARAM,
+		P_PERCPOLY_PARAM,
+		PARAMS_LEN
+	};
+	enum InputId {
+		IN_FUNC_LIGHTS_INPUT,
+		IN_MAIN_LIGHTS_INPUT,
+		IN_PERC_LIGHTS_INPUT,
+		INPUTS_LEN
+	};
+	enum OutputId {
+		OUT_S1A_OUTPUT,
+		OUT_S1R_OUTPUT,
+		OUT_S1G_OUTPUT,
+		OUT_BREATH_OUTPUT,
+		OUT_S2A_OUTPUT,
+		OUT_S2R_OUTPUT,
+		OUT_S2G_OUTPUT,
+		OUT_P1_OUTPUT,
+		OUT_P2_OUTPUT,
+		OUT_FK_OUTPUT,
+		OUT_FG_OUTPUT,
+		OUT_KG_FUNC_OUTPUT,
+		OUT_K_OUTPUT,
+		OUT_X_OUTPUT,
+		OUT_Y_OUTPUT,
+		OUT_Z_OUTPUT,
+		OUT_KG_MAIN_OUTPUT,
+		OUT_PK_OUTPUT,
+		OUT_PX_OUTPUT,
+		OUT_PY_OUTPUT,
+		OUT_PZ_OUTPUT,
+		OUT_KG_PERC_OUTPUT,
+		OUTPUTS_LEN
+	};
+	enum LightId {
+		LED_MODE_LIGHT,
+		LED_MAIN_LIGHT,
+		LED_PERC_LIGHT,
+		LIGHTS_LEN
+	};
 
     EDevice() {
         config(PARAMS_LEN, INPUTS_LEN, OUTPUTS_LEN, LIGHTS_LEN);
         configParam(P_BASEPOLY_PARAM, 0.f, 16.f, 16.f, "");
-        configParam(P_PERCPOLY_PARAM, 0.f, 16.f, 16.f, "");
+        configParam(P_PERCPOLY_PARAM, 0.f, 16.f, 4.f, "");
         configParam(P_FUNCPOLY_PARAM, 0.f, 16.f, 4, "");
-        configSwitch(P_FILTERTYPE_PARAM, 0.f, 2.f, 0.f, "Type", {"None", "Base", "Pico"});
-        configParam(P_FILTERNUMBER_PARAM, 1.f, 5.f, 1.f, "Dev Num");
+
         configInput(IN_FUNC_LIGHTS_INPUT, "");
         configInput(IN_MAIN_LIGHTS_INPUT, "");
         configInput(IN_PERC_LIGHTS_INPUT, "");
-        configOutput(OUT_S1_OUTPUT, "");
-        configOutput(OUT_S2_OUTPUT, "");
+		configOutput(OUT_S1A_OUTPUT, "");
+		configOutput(OUT_S1R_OUTPUT, "");
+		configOutput(OUT_S1G_OUTPUT, "");
+		configOutput(OUT_S2A_OUTPUT, "");
+		configOutput(OUT_S2R_OUTPUT, "");
+		configOutput(OUT_S2G_OUTPUT, "");
         configOutput(OUT_P1_OUTPUT, "");
         configOutput(OUT_P2_OUTPUT, "");
         configOutput(OUT_BREATH_OUTPUT, "");
@@ -89,8 +83,6 @@ struct EDevice : Module {
         configOutput(OUT_PZ_OUTPUT, "");
         configOutput(OUT_KG_PERC_OUTPUT, "");
 
-        paramQuantities[P_FILTERTYPE_PARAM]->snapEnabled = true;
-        paramQuantities[P_FILTERNUMBER_PARAM]->snapEnabled = true;
         paramQuantities[P_BASEPOLY_PARAM]->snapEnabled = true;
         paramQuantities[P_PERCPOLY_PARAM]->snapEnabled = true;
         paramQuantities[P_FUNCPOLY_PARAM]->snapEnabled = true;
@@ -184,6 +176,24 @@ struct EDevice : Module {
         }
     }
 
+    json_t* dataToJson() override {
+        json_t* root = json_object();
+        json_object_set_new(root, "filterType", json_integer(filterType_));
+        json_object_set_new(root, "filterDeviceNum", json_integer(filterDeviceNum_));
+        return root;
+    }
+    void dataFromJson(json_t* rootJ) override {
+        auto jType = json_object_get(rootJ, "filterType");
+        if (jType) {
+            filterType_ = json_integer_value(jType);
+        }
+
+        auto jNum = json_object_get(rootJ, "filterDeviceNum");
+        if (jNum) {
+            filterDeviceNum_ = json_integer_value(jNum);
+        }
+    }
+
     std::shared_ptr<EigenApi::Eigenharp> harp_;
     EigenApi::FWR_Embedded firmware_;
     EHarp harpData_;
@@ -202,60 +212,95 @@ struct EDevice : Module {
 
 struct EDeviceWidget : ModuleWidget {
     EDeviceWidget(EDevice* module) {
-        setModule(module);
-        setPanel(createPanel(asset::plugin(pluginInstance, "res/EDevice.svg")));
+		setModule(module);
+		setPanel(createPanel(asset::plugin(pluginInstance, "res/EDevice.svg")));
 
-        addChild(createWidget<ScrewSilver>(Vec(RACK_GRID_WIDTH, 0)));
-        addChild(createWidget<ScrewSilver>(Vec(box.size.x - 2 * RACK_GRID_WIDTH, 0)));
-        addChild(createWidget<ScrewSilver>(Vec(RACK_GRID_WIDTH, RACK_GRID_HEIGHT - RACK_GRID_WIDTH)));
-        addChild(createWidget<ScrewSilver>(Vec(box.size.x - 2 * RACK_GRID_WIDTH, RACK_GRID_HEIGHT - RACK_GRID_WIDTH)));
+		addChild(createWidget<ScrewSilver>(Vec(RACK_GRID_WIDTH, 0)));
+		addChild(createWidget<ScrewSilver>(Vec(box.size.x - 2 * RACK_GRID_WIDTH, 0)));
+		addChild(createWidget<ScrewSilver>(Vec(RACK_GRID_WIDTH, RACK_GRID_HEIGHT - RACK_GRID_WIDTH)));
+		addChild(createWidget<ScrewSilver>(Vec(box.size.x - 2 * RACK_GRID_WIDTH, RACK_GRID_HEIGHT - RACK_GRID_WIDTH)));
 
-		addParam(createParamCentered<RoundBlackKnob>(mm2px(Vec(11.3, 26.287)), module, EDevice::P_FILTERTYPE_PARAM));
-		addParam(createParamCentered<RoundBlackKnob>(mm2px(Vec(28.635, 26.287)), module, EDevice::P_FILTERNUMBER_PARAM));
-		addParam(createParamCentered<RoundBlackKnob>(mm2px(Vec(11.088, 77.319)), module, EDevice::P_FUNCPOLY_PARAM));
-		addParam(createParamCentered<RoundBlackKnob>(mm2px(Vec(11.047, 97.531)), module, EDevice::P_BASEPOLY_PARAM));
-		addParam(createParamCentered<RoundBlackKnob>(mm2px(Vec(11.047, 118.169)), module, EDevice::P_PERCPOLY_PARAM));
+		addParam(createParamCentered<PolyCountParam>(mm2px(Vec(10.08, 65.936)), module, EDevice::P_FUNCPOLY_PARAM));
+		addParam(createParamCentered<PolyCountParam>(mm2px(Vec(10.08, 88.56)), module, EDevice::P_BASEPOLY_PARAM));
+		addParam(createParamCentered<PolyCountParam>(mm2px(Vec(10.195, 111.106)), module, EDevice::P_PERCPOLY_PARAM));
 
-		addInput(createInputCentered<PJ301MPort>(mm2px(Vec(63.211, 77.953)), module, EDevice::IN_FUNC_LIGHTS_INPUT));
-		addInput(createInputCentered<PJ301MPort>(mm2px(Vec(93.453, 97.878)), module, EDevice::IN_MAIN_LIGHTS_INPUT));
-		addInput(createInputCentered<PJ301MPort>(mm2px(Vec(93.453, 118.516)), module, EDevice::IN_PERC_LIGHTS_INPUT));
+		addInput(createInputCentered<PJ301MPort>(mm2px(Vec(82.263, 62.57)), module, EDevice::IN_FUNC_LIGHTS_INPUT));
+		addInput(createInputCentered<PJ301MPort>(mm2px(Vec(82.259, 85.041)), module, EDevice::IN_MAIN_LIGHTS_INPUT));
+		addInput(createInputCentered<PJ301MPort>(mm2px(Vec(82.264, 107.56)), module, EDevice::IN_PERC_LIGHTS_INPUT));
 
-		addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(27.656, 55.306)), module, EDevice::OUT_S1_OUTPUT));
-		addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(39.734, 55.306)), module, EDevice::OUT_S2_OUTPUT));
-		addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(51.812, 55.306)), module, EDevice::OUT_P1_OUTPUT));
-		addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(63.889, 55.306)), module, EDevice::OUT_P2_OUTPUT));
-		addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(78.379, 55.164)), module, EDevice::OUT_BREATH_OUTPUT));
-		addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(27.371, 77.831)), module, EDevice::OUT_FK_OUTPUT));
-		addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(39.449, 77.831)), module, EDevice::OUT_FG_OUTPUT));
-		addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(49.805, 77.831)), module, EDevice::OUT_KG_FUNC_OUTPUT));
-		addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(27.085, 97.578)), module, EDevice::OUT_K_OUTPUT));
-		addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(39.163, 97.578)), module, EDevice::OUT_X_OUTPUT));
-		addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(51.241, 97.578)), module, EDevice::OUT_Y_OUTPUT));
-		addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(63.319, 97.578)), module, EDevice::OUT_Z_OUTPUT));
-		addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(79.171, 98.149)), module, EDevice::OUT_KG_MAIN_OUTPUT));
-		addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(27.085, 118.216)), module, EDevice::OUT_PK_OUTPUT));
-		addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(39.163, 118.216)), module, EDevice::OUT_PX_OUTPUT));
-		addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(51.241, 118.216)), module, EDevice::OUT_PY_OUTPUT));
-		addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(63.319, 118.216)), module, EDevice::OUT_PZ_OUTPUT));
-		addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(79.023, 118.318)), module, EDevice::OUT_KG_PERC_OUTPUT));
+		addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(21.281, 22.164)), module, EDevice::OUT_S1A_OUTPUT));
+		addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(33.462, 22.164)), module, EDevice::OUT_S1R_OUTPUT));
+		addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(45.642, 22.164)), module, EDevice::OUT_S1G_OUTPUT));
+		addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(70.049, 22.164)), module, EDevice::OUT_BREATH_OUTPUT));
+		addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(21.304, 40.177)), module, EDevice::OUT_S2A_OUTPUT));
+		addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(33.507, 40.199)), module, EDevice::OUT_S2R_OUTPUT));
+		addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(45.665, 40.177)), module, EDevice::OUT_S2G_OUTPUT));
+		addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(57.889, 40.177)), module, EDevice::OUT_P1_OUTPUT));
+		addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(70.072, 40.177)), module, EDevice::OUT_P2_OUTPUT));
+		addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(21.303, 62.571)), module, EDevice::OUT_FK_OUTPUT));
+		addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(33.495, 62.571)), module, EDevice::OUT_FG_OUTPUT));
+		addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(70.071, 62.57)), module, EDevice::OUT_KG_FUNC_OUTPUT));
+		addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(21.299, 85.041)), module, EDevice::OUT_K_OUTPUT));
+		addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(33.421, 85.041)), module, EDevice::OUT_X_OUTPUT));
+		addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(45.544, 85.041)), module, EDevice::OUT_Y_OUTPUT));
+		addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(57.945, 85.041)), module, EDevice::OUT_Z_OUTPUT));
+		addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(70.069, 85.041)), module, EDevice::OUT_KG_MAIN_OUTPUT));
+		addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(21.303, 107.56)), module, EDevice::OUT_PK_OUTPUT));
+		addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(33.482, 107.56)), module, EDevice::OUT_PX_OUTPUT));
+		addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(45.688, 107.56)), module, EDevice::OUT_PY_OUTPUT));
+		addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(57.88, 107.56)), module, EDevice::OUT_PZ_OUTPUT));
+		addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(70.072, 107.56)), module, EDevice::OUT_KG_PERC_OUTPUT));
 
-		addChild(createLightCentered<MediumLight<RedLight>>(mm2px(Vec(72.7, 20.786)), module, EDevice::LED1_LIGHT));
-		addChild(createLightCentered<MediumLight<RedLight>>(mm2px(Vec(78.88, 20.786)), module, EDevice::LED2_LIGHT));
-		addChild(createLightCentered<MediumLight<RedLight>>(mm2px(Vec(85.059, 20.786)), module, EDevice::LED3_LIGHT));
-		addChild(createLightCentered<MediumLight<RedLight>>(mm2px(Vec(91.238, 20.786)), module, EDevice::LED4_LIGHT));
-		addChild(createLightCentered<MediumLight<RedLight>>(mm2px(Vec(72.7, 26.965)), module, EDevice::LED5_LIGHT));
-		addChild(createLightCentered<MediumLight<RedLight>>(mm2px(Vec(78.88, 26.965)), module, EDevice::LED6_LIGHT));
-		addChild(createLightCentered<MediumLight<RedLight>>(mm2px(Vec(85.059, 26.965)), module, EDevice::LED7_LIGHT));
-		addChild(createLightCentered<MediumLight<RedLight>>(mm2px(Vec(91.238, 26.965)), module, EDevice::LED8_LIGHT));
-		addChild(createLightCentered<MediumLight<RedLight>>(mm2px(Vec(72.7, 33.144)), module, EDevice::LED9_LIGHT));
-		addChild(createLightCentered<MediumLight<RedLight>>(mm2px(Vec(78.88, 33.144)), module, EDevice::LED10_LIGHT));
-		addChild(createLightCentered<MediumLight<RedLight>>(mm2px(Vec(85.059, 33.144)), module, EDevice::LED11_LIGHT));
-		addChild(createLightCentered<MediumLight<RedLight>>(mm2px(Vec(91.238, 33.144)), module, EDevice::LED12_LIGHT));
-		addChild(createLightCentered<MediumLight<RedLight>>(mm2px(Vec(72.7, 39.323)), module, EDevice::LED13_LIGHT));
-		addChild(createLightCentered<MediumLight<RedLight>>(mm2px(Vec(78.88, 39.323)), module, EDevice::LED14_LIGHT));
-		addChild(createLightCentered<MediumLight<RedLight>>(mm2px(Vec(85.059, 39.323)), module, EDevice::LED15_LIGHT));
-		addChild(createLightCentered<MediumLight<RedLight>>(mm2px(Vec(91.238, 39.323)), module, EDevice::LED16_LIGHT));
+		addChild(createLightCentered<MediumLight<GreenLight>>(mm2px(Vec(14.405, 59.634)), module, EDevice::LED_MODE_LIGHT));
+		addChild(createLightCentered<MediumLight<GreenLight>>(mm2px(Vec(14.397, 82.128)), module, EDevice::LED_MAIN_LIGHT));
+		addChild(createLightCentered<MediumLight<GreenLight>>(mm2px(Vec(14.389, 104.634)), module, EDevice::LED_PERC_LIGHT));
     }
+
+
+    void appendContextMenu(Menu* menu) override {
+        auto module = getModule<EDevice>();
+
+        menu->addChild(new MenuSeparator);
+
+        std::vector<std::string> deviceTypes= {
+            "Any",
+            "Alpha/Tau only",
+            "Pico only"
+        };
+
+
+        std::vector<std::string> deviceNumber= {
+            "All",
+            "1",
+            "2",
+            "3",
+            "4"
+        };
+
+
+        menu->addChild(
+            createIndexSubmenuItem(
+                "Device Type",
+                deviceTypes,
+                [=]() {
+                    return module->filterType_;
+                },
+                [=](int idx) {
+                    module->filterType_= idx;
+                }));
+
+        menu->addChild(
+            createIndexSubmenuItem(
+                "Device Number",
+                deviceNumber,
+                [=]() {
+                    return module->filterDeviceNum_;
+                },
+                [=](int idx) {
+                    module->filterDeviceNum_= idx;
+                }));
+    }
+
 };
 
 Model* modelEDevice = createModel<EDevice, EDeviceWidget>("EigenHarp");
@@ -267,26 +312,22 @@ void EDevice::doProcess(const ProcessArgs& args) {
     maxPercVoices_ = params[P_PERCPOLY_PARAM].getValue();
     maxFuncVoices_ = params[P_FUNCPOLY_PARAM].getValue();
 
-    if (params[P_FILTERTYPE_PARAM].getValue() != filterType_ || params[P_FILTERNUMBER_PARAM].getValue() != filterDeviceNum_) {
-        filterType_ = params[P_FILTERTYPE_PARAM].getValue();
-        filterDeviceNum_ = params[P_FILTERNUMBER_PARAM].getValue();
 
-        switch (filterType_) {
-            case 0: {
-                harp_->setDeviceFilter(false, 0);
-                break;
-            }
-            case 1: {
-                harp_->setDeviceFilter(false, filterDeviceNum_);
-                break;
-            }
-            case 2: {
-                harp_->setDeviceFilter(true, filterDeviceNum_);
-                break;
-            }
-            default:
-                break;
+    switch (filterType_) {
+        case 0: {
+            harp_->setDeviceFilter(false, 0);
+            break;
         }
+        case 1: {
+            harp_->setDeviceFilter(false, filterDeviceNum_);
+            break;
+        }
+        case 2: {
+            harp_->setDeviceFilter(true, filterDeviceNum_);
+            break;
+        }
+        default:
+            break;
     }
 
     static constexpr int ESAMPERATE = 2000;
@@ -300,13 +341,13 @@ void EDevice::doProcess(const ProcessArgs& args) {
         unsigned nChannels = maxMainVoices_ < EHarp::MAX_VOICE ? maxMainVoices_ : EHarp::MAX_VOICE;
         auto& keys = harpData_.mainVoices_;
 
+        bool ledActive = false;
         for (unsigned voice = 0; voice < nChannels; voice++) {
             auto& vdata = keys.voices_[voice];
 
             if (vdata.active_) {
+                ledActive = true;
                 float pV = vdata.pV_.next(iRate);
-                lights[voice].setBrightness(pV / 10.0f);
-
                 float key = encodeKeyId(vdata.key_);
                 outputs[OUT_K_OUTPUT].setVoltage(key, voice);
                 outputs[OUT_X_OUTPUT].setVoltage(vdata.rV_.next(iRate), voice);
@@ -326,6 +367,8 @@ void EDevice::doProcess(const ProcessArgs& args) {
         outputs[OUT_Y_OUTPUT].setChannels(nChannels);
         outputs[OUT_Z_OUTPUT].setChannels(nChannels);
 
+        lights[LED_MAIN_LIGHT].setBrightness(ledActive ? 1.0f : 0.0f);
+
         auto& kg = harpData_.keygroups_[EHarp::KeyGroup::KG_MAIN];
         outputs[OUT_KG_MAIN_OUTPUT].setVoltage(encodeKeyGroup(kg.r_, kg.c_));
 
@@ -340,10 +383,12 @@ void EDevice::doProcess(const ProcessArgs& args) {
         unsigned nChannels = maxPercVoices_ < EHarp::MAX_VOICE ? maxPercVoices_ : EHarp::MAX_VOICE;
         auto& keys = harpData_.percVoices_;
 
+        bool ledActive = false;
         for (unsigned voice = 0; voice < nChannels; voice++) {
             auto& vdata = keys.voices_[voice];
 
             if (vdata.active_) {
+                ledActive = true;
                 float key = encodeKeyId(vdata.key_);
                 outputs[OUT_PK_OUTPUT].setVoltage(key, voice);
                 outputs[OUT_PX_OUTPUT].setVoltage(vdata.rV_.next(iRate), voice);
@@ -361,6 +406,7 @@ void EDevice::doProcess(const ProcessArgs& args) {
         outputs[OUT_PX_OUTPUT].setChannels(nChannels);
         outputs[OUT_PY_OUTPUT].setChannels(nChannels);
         outputs[OUT_PZ_OUTPUT].setChannels(nChannels);
+        lights[LED_PERC_LIGHT].setBrightness(ledActive ? 1.0f : 0.0f);
 
         auto& kg = harpData_.keygroups_[EHarp::KeyGroup::KG_PERC];
         outputs[OUT_KG_PERC_OUTPUT].setVoltage(encodeKeyGroup(kg.r_, kg.c_));
@@ -371,6 +417,7 @@ void EDevice::doProcess(const ProcessArgs& args) {
     }
 
     {  // func voices
+        bool ledActive = false;
         unsigned nChannels = maxFuncVoices_ < EHarp::MAX_VOICE ? maxFuncVoices_ : EHarp::MAX_VOICE;
         auto& keys = harpData_.funcVoices_;
 
@@ -378,6 +425,7 @@ void EDevice::doProcess(const ProcessArgs& args) {
             auto& vdata = keys.voices_[voice];
             float key = encodeKeyId(vdata.key_);
             if (vdata.active_) {
+                ledActive = true;
                 outputs[OUT_FK_OUTPUT].setVoltage(key, voice);
                 outputs[OUT_FG_OUTPUT].setVoltage(vdata.actV_.next(iRate), voice);
             } else {
@@ -388,6 +436,8 @@ void EDevice::doProcess(const ProcessArgs& args) {
 
         outputs[OUT_FK_OUTPUT].setChannels(nChannels);
         outputs[OUT_FG_OUTPUT].setChannels(nChannels);
+        lights[LED_MODE_LIGHT].setBrightness(ledActive ? 1.0f : 0.0f);
+
 
         auto& kg = harpData_.keygroups_[EHarp::KeyGroup::KG_FUNC];
         outputs[OUT_KG_FUNC_OUTPUT].setVoltage(encodeKeyGroup(kg.r_, kg.c_));
@@ -408,8 +458,12 @@ void EDevice::doProcess(const ProcessArgs& args) {
 
     outputs[OUT_BREATH_OUTPUT].setVoltage(harpData_.breathV_.next(iRate));
 
-    outputs[OUT_S1_OUTPUT].setVoltage(harpData_.stripV_[0].next(iRate));
-    outputs[OUT_S2_OUTPUT].setVoltage(harpData_.stripV_[1].next(iRate));
+    outputs[OUT_S1A_OUTPUT].setVoltage(harpData_.stripV_[0].next(iRate));
+    outputs[OUT_S1R_OUTPUT].setVoltage(harpData_.stripR_[0].next(iRate));
+    outputs[OUT_S1G_OUTPUT].setVoltage(harpData_.stripA_[0] ? 10.0f : 0.0f);
+    outputs[OUT_S2A_OUTPUT].setVoltage(harpData_.stripV_[1].next(iRate));
+    outputs[OUT_S2R_OUTPUT].setVoltage(harpData_.stripR_[1].next(iRate));
+    outputs[OUT_S2G_OUTPUT].setVoltage(harpData_.stripA_[1] ? 10.0f : 0.0f);
 
     outputs[OUT_P1_OUTPUT].setVoltage(harpData_.pedalV_[0].next(iRate));
     outputs[OUT_P2_OUTPUT].setVoltage(harpData_.pedalV_[1].next(iRate));

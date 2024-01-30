@@ -168,6 +168,8 @@ struct EHarp {
 
     bipolarValue breathV_ = 0.0f;
     bipolarValue stripV_[2] = {0.0f, 0.0f};
+    bipolarValue stripR_[2] = {0.0f, 0.0f};
+    bool stripA_[2] = {false, false};
     unipolarValue pedalV_[2] = {0.0f, 0.0f};
     Voices<FullVoice> mainVoices_;
     Voices<FullVoice> percVoices_;
@@ -420,11 +422,11 @@ class EHarpCallback : public EigenApi::Callback {
         if (harpData_.lastDevice_ != dev) return;
 
         if (strip > EHarp::MAX_STRIP) return;
-        if (a) {
-            harpData_.stripV_[strip - 1].set(val);
-        } else {
-            harpData_.stripV_[strip - 1].set(0.0f);
-        }
+
+        harpData_.stripA_[strip - 1]= a;
+        float lastValue = harpData_.stripV_[strip - 1].next(0.0f);
+        harpData_.stripV_[strip - 1].set(val);
+        harpData_.stripR_[strip - 1].set(val-lastValue);
     }
 
     void pedal(const char* dev, unsigned long long t, unsigned pedal, float val) override {

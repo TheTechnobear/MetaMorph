@@ -77,6 +77,8 @@
         "charconv": "cpp",
         "fstream": "cpp",
         "regex": "cpp",
-        "__memory": "cpp"
-    }
+        "__memory": "cpp",
+        "queue": "cpp"
+    },
+    "cmake.sourceDirectory": "/Users/kodiak/projects/MetaMorph/EigenLite"
 }
