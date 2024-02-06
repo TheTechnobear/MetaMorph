@@ -12,13 +12,13 @@ aka observations about how to get this working !
 / EIlluminator
 / ESwitch
 / EFunction
-0 ERSplit - Row splitter 
+/ ERSplit - Row splitter 
 / EFunction12
 / EScaler
 
 notes:
 ESwitch : leds incorrectly labelled
-
+ERSplit : leds incorrectly labelled
 
 ## general
 ### use menu to reduce parameters
