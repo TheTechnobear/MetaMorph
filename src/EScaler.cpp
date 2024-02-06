@@ -7,17 +7,17 @@
 
 struct EScaler : Module {
     enum ParamId {
-        P_ROW_MULT_PARAM,
-        P_COL_MULT_PARAM,
-        P_REF_NOTE_PARAM,
-        P_KEYPBR_PARAM,
-        P_GLOBALPBR_PARAM,
-        P_LED1_IDX_PARAM,
-        P_LED2_IDX_PARAM,
-        P_LED3_IDX_PARAM,
-        P_LED1_COLOUR_PARAM,
-        P_LED2_COLOUR_PARAM,
-        P_LED3_COLOUR_PARAM,
+		P_ROW_MULT_PARAM,
+		P_COL_MULT_PARAM,
+		P_KEYPBR_PARAM,
+		P_GLOBALPBR_PARAM,
+		P_REF_NOTE_PARAM,
+		P_LED1_IDX_PARAM,
+		P_LED2_IDX_PARAM,
+		P_LED3_IDX_PARAM,
+		P_LED2_COLOUR_PARAM,
+		P_LED1_COLOUR_PARAM,
+		P_LED3_COLOUR_PARAM,
         PARAMS_LEN
     };
     enum InputId {
@@ -27,6 +27,7 @@ struct EScaler : Module {
         IN_KG_INPUT,
         INPUTS_LEN
     };
+
     enum OutputId {
         OUT_VOCT_OUTPUT,
         OUT_LIGHTS_OUTPUT,
@@ -66,9 +67,9 @@ struct EScaler : Module {
         paramQuantities[P_LED1_IDX_PARAM]->snapEnabled = true;
         paramQuantities[P_LED2_IDX_PARAM]->snapEnabled = true;
         paramQuantities[P_LED3_IDX_PARAM]->snapEnabled = true;
-        paramQuantities[P_LED1_COLOUR_PARAM]->snapEnabled = true;
-        paramQuantities[P_LED2_COLOUR_PARAM]->snapEnabled = true;
-        paramQuantities[P_LED3_COLOUR_PARAM]->snapEnabled = true;
+        // paramQuantities[P_LED1_COLOUR_PARAM]->snapEnabled = true;
+        // paramQuantities[P_LED2_COLOUR_PARAM]->snapEnabled = true;
+        // paramQuantities[P_LED3_COLOUR_PARAM]->snapEnabled = true;
 
         auto dir = asset::plugin(pluginInstance, "res/scales");
         auto files = system::getEntries(dir);
@@ -193,35 +194,47 @@ struct EScaler : Module {
     float baseFreq_ = 440.f;
 };
 
+struct LedSwitch : app::SvgSwitch {
+	LedSwitch() {
+        auto plugin = pluginInstance;
+
+		shadow->opacity = 0.0;
+		addFrame(Svg::load(asset::plugin(plugin,"res/components/led/LED_OFF.svg")));
+		addFrame(Svg::load(asset::plugin(plugin,"res/components/led/LED_GREEN.svg")));
+		addFrame(Svg::load(asset::plugin(plugin,"res/components/led/LED_RED.svg")));
+		addFrame(Svg::load(asset::plugin(plugin,"res/components/led/LED_ORANGE.svg")));
+	}
+};
+
 struct EScalerWidget : ModuleWidget {
     EScalerWidget(EScaler* module) {
-        setModule(module);
-        setPanel(createPanel(asset::plugin(pluginInstance, "res/EScaler.svg")));
+ 		setModule(module);
+		setPanel(createPanel(asset::plugin(pluginInstance, "res/EScaler.svg")));
 
-        addChild(createWidget<ScrewSilver>(Vec(RACK_GRID_WIDTH, 0)));
-        addChild(createWidget<ScrewSilver>(Vec(box.size.x - 2 * RACK_GRID_WIDTH, 0)));
-        addChild(createWidget<ScrewSilver>(Vec(RACK_GRID_WIDTH, RACK_GRID_HEIGHT - RACK_GRID_WIDTH)));
-        addChild(createWidget<ScrewSilver>(Vec(box.size.x - 2 * RACK_GRID_WIDTH, RACK_GRID_HEIGHT - RACK_GRID_WIDTH)));
+		addChild(createWidget<ScrewSilver>(Vec(RACK_GRID_WIDTH, 0)));
+		addChild(createWidget<ScrewSilver>(Vec(box.size.x - 2 * RACK_GRID_WIDTH, 0)));
+		addChild(createWidget<ScrewSilver>(Vec(RACK_GRID_WIDTH, RACK_GRID_HEIGHT - RACK_GRID_WIDTH)));
+		addChild(createWidget<ScrewSilver>(Vec(box.size.x - 2 * RACK_GRID_WIDTH, RACK_GRID_HEIGHT - RACK_GRID_WIDTH)));
 
-        addParam(createParamCentered<RoundBlackKnob>(mm2px(Vec(10.128, 23.806)), module, EScaler::P_ROW_MULT_PARAM));
-        addParam(createParamCentered<RoundBlackKnob>(mm2px(Vec(25.725, 23.806)), module, EScaler::P_COL_MULT_PARAM));
-        addParam(createParamCentered<RoundBlackKnob>(mm2px(Vec(41.321, 23.806)), module, EScaler::P_REF_NOTE_PARAM));
-        addParam(createParamCentered<RoundBlackKnob>(mm2px(Vec(18.107, 44.826)), module, EScaler::P_KEYPBR_PARAM));
-        addParam(createParamCentered<RoundBlackKnob>(mm2px(Vec(33.704, 44.826)), module, EScaler::P_GLOBALPBR_PARAM));
-        addParam(createParamCentered<RoundBlackKnob>(mm2px(Vec(10.128, 65.081)), module, EScaler::P_LED1_IDX_PARAM));
-        addParam(createParamCentered<RoundBlackKnob>(mm2px(Vec(25.725, 65.081)), module, EScaler::P_LED2_IDX_PARAM));
-        addParam(createParamCentered<RoundBlackKnob>(mm2px(Vec(41.321, 65.081)), module, EScaler::P_LED3_IDX_PARAM));
-        addParam(createParamCentered<RoundBlackKnob>(mm2px(Vec(10.128, 80.427)), module, EScaler::P_LED1_COLOUR_PARAM));
-        addParam(createParamCentered<RoundBlackKnob>(mm2px(Vec(25.725, 80.427)), module, EScaler::P_LED2_COLOUR_PARAM));
-        addParam(createParamCentered<RoundBlackKnob>(mm2px(Vec(41.321, 80.427)), module, EScaler::P_LED3_COLOUR_PARAM));
+		addParam(createParamCentered<RoundBlackKnob>(mm2px(Vec(22.285, 19.164)), module, EScaler::P_ROW_MULT_PARAM));
+		addParam(createParamCentered<RoundBlackKnob>(mm2px(Vec(34.819, 19.164)), module, EScaler::P_COL_MULT_PARAM));
+		addParam(createParamCentered<RoundBlackKnob>(mm2px(Vec(11.993, 41.514)), module, EScaler::P_KEYPBR_PARAM));
+		addParam(createParamCentered<RoundBlackKnob>(mm2px(Vec(24.527, 41.514)), module, EScaler::P_GLOBALPBR_PARAM));
+		addParam(createParamCentered<RoundBlackKnob>(mm2px(Vec(45.289, 41.514)), module, EScaler::P_REF_NOTE_PARAM));
+		addParam(createParamCentered<RoundBlackKnob>(mm2px(Vec(21.667, 63.84)), module, EScaler::P_LED1_IDX_PARAM));
+		addParam(createParamCentered<RoundBlackKnob>(mm2px(Vec(34.202, 63.84)), module, EScaler::P_LED2_IDX_PARAM));
+		addParam(createParamCentered<RoundBlackKnob>(mm2px(Vec(46.736, 63.84)), module, EScaler::P_LED3_IDX_PARAM));
+		addParam(createParam<LedSwitch>(mm2px(Vec(17.603, 69.502)), module, EScaler::P_LED2_COLOUR_PARAM));
+		addParam(createParam<LedSwitch>(mm2px(Vec(30.138, 69.502)), module, EScaler::P_LED1_COLOUR_PARAM));
+		addParam(createParam<LedSwitch>(mm2px(Vec(42.672, 69.54)), module, EScaler::P_LED3_COLOUR_PARAM));
 
-        addInput(createInputCentered<PJ301MPort>(mm2px(Vec(6.705, 101.282)), module, EScaler::IN_K_INPUT));
-        addInput(createInputCentered<PJ301MPort>(mm2px(Vec(18.782, 101.282)), module, EScaler::IN_NOTE_PB_INPUT));
-        addInput(createInputCentered<PJ301MPort>(mm2px(Vec(30.86, 101.282)), module, EScaler::IN_G_PB_INPUT));
-        addInput(createInputCentered<PJ301MPort>(mm2px(Vec(44.079, 101.526)), module, EScaler::IN_KG_INPUT));
+		addInput(createInputCentered<PJ301MPort>(mm2px(Vec(9.133, 87.98)), module, EScaler::IN_K_INPUT));
+		addInput(createInputCentered<PJ301MPort>(mm2px(Vec(21.667, 87.98)), module, EScaler::IN_NOTE_PB_INPUT));
+		addInput(createInputCentered<PJ301MPort>(mm2px(Vec(34.202, 87.98)), module, EScaler::IN_G_PB_INPUT));
+		addInput(createInputCentered<PJ301MPort>(mm2px(Vec(46.736, 87.98)), module, EScaler::IN_KG_INPUT));
 
-        addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(7.275, 117.83)), module, EScaler::OUT_VOCT_OUTPUT));
-        addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(43.509, 117.83)), module, EScaler::OUT_LIGHTS_OUTPUT));
+		addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(9.133, 107.454)), module, EScaler::OUT_VOCT_OUTPUT));
+		addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(46.705, 107.454)), module, EScaler::OUT_LIGHTS_OUTPUT));
     }
 
     void appendContextMenu(Menu* menu) override {

@@ -22,7 +22,7 @@ struct EFunction : Module {
         IN_K_INPUT,
         IN_GATE_INPUT,
         IN_KG_INPUT,
-        IN_DISABLE_INPUT,
+        IN_ENABLE_INPUT,
         INPUTS_LEN
     };
     enum OutputId {
@@ -51,7 +51,7 @@ struct EFunction : Module {
         configInput(IN_K_INPUT, "");
         configInput(IN_GATE_INPUT, "");
         configInput(IN_KG_INPUT, "");
-        configInput(IN_DISABLE_INPUT, "");
+        configInput(IN_ENABLE_INPUT, "");
         configOutput(OUT_F1_OUTPUT, "");
         configOutput(OUT_F2_OUTPUT, "");
         configOutput(OUT_F3_OUTPUT, "");
@@ -197,31 +197,26 @@ struct EFunctionWidget : ModuleWidget {
         setModule(module);
         setPanel(createPanel(asset::plugin(pluginInstance, "res/EFunction.svg")));
 
-        addChild(createWidget<ScrewSilver>(Vec(RACK_GRID_WIDTH, 0)));
-        addChild(createWidget<ScrewSilver>(Vec(box.size.x - 2 * RACK_GRID_WIDTH, 0)));
-        addChild(createWidget<ScrewSilver>(Vec(RACK_GRID_WIDTH, RACK_GRID_HEIGHT - RACK_GRID_WIDTH)));
-        addChild(createWidget<ScrewSilver>(Vec(box.size.x - 2 * RACK_GRID_WIDTH, RACK_GRID_HEIGHT - RACK_GRID_WIDTH)));
+		addParam(createParamCentered<CKSSThree>(mm2px(Vec(27.94, 17.826)), module, EFunction::P_TYPE_PARAM));
+		addParam(createParamCentered<RoundBlackKnob>(mm2px(Vec(9.133, 32.391)), module, EFunction::P_F1_R_PARAM));
+		addParam(createParamCentered<RoundBlackKnob>(mm2px(Vec(21.667, 32.391)), module, EFunction::P_F1_C_PARAM));
+		addParam(createParamCentered<RoundBlackKnob>(mm2px(Vec(34.194, 32.391)), module, EFunction::P_F2_R_PARAM));
+		addParam(createParamCentered<RoundBlackKnob>(mm2px(Vec(46.729, 32.391)), module, EFunction::P_F2_C_PARAM));
+		addParam(createParamCentered<RoundBlackKnob>(mm2px(Vec(9.133, 53.391)), module, EFunction::P_F3_R_PARAM));
+		addParam(createParamCentered<RoundBlackKnob>(mm2px(Vec(21.667, 53.391)), module, EFunction::P_F3_C_PARAM));
+		addParam(createParamCentered<RoundBlackKnob>(mm2px(Vec(34.194, 53.391)), module, EFunction::P_F4_R_PARAM));
+		addParam(createParamCentered<RoundBlackKnob>(mm2px(Vec(46.729, 53.391)), module, EFunction::P_F4_C_PARAM));
 
-        addParam(createParamCentered<RoundBlackKnob>(mm2px(Vec(25.269, 23.28)), module, EFunction::P_TYPE_PARAM));
-        addParam(createParamCentered<RoundBlackKnob>(mm2px(Vec(6.175, 41.801)), module, EFunction::P_F1_R_PARAM));
-        addParam(createParamCentered<RoundBlackKnob>(mm2px(Vec(31.77, 41.659)), module, EFunction::P_F2_R_PARAM));
-        addParam(createParamCentered<RoundBlackKnob>(mm2px(Vec(18.919, 41.801)), module, EFunction::P_F1_C_PARAM));
-        addParam(createParamCentered<RoundBlackKnob>(mm2px(Vec(43.943, 41.659)), module, EFunction::P_F2_C_PARAM));
-        addParam(createParamCentered<RoundBlackKnob>(mm2px(Vec(6.175, 61.909)), module, EFunction::P_F3_R_PARAM));
-        addParam(createParamCentered<RoundBlackKnob>(mm2px(Vec(31.77, 61.767)), module, EFunction::P_F4_R_PARAM));
-        addParam(createParamCentered<RoundBlackKnob>(mm2px(Vec(18.919, 61.909)), module, EFunction::P_F3_C_PARAM));
-        addParam(createParamCentered<RoundBlackKnob>(mm2px(Vec(43.943, 61.767)), module, EFunction::P_F4_C_PARAM));
+		addInput(createInputCentered<PJ301MPort>(mm2px(Vec(9.163, 69.937)), module, EFunction::IN_K_INPUT));
+		addInput(createInputCentered<PJ301MPort>(mm2px(Vec(21.667, 69.937)), module, EFunction::IN_GATE_INPUT));
+		addInput(createInputCentered<PJ301MPort>(mm2px(Vec(46.766, 69.937)), module, EFunction::IN_KG_INPUT));
+		addInput(createInputCentered<PJ301MPort>(mm2px(Vec(9.163, 107.491)), module, EFunction::IN_ENABLE_INPUT));
 
-        addInput(createInputCentered<PJ301MPort>(mm2px(Vec(6.705, 80.645)), module, EFunction::IN_K_INPUT));
-        addInput(createInputCentered<PJ301MPort>(mm2px(Vec(18.782, 80.645)), module, EFunction::IN_GATE_INPUT));
-        addInput(createInputCentered<PJ301MPort>(mm2px(Vec(43.217, 80.645)), module, EFunction::IN_KG_INPUT));
-        addInput(createInputCentered<PJ301MPort>(mm2px(Vec(7.275, 118.359)), module, EFunction::IN_DISABLE_INPUT));
-
-        addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(7.275, 100.367)), module, EFunction::OUT_F1_OUTPUT));
-        addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(19.353, 100.367)), module, EFunction::OUT_F2_OUTPUT));
-        addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(31.431, 100.367)), module, EFunction::OUT_F3_OUTPUT));
-        addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(43.509, 100.367)), module, EFunction::OUT_F4_OUTPUT));
-        addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(43.509, 118.359)), module, EFunction::OUT_LIGHTS_OUTPUT));
+		addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(9.163, 88.0)), module, EFunction::OUT_F1_OUTPUT));
+		addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(21.667, 88.0)), module, EFunction::OUT_F2_OUTPUT));
+		addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(34.194, 88.0)), module, EFunction::OUT_F3_OUTPUT));
+		addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(46.766, 88.0)), module, EFunction::OUT_F4_OUTPUT));
+		addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(46.766, 107.491)), module, EFunction::OUT_LIGHTS_OUTPUT));
     }
 };
 
@@ -244,7 +239,7 @@ void EFunction::doProcess(const ProcessArgs& args) {
         kg_c_ = in_kg_c;
     }
 
-    bool enabled = !(inputs[IN_DISABLE_INPUT].getVoltage() > 2.0f);
+    bool enabled = !(inputs[IN_ENABLE_INPUT].getVoltage() > 2.0f);
 
     if (enabled_ != enabled) {
         enabled_ = enabled;

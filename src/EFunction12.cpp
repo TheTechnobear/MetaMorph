@@ -12,7 +12,7 @@ struct EFunction12 : Module {
         IN_K_INPUT,
         IN_GATE_INPUT,
         IN_KG_INPUT,
-        IN_DISABLE_INPUT,
+        IN_ENABLE_INPUT,
         INPUTS_LEN
     };
     enum OutputId {
@@ -41,7 +41,7 @@ struct EFunction12 : Module {
         configInput(IN_K_INPUT, "");
         configInput(IN_GATE_INPUT, "");
         configInput(IN_KG_INPUT, "");
-        configInput(IN_DISABLE_INPUT, "");
+        configInput(IN_ENABLE_INPUT, "");
         configOutput(OUT_F1_OUTPUT, "");
         configOutput(OUT_F2_OUTPUT, "");
         configOutput(OUT_F3_OUTPUT, "");
@@ -192,31 +192,29 @@ struct EFunction12Widget : ModuleWidget {
         setModule(module);
         setPanel(createPanel(asset::plugin(pluginInstance, "res/EFunction12.svg")));
 
-        addChild(createWidget<ScrewSilver>(Vec(RACK_GRID_WIDTH, 0)));
-        addChild(createWidget<ScrewSilver>(Vec(box.size.x - 2 * RACK_GRID_WIDTH, 0)));
-        addChild(createWidget<ScrewSilver>(Vec(RACK_GRID_WIDTH, RACK_GRID_HEIGHT - RACK_GRID_WIDTH)));
-        addChild(createWidget<ScrewSilver>(Vec(box.size.x - 2 * RACK_GRID_WIDTH, RACK_GRID_HEIGHT - RACK_GRID_WIDTH)));
+		addChild(createWidget<ScrewSilver>(Vec(RACK_GRID_WIDTH, 0)));
+		addChild(createWidget<ScrewSilver>(Vec(box.size.x - 2 * RACK_GRID_WIDTH, 0)));
+		addChild(createWidget<ScrewSilver>(Vec(RACK_GRID_WIDTH, RACK_GRID_HEIGHT - RACK_GRID_WIDTH)));
+		addChild(createWidget<ScrewSilver>(Vec(box.size.x - 2 * RACK_GRID_WIDTH, RACK_GRID_HEIGHT - RACK_GRID_WIDTH)));
 
-        addParam(createParamCentered<RoundBlackKnob>(mm2px(Vec(25.269, 23.28)), module, EFunction12::P_TYPE_PARAM));
+		addParam(createParamCentered<CKSSThree>(mm2px(Vec(27.94, 17.826)), module, EFunction12::P_TYPE_PARAM));
 
-        addInput(createInputCentered<PJ301MPort>(mm2px(Vec(6.705, 36.195)), module, EFunction12::IN_K_INPUT));
-        addInput(createInputCentered<PJ301MPort>(mm2px(Vec(18.782, 36.195)), module, EFunction12::IN_GATE_INPUT));
-        addInput(createInputCentered<PJ301MPort>(mm2px(Vec(43.217, 36.195)), module, EFunction12::IN_KG_INPUT));
-        addInput(createInputCentered<PJ301MPort>(mm2px(Vec(7.275, 118.359)), module, EFunction12::IN_DISABLE_INPUT));
+		addInput(createInputCentered<PJ301MPort>(mm2px(Vec(9.103, 30.979)), module, EFunction12::IN_K_INPUT));
+		addInput(createInputCentered<PJ301MPort>(mm2px(Vec(46.707, 30.979)), module, EFunction12::IN_KG_INPUT));
+		addInput(createInputCentered<PJ301MPort>(mm2px(Vec(9.103, 107.491)), module, EFunction12::IN_ENABLE_INPUT));
 
-        addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(7.275, 55.917)), module, EFunction12::OUT_F1_OUTPUT));
-        addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(19.353, 55.917)), module, EFunction12::OUT_F2_OUTPUT));
-        addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(31.431, 55.917)), module, EFunction12::OUT_F3_OUTPUT));
-        addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(43.509, 55.917)), module, EFunction12::OUT_F4_OUTPUT));
-        addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(7.275, 75.497)), module, EFunction12::OUT_F5_OUTPUT));
-        addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(19.353, 75.497)), module, EFunction12::OUT_F6_OUTPUT));
-        addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(31.431, 75.497)), module, EFunction12::OUT_F7_OUTPUT));
-        addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(43.509, 75.497)), module, EFunction12::OUT_F8_OUTPUT));
-        addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(7.275, 97.722)), module, EFunction12::OUT_F9_OUTPUT));
-        addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(19.353, 97.722)), module, EFunction12::OUT_F10_OUTPUT));
-        addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(31.431, 97.722)), module, EFunction12::OUT_F11_OUTPUT));
-        addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(43.509, 97.722)), module, EFunction12::OUT_F12_OUTPUT));
-        addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(43.509, 118.359)), module, EFunction12::OUT_LIGHTS_OUTPUT));
+		addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(9.103, 48.98)), module, EFunction12::OUT_F1_OUTPUT));
+		addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(34.172, 48.98)), module, EFunction12::OUT_F3_OUTPUT));
+		addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(46.707, 48.98)), module, EFunction12::OUT_F4_OUTPUT));
+		addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(9.103, 68.48)), module, EFunction12::OUT_F5_OUTPUT));
+		addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(21.638, 68.48)), module, EFunction12::OUT_F6_OUTPUT));
+		addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(34.172, 68.48)), module, EFunction12::OUT_F7_OUTPUT));
+		addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(46.707, 68.48)), module, EFunction12::OUT_F8_OUTPUT));
+		addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(9.103, 87.98)), module, EFunction12::OUT_F9_OUTPUT));
+		addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(21.638, 87.98)), module, EFunction12::OUT_F10_OUTPUT));
+		addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(34.172, 87.98)), module, EFunction12::OUT_F11_OUTPUT));
+		addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(46.707, 87.98)), module, EFunction12::OUT_F12_OUTPUT));
+		addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(46.707, 107.491)), module, EFunction12::OUT_LIGHTS_OUTPUT));
     }
 };
 
@@ -254,7 +252,7 @@ void EFunction12::doProcess(const ProcessArgs& args) {
             funcs_[i].updateKey(r, c);
         }
     }
-    bool enabled = !(inputs[IN_DISABLE_INPUT].getVoltage() > 2.0f);
+    bool enabled = !(inputs[IN_ENABLE_INPUT].getVoltage() > 2.0f);
 
     if (enabled_ != enabled) {
         enabled_ = enabled;

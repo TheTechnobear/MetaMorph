@@ -6,6 +6,16 @@ aka observations about how to get this working !
 
 # todo 
 
+
+0 ESplit
+/ EDevice - Eigenharp
+/ EIlluminator
+0 ESwitch
+/ EFunction
+0 ERSplit - Row splitter 
+/ EFunction12
+/ EScaler
+
 ## general
 ### use menu to reduce parameters
 things like polyphony can be implemented as context menu

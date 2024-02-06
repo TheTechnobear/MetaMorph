@@ -195,18 +195,18 @@ struct EIlluminator : Module {
 struct EIlluminatorWidget : ModuleWidget {
     EIlluminatorWidget(EIlluminator* module) {
         setModule(module);
-        setPanel(createPanel(asset::plugin(pluginInstance, "res/EIlluminator.svg")));
+		setPanel(createPanel(asset::plugin(pluginInstance, "res/EIlluminator.svg")));
 
-        addChild(createWidget<ScrewSilver>(Vec(RACK_GRID_WIDTH, 0)));
-        addChild(createWidget<ScrewSilver>(Vec(box.size.x - 2 * RACK_GRID_WIDTH, 0)));
-        addChild(createWidget<ScrewSilver>(Vec(RACK_GRID_WIDTH, RACK_GRID_HEIGHT - RACK_GRID_WIDTH)));
-        addChild(createWidget<ScrewSilver>(Vec(box.size.x - 2 * RACK_GRID_WIDTH, RACK_GRID_HEIGHT - RACK_GRID_WIDTH)));
+		addChild(createWidget<ScrewSilver>(Vec(RACK_GRID_WIDTH, 0)));
+		addChild(createWidget<ScrewSilver>(Vec(box.size.x - 2 * RACK_GRID_WIDTH, 0)));
+		addChild(createWidget<ScrewSilver>(Vec(RACK_GRID_WIDTH, RACK_GRID_HEIGHT - RACK_GRID_WIDTH)));
+		addChild(createWidget<ScrewSilver>(Vec(box.size.x - 2 * RACK_GRID_WIDTH, RACK_GRID_HEIGHT - RACK_GRID_WIDTH)));
 
-        addInput(createInputCentered<PJ301MPort>(mm2px(Vec(14.978, 74.749)), module, EIlluminator::IN_DISABLE_INPUT));
-        addInput(createInputCentered<PJ301MPort>(mm2px(Vec(8.416, 93.865)), module, EIlluminator::IN_K_INPUT));
-        addInput(createInputCentered<PJ301MPort>(mm2px(Vec(21.826, 93.865)), module, EIlluminator::IN_KG_INPUT));
+		addInput(createInputCentered<PJ301MPort>(mm2px(Vec(15.24, 68.539)), module, EIlluminator::IN_DISABLE_INPUT));
+		addInput(createInputCentered<PJ301MPort>(mm2px(Vec(9.208, 88.0)), module, EIlluminator::IN_K_INPUT));
+		addInput(createInputCentered<PJ301MPort>(mm2px(Vec(21.336, 88.0)), module, EIlluminator::IN_KG_INPUT));
 
-        addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(15.549, 118.115)), module, EIlluminator::OUT_LIGHTS_OUTPUT));
+		addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(15.24, 107.555)), module, EIlluminator::OUT_LIGHTS_OUTPUT));
     }
 
     void appendContextMenu(Menu* menu) override {
