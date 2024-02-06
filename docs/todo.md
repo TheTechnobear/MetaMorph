@@ -4,23 +4,6 @@ aka observations about how to get this working !
 # issues
 
 
-# todo 
-
-
-/ ESplit
-/ EDevice - Eigenharp
-/ EIlluminator
-/ ESwitch
-/ EFunction
-/ ERSplit - Row splitter 
-/ EFunction12
-/ EScaler
-
-notes:
-ESwitch : leds incorrectly labelled
-ERSplit : leds incorrectly labelled
-ESplit : led incorrect label for led_s2
-
 
 ## general
 ### use menu to reduce parameters

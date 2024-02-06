@@ -39,7 +39,7 @@ struct EFunction : Module {
 
     EFunction() {
         config(PARAMS_LEN, INPUTS_LEN, OUTPUTS_LEN, LIGHTS_LEN);
-        configSwitch(P_TYPE_PARAM, 0.f, 2.f, 0.f, "Type", {"Gate", "Trig", "Toggle"});
+        configSwitch(P_TYPE_PARAM, 0.f, 2.f, 0.f, "Type", {"Toggle", "Trig", "Gate"});
         configParam(P_F1_R_PARAM, 0.f, 24.f, 0.f, "");
         configParam(P_F1_C_PARAM, 0.f, 24.f, 0.f, "");
         configParam(P_F2_R_PARAM, 0.f, 24.f, 0.f, "");
@@ -134,9 +134,9 @@ struct EFunction : Module {
         const unsigned TRIG_LEN = 48;
 
         enum {
-            S_GATE,
-            S_TRIG,
             S_TOGGLE,
+            S_TRIG,
+            S_GATE,
             S_MAX
         };
         bool valid() {

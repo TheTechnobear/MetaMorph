@@ -37,7 +37,7 @@ struct EFunction12 : Module {
 
     EFunction12() {
         config(PARAMS_LEN, INPUTS_LEN, OUTPUTS_LEN, LIGHTS_LEN);
-        configSwitch(P_TYPE_PARAM, 0.f, 2.f, 0.f, "Type", {"Gate", "Trig", "Toggle"});
+        configSwitch(P_TYPE_PARAM, 0.f, 2.f, 0.f, "Type", {"Toggle", "Trig", "Gate"});
         configInput(IN_K_INPUT, "");
         configInput(IN_GATE_INPUT, "");
         configInput(IN_KG_INPUT, "");
@@ -128,9 +128,9 @@ struct EFunction12 : Module {
         const unsigned TRIG_LEN = 48;
 
         enum {
-            S_GATE,
-            S_TRIG,
             S_TOGGLE,
+            S_TRIG,
+            S_GATE,
             S_MAX
         };
 
@@ -200,10 +200,12 @@ struct EFunction12Widget : ModuleWidget {
 		addParam(createParamCentered<CKSSThree>(mm2px(Vec(27.94, 17.826)), module, EFunction12::P_TYPE_PARAM));
 
 		addInput(createInputCentered<PJ301MPort>(mm2px(Vec(9.103, 30.979)), module, EFunction12::IN_K_INPUT));
+		addInput(createInputCentered<PJ301MPort>(mm2px(Vec(21.911, 31.202)), module, EFunction12::IN_GATE_INPUT));
 		addInput(createInputCentered<PJ301MPort>(mm2px(Vec(46.707, 30.979)), module, EFunction12::IN_KG_INPUT));
 		addInput(createInputCentered<PJ301MPort>(mm2px(Vec(9.103, 107.491)), module, EFunction12::IN_ENABLE_INPUT));
 
 		addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(9.103, 48.98)), module, EFunction12::OUT_F1_OUTPUT));
+		addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(21.462, 48.979)), module, EFunction12::OUT_F2_OUTPUT));
 		addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(34.172, 48.98)), module, EFunction12::OUT_F3_OUTPUT));
 		addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(46.707, 48.98)), module, EFunction12::OUT_F4_OUTPUT));
 		addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(9.103, 68.48)), module, EFunction12::OUT_F5_OUTPUT));
