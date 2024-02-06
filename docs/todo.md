@@ -10,11 +10,15 @@ aka observations about how to get this working !
 0 ESplit
 / EDevice - Eigenharp
 / EIlluminator
-0 ESwitch
+/ ESwitch
 / EFunction
 0 ERSplit - Row splitter 
 / EFunction12
 / EScaler
+
+notes:
+ESwitch : leds incorrectly labelled
+
 
 ## general
 ### use menu to reduce parameters
