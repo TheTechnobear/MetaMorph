@@ -7,7 +7,7 @@ aka observations about how to get this working !
 # todo 
 
 
-0 ESplit
+/ ESplit
 / EDevice - Eigenharp
 / EIlluminator
 / ESwitch
@@ -19,6 +19,8 @@ aka observations about how to get this working !
 notes:
 ESwitch : leds incorrectly labelled
 ERSplit : leds incorrectly labelled
+ESplit : led incorrect label for led_s2
+
 
 ## general
 ### use menu to reduce parameters

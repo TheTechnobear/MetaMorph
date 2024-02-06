@@ -405,7 +405,6 @@ void ESwitch::doProcess(const ProcessArgs& args) {
 
         lights[LED_S1_LIGHT + splitId].setBrightness(activityLed[splitId] ? 1.0f : 0.0f);
 
-
         if (layoutChanged_) {
             layoutChanged_ = false;
             refreshLeds_ = true;
