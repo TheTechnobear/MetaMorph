@@ -32,7 +32,7 @@
    inkscape:window-x="0"
    inkscape:window-y="25"
    inkscape:window-maximized="0"
-   inkscape:current-layer="g155"
+   inkscape:current-layer="layer2-0"
    showguides="false"><inkscape:grid
      id="grid120"
      units="mm"
@@ -576,11 +576,11 @@
    height="2.987998"
    x="30.137682"
    y="69.502266"
-   inkscape:label="p_led1_colour" /><rect
+   inkscape:label="p_led2_colour" /><rect
    style="display:inline;fill:#ff0000;stroke-width:0.34268"
    id="rect26"
    width="8.1280012"
    height="2.987998"
    x="17.603354"
    y="69.502266"
-   inkscape:label="p_led2_colour" /></g>&#10;</svg>
+   inkscape:label="p_led1_colour" /></g>&#10;</svg>
