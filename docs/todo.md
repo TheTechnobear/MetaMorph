@@ -51,10 +51,13 @@ untested, musical e.g refnote and pb etc.
 (led wrong order : fixed in code , not in svg)
 
 -----------------------------------------------------
-# module - splitter 
+# module - rowsplitter 
+
+tested : ok
 
 -----------------------------------------------------
-# module - rowsplitter 
+# module - splitter 
+
 
 
 -----------------------------------------------------
