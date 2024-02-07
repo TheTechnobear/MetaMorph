@@ -37,24 +37,26 @@ struct EFunction12 : Module {
 
     EFunction12() {
         config(PARAMS_LEN, INPUTS_LEN, OUTPUTS_LEN, LIGHTS_LEN);
+        
         configSwitch(P_TYPE_PARAM, 0.f, 2.f, 0.f, "Type", {"Toggle", "Trig", "Gate"});
-        configInput(IN_K_INPUT, "");
-        configInput(IN_GATE_INPUT, "");
-        configInput(IN_KG_INPUT, "");
-        configInput(IN_ENABLE_INPUT, "");
-        configOutput(OUT_F1_OUTPUT, "");
-        configOutput(OUT_F2_OUTPUT, "");
-        configOutput(OUT_F3_OUTPUT, "");
-        configOutput(OUT_F4_OUTPUT, "");
-        configOutput(OUT_F5_OUTPUT, "");
-        configOutput(OUT_F6_OUTPUT, "");
-        configOutput(OUT_F7_OUTPUT, "");
-        configOutput(OUT_F8_OUTPUT, "");
-        configOutput(OUT_F9_OUTPUT, "");
-        configOutput(OUT_F10_OUTPUT, "");
-        configOutput(OUT_F11_OUTPUT, "");
-        configOutput(OUT_F12_OUTPUT, "");
-        configOutput(OUT_LIGHTS_OUTPUT, "");
+        configInput(IN_K_INPUT, "Key");
+        configInput(IN_GATE_INPUT, "Gate");
+        configInput(IN_KG_INPUT, "KG");
+        configInput(IN_ENABLE_INPUT, "Disable");
+
+        configOutput(OUT_F1_OUTPUT, "Func 1");
+        configOutput(OUT_F2_OUTPUT, "Func 2");
+        configOutput(OUT_F3_OUTPUT, "Func 3");
+        configOutput(OUT_F4_OUTPUT, "Func 4");
+        configOutput(OUT_F5_OUTPUT, "Func 5");
+        configOutput(OUT_F6_OUTPUT, "Func 6");
+        configOutput(OUT_F7_OUTPUT, "Func 7");
+        configOutput(OUT_F8_OUTPUT, "Func 8");
+        configOutput(OUT_F9_OUTPUT, "Func 9");
+        configOutput(OUT_F10_OUTPUT, "Func 10");
+        configOutput(OUT_F11_OUTPUT, "Func 11");
+        configOutput(OUT_F12_OUTPUT, "Func 12");
+        configOutput(OUT_LIGHTS_OUTPUT, "LED");
     }
 
     void processBypass(const ProcessArgs& args) override {

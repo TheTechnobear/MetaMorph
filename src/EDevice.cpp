@@ -53,35 +53,37 @@ struct EDevice : Module {
 
     EDevice() {
         config(PARAMS_LEN, INPUTS_LEN, OUTPUTS_LEN, LIGHTS_LEN);
-        configParam(P_BASEPOLY_PARAM, 0.f, 16.f, 16.f, "");
-        configParam(P_PERCPOLY_PARAM, 0.f, 16.f, 4.f, "");
-        configParam(P_FUNCPOLY_PARAM, 0.f, 16.f, 4, "");
+        
+        configParam(P_BASEPOLY_PARAM, 0.f, 16.f, 16.f, "Main Poly");
+        configParam(P_PERCPOLY_PARAM, 0.f, 16.f, 4.f, "Perc Poly");
+        configParam(P_FUNCPOLY_PARAM, 0.f, 16.f, 4, "Mode Poly");
 
-        configInput(IN_FUNC_LIGHTS_INPUT, "");
-        configInput(IN_MAIN_LIGHTS_INPUT, "");
-        configInput(IN_PERC_LIGHTS_INPUT, "");
-		configOutput(OUT_S1A_OUTPUT, "");
-		configOutput(OUT_S1R_OUTPUT, "");
-		configOutput(OUT_S1G_OUTPUT, "");
-		configOutput(OUT_S2A_OUTPUT, "");
-		configOutput(OUT_S2R_OUTPUT, "");
-		configOutput(OUT_S2G_OUTPUT, "");
-        configOutput(OUT_P1_OUTPUT, "");
-        configOutput(OUT_P2_OUTPUT, "");
-        configOutput(OUT_BREATH_OUTPUT, "");
-        configOutput(OUT_FK_OUTPUT, "");
-        configOutput(OUT_FG_OUTPUT, "");
-        configOutput(OUT_KG_FUNC_OUTPUT, "");
-        configOutput(OUT_K_OUTPUT, "");
-        configOutput(OUT_X_OUTPUT, "");
-        configOutput(OUT_Y_OUTPUT, "");
-        configOutput(OUT_Z_OUTPUT, "");
-        configOutput(OUT_KG_MAIN_OUTPUT, "");
-        configOutput(OUT_PK_OUTPUT, "");
-        configOutput(OUT_PX_OUTPUT, "");
-        configOutput(OUT_PY_OUTPUT, "");
-        configOutput(OUT_PZ_OUTPUT, "");
-        configOutput(OUT_KG_PERC_OUTPUT, "");
+        configInput(IN_FUNC_LIGHTS_INPUT, "Mode LED");
+        configInput(IN_MAIN_LIGHTS_INPUT, "Main LED");
+        configInput(IN_PERC_LIGHTS_INPUT, "Perc LED");
+
+		configOutput(OUT_S1A_OUTPUT, "Strip 1 Abs");
+		configOutput(OUT_S1R_OUTPUT, "Strip 1 Rel");
+		configOutput(OUT_S1G_OUTPUT, "Strip 1 Gate");
+		configOutput(OUT_S2A_OUTPUT, "Strip 2 Abs");
+		configOutput(OUT_S2R_OUTPUT, "Strip 2 Rel");
+		configOutput(OUT_S2G_OUTPUT, "Strip 2 Gate");
+        configOutput(OUT_P1_OUTPUT, "Pedal 1");
+        configOutput(OUT_P2_OUTPUT, "Pedal 2");
+        configOutput(OUT_BREATH_OUTPUT, "Breath");
+        configOutput(OUT_FK_OUTPUT, "Mode Key");
+        configOutput(OUT_FG_OUTPUT, "Mode Gate");
+        configOutput(OUT_KG_FUNC_OUTPUT, "Mode KG");
+        configOutput(OUT_K_OUTPUT, "Main Key");
+        configOutput(OUT_X_OUTPUT, "Main X");
+        configOutput(OUT_Y_OUTPUT, "Main Y");
+        configOutput(OUT_Z_OUTPUT, "Main Z");
+        configOutput(OUT_KG_MAIN_OUTPUT, "Main KG");
+        configOutput(OUT_PK_OUTPUT, "Perc Key");
+        configOutput(OUT_PX_OUTPUT, "Perc X");
+        configOutput(OUT_PY_OUTPUT, "Perc Y");
+        configOutput(OUT_PZ_OUTPUT, "Perc Z");
+        configOutput(OUT_KG_PERC_OUTPUT, "Perg KG");
 
         paramQuantities[P_BASEPOLY_PARAM]->snapEnabled = true;
         paramQuantities[P_PERCPOLY_PARAM]->snapEnabled = true;
@@ -93,6 +95,7 @@ struct EDevice : Module {
         harp_->start();
         harp_->addCallback(callback_.get());
     }
+
     ~EDevice() {
         if (harp_) {
             harp_->removeCallback(callback_.get());
@@ -223,7 +226,6 @@ struct EDeviceWidget : ModuleWidget {
 		addParam(createParamCentered<PolyCountParam>(mm2px(Vec(10.08, 65.936)), module, EDevice::P_FUNCPOLY_PARAM));
 		addParam(createParamCentered<PolyCountParam>(mm2px(Vec(10.08, 88.56)), module, EDevice::P_BASEPOLY_PARAM));
 		addParam(createParamCentered<PolyCountParam>(mm2px(Vec(10.195, 111.106)), module, EDevice::P_PERCPOLY_PARAM));
-
 		addInput(createInputCentered<PJ301MPort>(mm2px(Vec(82.263, 62.57)), module, EDevice::IN_FUNC_LIGHTS_INPUT));
 		addInput(createInputCentered<PJ301MPort>(mm2px(Vec(82.259, 85.041)), module, EDevice::IN_MAIN_LIGHTS_INPUT));
 		addInput(createInputCentered<PJ301MPort>(mm2px(Vec(82.264, 107.56)), module, EDevice::IN_PERC_LIGHTS_INPUT));
@@ -354,7 +356,6 @@ void EDevice::doProcess(const ProcessArgs& args) {
                 outputs[OUT_Y_OUTPUT].setVoltage(vdata.yV_.next(iRate), voice);
                 outputs[OUT_Z_OUTPUT].setVoltage(pV, voice);
             } else {
-                lights[voice].setBrightness(0.f);
                 outputs[OUT_K_OUTPUT].setVoltage(0.f, voice);
                 outputs[OUT_X_OUTPUT].setVoltage(0.f, voice);
                 outputs[OUT_Y_OUTPUT].setVoltage(0.f, voice);

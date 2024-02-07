@@ -39,24 +39,27 @@ struct EFunction : Module {
 
     EFunction() {
         config(PARAMS_LEN, INPUTS_LEN, OUTPUTS_LEN, LIGHTS_LEN);
+
         configSwitch(P_TYPE_PARAM, 0.f, 2.f, 0.f, "Type", {"Toggle", "Trig", "Gate"});
-        configParam(P_F1_R_PARAM, 0.f, 24.f, 0.f, "");
-        configParam(P_F1_C_PARAM, 0.f, 24.f, 0.f, "");
-        configParam(P_F2_R_PARAM, 0.f, 24.f, 0.f, "");
-        configParam(P_F2_C_PARAM, 0.f, 24.f, 0.f, "");
-        configParam(P_F3_R_PARAM, 0.f, 24.f, 0.f, "");
-        configParam(P_F3_C_PARAM, 0.f, 24.f, 0.f, "");
-        configParam(P_F4_R_PARAM, 0.f, 24.f, 0.f, "");
-        configParam(P_F4_C_PARAM, 0.f, 24.f, 0.f, "");
-        configInput(IN_K_INPUT, "");
-        configInput(IN_GATE_INPUT, "");
-        configInput(IN_KG_INPUT, "");
-        configInput(IN_ENABLE_INPUT, "");
-        configOutput(OUT_F1_OUTPUT, "");
-        configOutput(OUT_F2_OUTPUT, "");
-        configOutput(OUT_F3_OUTPUT, "");
-        configOutput(OUT_F4_OUTPUT, "");
-        configOutput(OUT_LIGHTS_OUTPUT, "");
+        configParam(P_F1_R_PARAM, 0.f, 24.f, 0.f, "F1 Row");
+        configParam(P_F1_C_PARAM, 0.f, 24.f, 0.f, "F1 Col");
+        configParam(P_F2_R_PARAM, 0.f, 24.f, 0.f, "F2 Row");
+        configParam(P_F2_C_PARAM, 0.f, 24.f, 0.f, "F2 Col");
+        configParam(P_F3_R_PARAM, 0.f, 24.f, 0.f, "F3 Row");
+        configParam(P_F3_C_PARAM, 0.f, 24.f, 0.f, "F3 Col");
+        configParam(P_F4_R_PARAM, 0.f, 24.f, 0.f, "F4 Row");
+        configParam(P_F4_C_PARAM, 0.f, 24.f, 0.f, "F4 Col");
+
+        configInput(IN_K_INPUT, "Key");
+        configInput(IN_GATE_INPUT, "Gate");
+        configInput(IN_KG_INPUT, "KG");
+        configInput(IN_ENABLE_INPUT, "Disable");
+        
+        configOutput(OUT_F1_OUTPUT, "Func 1");
+        configOutput(OUT_F2_OUTPUT, "Func 2");
+        configOutput(OUT_F3_OUTPUT, "Func 3");
+        configOutput(OUT_F4_OUTPUT, "Func 4");
+        configOutput(OUT_LIGHTS_OUTPUT, "LED");
 
         paramQuantities[P_F1_R_PARAM]->snapEnabled = true;
         paramQuantities[P_F1_C_PARAM]->snapEnabled = true;
@@ -103,7 +106,7 @@ struct EFunction : Module {
             }
         } else {
         }
-        if (e.type == Port::OUTPUT && e.portId >= OUT_F1_OUTPUT && e.portId <= OUT_F2_OUTPUT) {
+        if (e.type == Port::OUTPUT && e.portId >= OUT_F1_OUTPUT && e.portId <= OUT_F4_OUTPUT) {
             connectedFuncs_[e.portId - OUT_F1_OUTPUT] = e.connecting;
             refreshLeds_ = true;
         }
@@ -271,6 +274,7 @@ void EFunction::doProcess(const ProcessArgs& args) {
                 ledQueue_.write(msg);
             }
         }
+        refreshLeds_ = false;
     }
 
     unsigned switch_type = (unsigned)params[P_TYPE_PARAM].getValue();
@@ -294,7 +298,7 @@ void EFunction::doProcess(const ProcessArgs& args) {
                         bool changed = func.changeState(switch_type, key_state);
                         if (changed) {
                             LedMsgType t = connectedFuncs_[fk] ? (func.state_ ? LED_SET_RED : LED_SET_GREEN) : LED_SET_OFF;
-                            // std::cout << "change led " << in_r << "," << in_c << " state" << t << std::endl;
+                            std::cout << "change led " << in_r << "," << in_c << " state" << t << std::endl;
                             float msg = encodeLedMsg(t, in_r, in_c, 1, 1);
                             ledQueue_.write(msg);
                         }
@@ -315,7 +319,7 @@ void EFunction::doProcess(const ProcessArgs& args) {
                         unsigned c = func.c_;
                         if (r < kg_r_ && c < kg_c_ && func.valid()) {
                             LedMsgType t = connectedFuncs_[fk] ? (func.state_ ? LED_SET_RED : LED_SET_GREEN) : LED_SET_OFF;
-                            // std::cout << "change led " << in_r << "," << in_c << " state" << t << std::endl;
+                            std::cout << "change led " << in_r << "," << in_c << " state" << t << std::endl;
                             float msg = encodeLedMsg(t, r, c, 1, 1);
                             ledQueue_.write(msg);
                         }
@@ -330,7 +334,7 @@ void EFunction::doProcess(const ProcessArgs& args) {
                                 func.state_ = false;
                                 if (r < kg_r_ && c < kg_c_) {
                                     LedMsgType t = connectedFuncs_[fk] ? (func.state_ ? LED_SET_RED : LED_SET_GREEN) : LED_SET_OFF;
-                                    // std::cout << "change led " << in_r << "," << in_c << " state" << t << std::endl;
+                                    std::cout << "change led " << in_r << "," << in_c << " state" << t << std::endl;
                                     float msg = encodeLedMsg(t, r, c, 1, 1);
                                     ledQueue_.write(msg);
                                 }

@@ -15,8 +15,8 @@ struct EScaler : Module {
 		P_LED1_IDX_PARAM,
 		P_LED2_IDX_PARAM,
 		P_LED3_IDX_PARAM,
-		P_LED2_COLOUR_PARAM,
 		P_LED1_COLOUR_PARAM,
+		P_LED2_COLOUR_PARAM,
 		P_LED3_COLOUR_PARAM,
         PARAMS_LEN
     };
@@ -39,23 +39,26 @@ struct EScaler : Module {
 
     EScaler() {
         config(PARAMS_LEN, INPUTS_LEN, OUTPUTS_LEN, LIGHTS_LEN);
-        configParam(P_ROW_MULT_PARAM, -24.f, 24.f, 1.f, "xRow");
-        configParam(P_COL_MULT_PARAM, -24.0f, 24.f, 4.f, "xCol");
+
+        configParam(P_ROW_MULT_PARAM, -24.f, 24.f, 1.f, "x Row");
+        configParam(P_COL_MULT_PARAM, -24.0f, 24.f, 4.f, "x Col");
         configParam(P_REF_NOTE_PARAM, -60.f, 60.f, 0.f, "Ref Note");
-        configParam(P_KEYPBR_PARAM, 0.f, 48.f, 1.f, "");
-        configParam(P_GLOBALPBR_PARAM, 0.f, 48.f, 12.f, "");
-        configParam(P_LED1_IDX_PARAM, 0.f, 24.f, 0.f, "");
-        configParam(P_LED2_IDX_PARAM, 0.f, 24.f, 0.f, "");
-        configParam(P_LED3_IDX_PARAM, 0.f, 24.f, 0.f, "");
-        configSwitch(P_LED1_COLOUR_PARAM, 0.f, 3.f, 1.f, "Type", {"Off", "Green", "Red", "Orange"});
-        configSwitch(P_LED2_COLOUR_PARAM, 0.f, 3.f, 0.f, "Type", {"Off", "Green", "Red", "Orange"});
-        configSwitch(P_LED3_COLOUR_PARAM, 0.f, 3.f, 0.f, "Type", {"Off", "Green", "Red", "Orange"});
-        configInput(IN_K_INPUT, "");
-        configInput(IN_NOTE_PB_INPUT, "");
-        configInput(IN_G_PB_INPUT, "");
-        configInput(IN_KG_INPUT, "");
-        configOutput(OUT_VOCT_OUTPUT, "");
-        configOutput(OUT_LIGHTS_OUTPUT, "");
+        configParam(P_KEYPBR_PARAM, 0.f, 48.f, 1.f, "Key Bend");
+        configParam(P_GLOBALPBR_PARAM, 0.f, 48.f, 12.f, "Global Bend");
+        configParam(P_LED1_IDX_PARAM, 0.f, 24.f, 0.f, "Degree 1");
+        configParam(P_LED2_IDX_PARAM, 0.f, 24.f, 0.f, "Degree 2");
+        configParam(P_LED3_IDX_PARAM, 0.f, 24.f, 0.f, "Degree 3");
+        configSwitch(P_LED1_COLOUR_PARAM, 0.f, 3.f, 1.f, "Colour 1", {"Off", "Green", "Red", "Orange"});
+        configSwitch(P_LED2_COLOUR_PARAM, 0.f, 3.f, 0.f, "Colour 2", {"Off", "Green", "Red", "Orange"});
+        configSwitch(P_LED3_COLOUR_PARAM, 0.f, 3.f, 0.f, "Colour 3", {"Off", "Green", "Red", "Orange"});
+
+        configInput(IN_K_INPUT, "Key");
+        configInput(IN_NOTE_PB_INPUT, "Note Bend");
+        configInput(IN_G_PB_INPUT, "Global Bend");
+        configInput(IN_KG_INPUT, "KG");
+        
+        configOutput(OUT_VOCT_OUTPUT, "v/oct");
+        configOutput(OUT_LIGHTS_OUTPUT, "LED");
 
         paramQuantities[P_ROW_MULT_PARAM]->snapEnabled = true;
         paramQuantities[P_COL_MULT_PARAM]->snapEnabled = true;
@@ -67,9 +70,9 @@ struct EScaler : Module {
         paramQuantities[P_LED1_IDX_PARAM]->snapEnabled = true;
         paramQuantities[P_LED2_IDX_PARAM]->snapEnabled = true;
         paramQuantities[P_LED3_IDX_PARAM]->snapEnabled = true;
-        // paramQuantities[P_LED1_COLOUR_PARAM]->snapEnabled = true;
-        // paramQuantities[P_LED2_COLOUR_PARAM]->snapEnabled = true;
-        // paramQuantities[P_LED3_COLOUR_PARAM]->snapEnabled = true;
+        paramQuantities[P_LED1_COLOUR_PARAM]->snapEnabled = true;
+        paramQuantities[P_LED2_COLOUR_PARAM]->snapEnabled = true;
+        paramQuantities[P_LED3_COLOUR_PARAM]->snapEnabled = true;
 
         auto dir = asset::plugin(pluginInstance, "res/scales");
         auto files = system::getEntries(dir);
@@ -224,8 +227,8 @@ struct EScalerWidget : ModuleWidget {
 		addParam(createParamCentered<RoundBlackKnob>(mm2px(Vec(21.667, 63.84)), module, EScaler::P_LED1_IDX_PARAM));
 		addParam(createParamCentered<RoundBlackKnob>(mm2px(Vec(34.202, 63.84)), module, EScaler::P_LED2_IDX_PARAM));
 		addParam(createParamCentered<RoundBlackKnob>(mm2px(Vec(46.736, 63.84)), module, EScaler::P_LED3_IDX_PARAM));
-		addParam(createParam<LedSwitch>(mm2px(Vec(17.603, 69.502)), module, EScaler::P_LED2_COLOUR_PARAM));
-		addParam(createParam<LedSwitch>(mm2px(Vec(30.138, 69.502)), module, EScaler::P_LED1_COLOUR_PARAM));
+		addParam(createParam<LedSwitch>(mm2px(Vec(17.603, 69.502)), module, EScaler::P_LED1_COLOUR_PARAM));
+		addParam(createParam<LedSwitch>(mm2px(Vec(30.138, 69.502)), module, EScaler::P_LED2_COLOUR_PARAM));
 		addParam(createParam<LedSwitch>(mm2px(Vec(42.672, 69.54)), module, EScaler::P_LED3_COLOUR_PARAM));
 
 		addInput(createInputCentered<PJ301MPort>(mm2px(Vec(9.133, 87.98)), module, EScaler::IN_K_INPUT));

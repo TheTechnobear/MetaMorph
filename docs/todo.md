@@ -1,14 +1,69 @@
 # fix me and things to do...
 aka observations about how to get this working ! 
 
-# issues
+# release plan
+
+- testing, see below
+- move documentation to wiki (from forum)
+- consistency of module name (e.g. EFunction -> Function)
+- check tags in plugin.json
+
+
+# Testing notes
+
+# general 
+
+crash at startup, something to so with paramquantity
+... need to isolate which module!
+
+random crash on deletion... 
 
 
 
-## general
-### use menu to reduce parameters
-things like polyphony can be implemented as context menu
-however, this requires using custom json
+-----------------------------------------------------
+## module - eigenharp 
+
+strip 1 : rel - voltage range incorect.
+strip 1 : gate - not working
+
+untested so far: 
+strip 2
+pedals 
+strip 1 abs
+
+-----------------------------------------------------
+# module - function12 
+
+tested : ok
+
+-----------------------------------------------------
+# module - function 
+
+tested : ok
+
+
+-----------------------------------------------------
+## module - scaler 
+
+leds checked, 
+untested, musical e.g refnote and pb etc.
+
+(led wrong order : fixed in code , not in svg)
+
+-----------------------------------------------------
+# module - splitter 
+
+-----------------------------------------------------
+# module - rowsplitter 
+
+
+-----------------------------------------------------
+# module - switch 
+
+-----------------------------------------------------
+# module - illuminator 
+
+
 
 
 -----------------------------------------------------
@@ -20,6 +75,8 @@ main purpose is multiple function modules from one split
 
 
 -----------------------------------------------------
+
+
 
 
 ### EigenLite
@@ -50,18 +107,8 @@ bool EF_BaseStation::poll(long long t)
 ## module - eigenHarp 
 
 
-### fix module to one eigenharp?
-this implies EigenLite filter will allow ANY,1
-currently this would link to both first base and pico.
-
-not sure, without eigenlite api change we do this AND allow no filter
-
 -----------------------------------------------------
 ## module - scaler 
-
-allow non-chromatic scales
-perhaps have a scale selector, which loads from json file?
-0 = no scale = chromatic, as this is most effecient.
 
 custom lighting - currently fixed to root, 5th , 7th
 
