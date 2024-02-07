@@ -45,6 +45,7 @@ struct EScaler : Module {
         configParam(P_REF_NOTE_PARAM, -60.f, 60.f, 0.f, "Ref Note");
         configParam(P_KEYPBR_PARAM, 0.f, 48.f, 1.f, "Key Bend");
         configParam(P_GLOBALPBR_PARAM, 0.f, 48.f, 12.f, "Global Bend");
+        
         configParam(P_LED1_IDX_PARAM, 0.f, 24.f, 0.f, "Degree 1");
         configParam(P_LED2_IDX_PARAM, 0.f, 24.f, 0.f, "Degree 2");
         configParam(P_LED3_IDX_PARAM, 0.f, 24.f, 0.f, "Degree 3");
@@ -56,7 +57,7 @@ struct EScaler : Module {
         configInput(IN_NOTE_PB_INPUT, "Note Bend");
         configInput(IN_G_PB_INPUT, "Global Bend");
         configInput(IN_KG_INPUT, "KG");
-        
+
         configOutput(OUT_VOCT_OUTPUT, "v/oct");
         configOutput(OUT_LIGHTS_OUTPUT, "LED");
 

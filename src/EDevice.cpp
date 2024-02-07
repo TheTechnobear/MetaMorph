@@ -53,7 +53,7 @@ struct EDevice : Module {
 
     EDevice() {
         config(PARAMS_LEN, INPUTS_LEN, OUTPUTS_LEN, LIGHTS_LEN);
-        
+
         configParam(P_BASEPOLY_PARAM, 0.f, 16.f, 16.f, "Main Poly");
         configParam(P_PERCPOLY_PARAM, 0.f, 16.f, 4.f, "Perc Poly");
         configParam(P_FUNCPOLY_PARAM, 0.f, 16.f, 4, "Mode Poly");
@@ -65,20 +65,26 @@ struct EDevice : Module {
 		configOutput(OUT_S1A_OUTPUT, "Strip 1 Abs");
 		configOutput(OUT_S1R_OUTPUT, "Strip 1 Rel");
 		configOutput(OUT_S1G_OUTPUT, "Strip 1 Gate");
+
 		configOutput(OUT_S2A_OUTPUT, "Strip 2 Abs");
 		configOutput(OUT_S2R_OUTPUT, "Strip 2 Rel");
 		configOutput(OUT_S2G_OUTPUT, "Strip 2 Gate");
+
         configOutput(OUT_P1_OUTPUT, "Pedal 1");
         configOutput(OUT_P2_OUTPUT, "Pedal 2");
+        
         configOutput(OUT_BREATH_OUTPUT, "Breath");
+        
         configOutput(OUT_FK_OUTPUT, "Mode Key");
         configOutput(OUT_FG_OUTPUT, "Mode Gate");
         configOutput(OUT_KG_FUNC_OUTPUT, "Mode KG");
+        
         configOutput(OUT_K_OUTPUT, "Main Key");
         configOutput(OUT_X_OUTPUT, "Main X");
         configOutput(OUT_Y_OUTPUT, "Main Y");
         configOutput(OUT_Z_OUTPUT, "Main Z");
         configOutput(OUT_KG_MAIN_OUTPUT, "Main KG");
+        
         configOutput(OUT_PK_OUTPUT, "Perc Key");
         configOutput(OUT_PX_OUTPUT, "Perc X");
         configOutput(OUT_PY_OUTPUT, "Perc Y");

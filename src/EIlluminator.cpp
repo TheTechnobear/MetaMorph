@@ -22,10 +22,12 @@ struct EIlluminator : Module {
 
     EIlluminator() {
         config(PARAMS_LEN, INPUTS_LEN, OUTPUTS_LEN, LIGHTS_LEN);
-        configInput(IN_DISABLE_INPUT, "");
-        configInput(IN_K_INPUT, "");
-        configInput(IN_KG_INPUT, "");
-        configOutput(OUT_LIGHTS_OUTPUT, "");
+
+        configInput(IN_DISABLE_INPUT, "Disable");
+        configInput(IN_K_INPUT, "Key");
+        configInput(IN_KG_INPUT, "KG");
+        
+        configOutput(OUT_LIGHTS_OUTPUT, "LED");
 
         auto dir = asset::plugin(pluginInstance, "res/patterns");
         auto files = system::getEntries(dir);

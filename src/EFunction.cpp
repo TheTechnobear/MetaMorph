@@ -54,11 +54,12 @@ struct EFunction : Module {
         configInput(IN_GATE_INPUT, "Gate");
         configInput(IN_KG_INPUT, "KG");
         configInput(IN_ENABLE_INPUT, "Disable");
-        
+
         configOutput(OUT_F1_OUTPUT, "Func 1");
         configOutput(OUT_F2_OUTPUT, "Func 2");
         configOutput(OUT_F3_OUTPUT, "Func 3");
         configOutput(OUT_F4_OUTPUT, "Func 4");
+        
         configOutput(OUT_LIGHTS_OUTPUT, "LED");
 
         paramQuantities[P_F1_R_PARAM]->snapEnabled = true;

@@ -37,8 +37,9 @@ struct EFunction12 : Module {
 
     EFunction12() {
         config(PARAMS_LEN, INPUTS_LEN, OUTPUTS_LEN, LIGHTS_LEN);
-        
+
         configSwitch(P_TYPE_PARAM, 0.f, 2.f, 0.f, "Type", {"Toggle", "Trig", "Gate"});
+        
         configInput(IN_K_INPUT, "Key");
         configInput(IN_GATE_INPUT, "Gate");
         configInput(IN_KG_INPUT, "KG");
@@ -56,6 +57,7 @@ struct EFunction12 : Module {
         configOutput(OUT_F10_OUTPUT, "Func 10");
         configOutput(OUT_F11_OUTPUT, "Func 11");
         configOutput(OUT_F12_OUTPUT, "Func 12");
+
         configOutput(OUT_LIGHTS_OUTPUT, "LED");
     }
 

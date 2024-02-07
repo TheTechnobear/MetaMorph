@@ -64,7 +64,7 @@ struct ERSplit : Module {
 
     ERSplit() {
         config(PARAMS_LEN, INPUTS_LEN, OUTPUTS_LEN, LIGHTS_LEN);
-        
+
         configParam(P_S1_NROW_PARAM, 0.f, 24.f, 0.f, "Split 1 Num Rows");
         configParam(P_S1_POLY_PARAM, 0.f, 16.f, 0.f, "Split 1 Poly");
         configParam(P_S2_NROW_PARAM, 0.f, 24.f, 0.f, "Split 2 Num Rows");
@@ -80,27 +80,32 @@ struct ERSplit : Module {
         configInput(IN_Y_INPUT, "Y");
         configInput(IN_Z_INPUT, "");
         configInput(IN_KG_INPUT, "Z");
+
         configInput(IN1_LIGHTS_INPUT, "Split 1 LED");
         configInput(IN2_LIGHTS_INPUT, "Split 2 LED");
         configInput(IN3_LIGHTS_INPUT, "Split 3 LED");
         configInput(IN4_LIGHTS_INPUT, "Split 4 LED");
 
         configOutput(OUT_LIGHTS_OUTPUT, "LED");
+        
         configOutput(OUT1_K_OUTPUT, "Split 1 Key");
         configOutput(OUT1_X_OUTPUT, "Split 1 X");
         configOutput(OUT1_Y_OUTPUT, "Split 1 Y");
         configOutput(OUT1_Z_OUTPUT, "Split 1 Z");
         configOutput(OUT1_KG_OUTPUT, "Split 1 KG");
+
         configOutput(OUT2_K_OUTPUT, "Split 2 Key");
         configOutput(OUT2_X_OUTPUT, "Split 2 X");
         configOutput(OUT2_Y_OUTPUT, "Split 2 Y");
         configOutput(OUT2_Z_OUTPUT, "Split 2 Z");
         configOutput(OUT2_KG_OUTPUT, "Split 2 KG");
+
         configOutput(OUT3_K_OUTPUT, "Split 3 Key");
         configOutput(OUT3_X_OUTPUT, "Split 3 X");
         configOutput(OUT3_Y_OUTPUT, "Split 3 Y");
         configOutput(OUT3_Z_OUTPUT, "Split 3 Z");
         configOutput(OUT3_KG_OUTPUT, "Split 3 KG");
+
         configOutput(OUT4_K_OUTPUT, "Split 4 Key");
         configOutput(OUT4_X_OUTPUT, "Split 4 X");
         configOutput(OUT4_Y_OUTPUT, "Split 4 Y");
