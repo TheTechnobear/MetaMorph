@@ -1,9 +1,8 @@
+#include "EComponents.h"
 #include "EHarp.h"
 #include "Encoding.h"
 #include "LightWire.h"
 #include "plugin.hpp"
-
-#include "EComponents.h"
 
 struct ERSplit : Module {
     enum ParamId {
@@ -54,13 +53,7 @@ struct ERSplit : Module {
         OUT4_KG_OUTPUT,
         OUTPUTS_LEN
     };
-	enum LightId {
-		LED_S1_LIGHT,
-		LED_S2_LIGHT,
-		LED_S3_LIGHT,
-		LED_S4_LIGHT,
-		LIGHTS_LEN
-	};
+    enum LightId { LED_S1_LIGHT, LED_S2_LIGHT, LED_S3_LIGHT, LED_S4_LIGHT, LIGHTS_LEN };
 
     ERSplit() {
         config(PARAMS_LEN, INPUTS_LEN, OUTPUTS_LEN, LIGHTS_LEN);
@@ -87,7 +80,7 @@ struct ERSplit : Module {
         configInput(IN4_LIGHTS_INPUT, "Split 4 LED");
 
         configOutput(OUT_LIGHTS_OUTPUT, "LED");
-        
+
         configOutput(OUT1_K_OUTPUT, "Split 1 Key");
         configOutput(OUT1_X_OUTPUT, "Split 1 X");
         configOutput(OUT1_Y_OUTPUT, "Split 1 Y");
@@ -122,9 +115,7 @@ struct ERSplit : Module {
         paramQuantities[P_S4_POLY_PARAM]->snapEnabled = true;
     }
 
-    void processBypass(const ProcessArgs &args) override {
-        doProcessBypass(args);
-    }
+    void processBypass(const ProcessArgs &args) override { doProcessBypass(args); }
 
     void process(const ProcessArgs &args) override { doProcess(args); }
 
@@ -137,8 +128,7 @@ struct ERSplit : Module {
                             layoutChanged_ = true;
                             break;
                         }
-                        default:
-                            break;
+                        default: break;
                     }
                     break;
                 }
@@ -148,8 +138,7 @@ struct ERSplit : Module {
                             refreshLeds_ = true;
                             break;
                         }
-                        default:
-                            break;
+                        default: break;
                     }
                 }
             }
@@ -165,13 +154,11 @@ struct ERSplit : Module {
                             refreshLeds_ = true;
                             break;
                         }
-                        default:
-                            break;
+                        default: break;
                     }
                     break;
                 }
-                default:
-                    break;
+                default: break;
             }
         }
     }
@@ -187,8 +174,7 @@ struct ERSplit : Module {
         float y_ = 0.f;
         float z_ = 0.f;
 
-        void updateVoice(long key, unsigned r, unsigned c, bool a, float x, float y,
-                         float z) {
+        void updateVoice(long key, unsigned r, unsigned c, bool a, float x, float y, float z) {
             active_ = a;
             key_ = key;  // inbound channel
             r_ = r;
@@ -206,35 +192,34 @@ struct ERSplit : Module {
         unsigned sizeR_ = 0, sizeC_ = 0;
         bool active_ = false;
 
-        Split() {
-            clearLeds();
-        }
+        Split() { clearLeds(); }
 
         void active(bool a) { active_ = a; }
 
-        void setStart(unsigned r, unsigned c) {
+        bool setStart(unsigned r, unsigned c) {
+            unsigned lr = startR_, lc = startC_;
             startR_ = r < (MAX_R - 1) ? r : MAX_R - 1;
             startC_ = c < (MAX_C - 1) ? c : MAX_C - 1;
+            return startR_ != lr || startC_ != lc;
         }
-        void setSize(unsigned r, unsigned c) {
+
+        bool setSize(unsigned r, unsigned c) {
+            unsigned lr = sizeR_, lc = sizeC_;
             sizeR_ = r < MAX_R ? r : MAX_R;
             sizeC_ = c < MAX_C ? c : MAX_C;
+            return sizeR_ != lr || sizeC_ != lc;
         }
 
         void setLed(LedMsgType t, unsigned startr, unsigned startc, unsigned sizer, unsigned sizec) {
             unsigned r = 0, c = 0;
             for (r = startr; r < sizeR_ && r < (startr + sizer); r++) {
-                for (c = startc; c < sizeC_ && c < (startc + sizec); c++) {
-                    ledState_[r][c] = t;
-                }
+                for (c = startc; c < sizeC_ && c < (startc + sizec); c++) { ledState_[r][c] = t; }
             }
         }
 
         void clearLeds() {
             for (unsigned r = 0; r < MAX_R; r++) {
-                for (unsigned c = 0; c < MAX_R; c++) {
-                    ledState_[r][c] = LED_SET_OFF;
-                }
+                for (unsigned c = 0; c < MAX_R; c++) { ledState_[r][c] = LED_SET_OFF; }
             }
         }
 
@@ -256,57 +241,61 @@ struct ERSplitWidget : ModuleWidget {
         setModule(module);
         setPanel(createPanel(asset::plugin(pluginInstance, "res/ERSplit.svg")));
 
-		addChild(createWidget<ScrewSilver>(Vec(RACK_GRID_WIDTH, 0)));
-		addChild(createWidget<ScrewSilver>(Vec(box.size.x - 2 * RACK_GRID_WIDTH, 0)));
-		addChild(createWidget<ScrewSilver>(Vec(RACK_GRID_WIDTH, RACK_GRID_HEIGHT - RACK_GRID_WIDTH)));
-		addChild(createWidget<ScrewSilver>(Vec(box.size.x - 2 * RACK_GRID_WIDTH, RACK_GRID_HEIGHT - RACK_GRID_WIDTH)));
+        addChild(createWidget<ScrewSilver>(Vec(RACK_GRID_WIDTH, 0)));
+        addChild(createWidget<ScrewSilver>(Vec(box.size.x - 2 * RACK_GRID_WIDTH, 0)));
+        addChild(createWidget<ScrewSilver>(Vec(RACK_GRID_WIDTH, RACK_GRID_HEIGHT - RACK_GRID_WIDTH)));
+        addChild(createWidget<ScrewSilver>(Vec(box.size.x - 2 * RACK_GRID_WIDTH, RACK_GRID_HEIGHT - RACK_GRID_WIDTH)));
 
-		addParam(createParamCentered<RoundBlackKnob>(mm2px(Vec(7.349, 49.043)), module, ERSplit::P_S1_NROW_PARAM));
-		addParam(createParamCentered<PolyCountParam>(mm2px(Vec(20.32, 52.554)), module, ERSplit::P_S1_POLY_PARAM));
-		addParam(createParamCentered<RoundBlackKnob>(mm2px(Vec(7.349, 68.54)), module, ERSplit::P_S2_NROW_PARAM));
-		addParam(createParamCentered<PolyCountParam>(mm2px(Vec(20.32, 72.133)), module, ERSplit::P_S2_POLY_PARAM));
-		addParam(createParamCentered<RoundBlackKnob>(mm2px(Vec(7.349, 88.041)), module, ERSplit::P_S3_NROW_PARAM));
-		addParam(createParamCentered<PolyCountParam>(mm2px(Vec(20.32, 91.712)), module, ERSplit::P_S3_POLY_PARAM));
-		addParam(createParamCentered<RoundBlackKnob>(mm2px(Vec(7.349, 107.555)), module, ERSplit::P_S4_NROW_PARAM));
-		addParam(createParamCentered<PolyCountParam>(mm2px(Vec(20.32, 111.106)), module, ERSplit::P_S4_POLY_PARAM));
+        addParam(createParamCentered<RoundBlackKnob>(mm2px(Vec(7.349, 49.043)), module, ERSplit::P_S1_NROW_PARAM));
+        addParam(createParamCentered<PolyCountParam>(mm2px(Vec(20.32, 52.554)), module, ERSplit::P_S1_POLY_PARAM));
+        addParam(createParamCentered<RoundBlackKnob>(mm2px(Vec(7.349, 68.54)), module, ERSplit::P_S2_NROW_PARAM));
+        addParam(createParamCentered<PolyCountParam>(mm2px(Vec(20.32, 72.133)), module, ERSplit::P_S2_POLY_PARAM));
+        addParam(createParamCentered<RoundBlackKnob>(mm2px(Vec(7.349, 88.041)), module, ERSplit::P_S3_NROW_PARAM));
+        addParam(createParamCentered<PolyCountParam>(mm2px(Vec(20.32, 91.712)), module, ERSplit::P_S3_POLY_PARAM));
+        addParam(createParamCentered<RoundBlackKnob>(mm2px(Vec(7.349, 107.555)), module, ERSplit::P_S4_NROW_PARAM));
+        addParam(createParamCentered<PolyCountParam>(mm2px(Vec(20.32, 111.106)), module, ERSplit::P_S4_POLY_PARAM));
 
-		addInput(createInputCentered<PJ301MPort>(mm2px(Vec(20.32, 29.567)), module, ERSplit::IN_DISABLE_INPUT));
-		addInput(createInputCentered<PJ301MPort>(mm2px(Vec(31.497, 29.567)), module, ERSplit::IN_K_INPUT));
-		addInput(createInputCentered<PJ301MPort>(mm2px(Vec(43.689, 29.567)), module, ERSplit::IN_X_INPUT));
-		addInput(createInputCentered<PJ301MPort>(mm2px(Vec(55.881, 29.567)), module, ERSplit::IN_Y_INPUT));
-		addInput(createInputCentered<PJ301MPort>(mm2px(Vec(68.073, 29.567)), module, ERSplit::IN_Z_INPUT));
-		addInput(createInputCentered<PJ301MPort>(mm2px(Vec(80.265, 29.567)), module, ERSplit::IN_KG_INPUT));
-		addInput(createInputCentered<PJ301MPort>(mm2px(Vec(92.456, 49.043)), module, ERSplit::IN1_LIGHTS_INPUT));
-		addInput(createInputCentered<PJ301MPort>(mm2px(Vec(92.456, 68.54)), module, ERSplit::IN2_LIGHTS_INPUT));
-		addInput(createInputCentered<PJ301MPort>(mm2px(Vec(92.456, 88.041)), module, ERSplit::IN3_LIGHTS_INPUT));
-		addInput(createInputCentered<PJ301MPort>(mm2px(Vec(92.456, 107.555)), module, ERSplit::IN4_LIGHTS_INPUT));
+        addInput(createInputCentered<PJ301MPort>(mm2px(Vec(20.32, 29.567)), module, ERSplit::IN_DISABLE_INPUT));
+        addInput(createInputCentered<PJ301MPort>(mm2px(Vec(31.497, 29.567)), module, ERSplit::IN_K_INPUT));
+        addInput(createInputCentered<PJ301MPort>(mm2px(Vec(43.689, 29.567)), module, ERSplit::IN_X_INPUT));
+        addInput(createInputCentered<PJ301MPort>(mm2px(Vec(55.881, 29.567)), module, ERSplit::IN_Y_INPUT));
+        addInput(createInputCentered<PJ301MPort>(mm2px(Vec(68.073, 29.567)), module, ERSplit::IN_Z_INPUT));
+        addInput(createInputCentered<PJ301MPort>(mm2px(Vec(80.265, 29.567)), module, ERSplit::IN_KG_INPUT));
+        addInput(createInputCentered<PJ301MPort>(mm2px(Vec(92.456, 49.043)), module, ERSplit::IN1_LIGHTS_INPUT));
+        addInput(createInputCentered<PJ301MPort>(mm2px(Vec(92.456, 68.54)), module, ERSplit::IN2_LIGHTS_INPUT));
+        addInput(createInputCentered<PJ301MPort>(mm2px(Vec(92.456, 88.041)), module, ERSplit::IN3_LIGHTS_INPUT));
+        addInput(createInputCentered<PJ301MPort>(mm2px(Vec(92.456, 107.555)), module, ERSplit::IN4_LIGHTS_INPUT));
 
-		addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(92.457, 29.567)), module, ERSplit::OUT_LIGHTS_OUTPUT));
-		addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(31.496, 49.043)), module, ERSplit::OUT1_K_OUTPUT));
-		addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(43.688, 49.043)), module, ERSplit::OUT1_X_OUTPUT));
-		addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(55.88, 49.043)), module, ERSplit::OUT1_Y_OUTPUT));
-		addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(68.072, 49.043)), module, ERSplit::OUT1_Z_OUTPUT));
-		addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(80.264, 49.043)), module, ERSplit::OUT1_KG_OUTPUT));
-		addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(31.496, 68.54)), module, ERSplit::OUT2_K_OUTPUT));
-		addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(43.688, 68.54)), module, ERSplit::OUT2_X_OUTPUT));
-		addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(55.88, 68.54)), module, ERSplit::OUT2_Y_OUTPUT));
-		addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(68.072, 68.54)), module, ERSplit::OUT2_Z_OUTPUT));
-		addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(80.264, 68.54)), module, ERSplit::OUT2_KG_OUTPUT));
-		addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(31.496, 88.041)), module, ERSplit::OUT3_K_OUTPUT));
-		addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(43.688, 88.041)), module, ERSplit::OUT3_X_OUTPUT));
-		addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(55.88, 88.041)), module, ERSplit::OUT3_Y_OUTPUT));
-		addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(68.072, 88.041)), module, ERSplit::OUT3_Z_OUTPUT));
-		addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(80.264, 88.041)), module, ERSplit::OUT3_KG_OUTPUT));
-		addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(31.496, 107.555)), module, ERSplit::OUT4_K_OUTPUT));
-		addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(43.688, 107.555)), module, ERSplit::OUT4_X_OUTPUT));
-		addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(55.88, 107.555)), module, ERSplit::OUT4_Y_OUTPUT));
-		addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(68.072, 107.555)), module, ERSplit::OUT4_Z_OUTPUT));
-		addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(80.264, 107.555)), module, ERSplit::OUT4_KG_OUTPUT));
+        addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(92.457, 29.567)), module, ERSplit::OUT_LIGHTS_OUTPUT));
+        addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(31.496, 49.043)), module, ERSplit::OUT1_K_OUTPUT));
+        addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(43.688, 49.043)), module, ERSplit::OUT1_X_OUTPUT));
+        addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(55.88, 49.043)), module, ERSplit::OUT1_Y_OUTPUT));
+        addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(68.072, 49.043)), module, ERSplit::OUT1_Z_OUTPUT));
+        addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(80.264, 49.043)), module, ERSplit::OUT1_KG_OUTPUT));
+        addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(31.496, 68.54)), module, ERSplit::OUT2_K_OUTPUT));
+        addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(43.688, 68.54)), module, ERSplit::OUT2_X_OUTPUT));
+        addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(55.88, 68.54)), module, ERSplit::OUT2_Y_OUTPUT));
+        addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(68.072, 68.54)), module, ERSplit::OUT2_Z_OUTPUT));
+        addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(80.264, 68.54)), module, ERSplit::OUT2_KG_OUTPUT));
+        addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(31.496, 88.041)), module, ERSplit::OUT3_K_OUTPUT));
+        addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(43.688, 88.041)), module, ERSplit::OUT3_X_OUTPUT));
+        addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(55.88, 88.041)), module, ERSplit::OUT3_Y_OUTPUT));
+        addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(68.072, 88.041)), module, ERSplit::OUT3_Z_OUTPUT));
+        addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(80.264, 88.041)), module, ERSplit::OUT3_KG_OUTPUT));
+        addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(31.496, 107.555)), module, ERSplit::OUT4_K_OUTPUT));
+        addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(43.688, 107.555)), module, ERSplit::OUT4_X_OUTPUT));
+        addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(55.88, 107.555)), module, ERSplit::OUT4_Y_OUTPUT));
+        addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(68.072, 107.555)), module, ERSplit::OUT4_Z_OUTPUT));
+        addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(80.264, 107.555)), module, ERSplit::OUT4_KG_OUTPUT));
 
-		addChild(createLightCentered<MediumLight<GreenLight>>(mm2px(Vec(24.528, 46.068)), module, ERSplit::LED_S1_LIGHT));
-		addChild(createLightCentered<MediumLight<GreenLight>>(mm2px(Vec(24.528, 65.564)), module, ERSplit::LED_S2_LIGHT));
-		addChild(createLightCentered<MediumLight<GreenLight>>(mm2px(Vec(24.528, 85.066)), module, ERSplit::LED_S3_LIGHT));
-		addChild(createLightCentered<MediumLight<GreenLight>>(mm2px(Vec(24.528, 104.634)), module, ERSplit::LED_S4_LIGHT));
+        addChild(
+            createLightCentered<MediumLight<GreenLight>>(mm2px(Vec(24.528, 46.068)), module, ERSplit::LED_S1_LIGHT));
+        addChild(
+            createLightCentered<MediumLight<GreenLight>>(mm2px(Vec(24.528, 65.564)), module, ERSplit::LED_S2_LIGHT));
+        addChild(
+            createLightCentered<MediumLight<GreenLight>>(mm2px(Vec(24.528, 85.066)), module, ERSplit::LED_S3_LIGHT));
+        addChild(
+            createLightCentered<MediumLight<GreenLight>>(mm2px(Vec(24.528, 104.634)), module, ERSplit::LED_S4_LIGHT));
     }
 };
 
@@ -327,9 +316,9 @@ void ERSplit::doProcess(const ProcessArgs &args) {
     static constexpr unsigned OUT_N = OUT2_K_OUTPUT - OUT1_K_OUTPUT;
     static constexpr unsigned PARAM_N = P_S2_NROW_PARAM - P_S1_NROW_PARAM;
 
-    bool activityLed[MAX_SPLIT] = {false,false,false,false};
+    bool activityLed[MAX_SPLIT] = { false, false, false, false };
     for (unsigned splitId = 0; splitId < MAX_SPLIT; splitId++) {
-        if(splitRow >= in_kg_r) continue; 
+        if (splitRow >= in_kg_r) continue;
 
         auto &split = splits_[splitId];
         auto &voices = voices_[splitId];
@@ -341,9 +330,10 @@ void ERSplit::doProcess(const ProcessArgs &args) {
 
         // just check startR since no others change
         if (in_kg_c != split.sizeC_ || nRow != split.sizeR_ || splitRow != split.startR_) {
-            split.setStart(splitRow, 0);
-            split.setSize(nRow, in_kg_c);
-            layoutChanged_ = true;
+            bool chg = false;
+            chg |= split.setStart(splitRow, 0);
+            chg |= split.setSize(nRow, in_kg_c);
+            layoutChanged_ = chg;
         }
         splitRow += nRow;
 
@@ -365,9 +355,7 @@ void ERSplit::doProcess(const ProcessArgs &args) {
             for (unsigned ch = 0; ch < nChannels; ch++) {
                 unsigned in_r = 0, in_c = 0;
                 bool valid = enabled;
-                if (valid) {
-                    decodeKey(inputs[IN_K_INPUT].getVoltage(ch), valid, in_r, in_c);
-                }
+                if (valid) { decodeKey(inputs[IN_K_INPUT].getVoltage(ch), valid, in_r, in_c); }
 
                 float inX = inputs[IN_X_INPUT].getVoltage(ch);
                 float inY = inputs[IN_Y_INPUT].getVoltage(ch);
@@ -379,9 +367,7 @@ void ERSplit::doProcess(const ProcessArgs &args) {
                     unsigned r = in_r - startR;
                     unsigned c = in_c - startC;
 
-                    if (!v) {
-                        v = voices.findFreeVoice(maxVoices);
-                    }
+                    if (!v) { v = voices.findFreeVoice(maxVoices); }
 
                     if (v) {
                         v->updateVoice(ch, r, c, valid, inX, inY, inZ);
@@ -389,7 +375,7 @@ void ERSplit::doProcess(const ProcessArgs &args) {
                         outputs[OUT1_X_OUTPUT + (splitId * OUT_N)].setVoltage(inX, v->voiceId_);
                         outputs[OUT1_Y_OUTPUT + (splitId * OUT_N)].setVoltage(inY, v->voiceId_);
                         outputs[OUT1_Z_OUTPUT + (splitId * OUT_N)].setVoltage(inZ, v->voiceId_);
-                        activityLed[splitId] = activityLed[splitId]  |=true;
+                        activityLed[splitId] = activityLed[splitId] |= true;
                     }
                 } else {
                     // was in this split, but now key is outside
@@ -434,7 +420,6 @@ void ERSplit::doProcess(const ProcessArgs &args) {
         lights[LED_S1_LIGHT + splitId].setBrightness(activityLed[splitId] ? 1.0f : 0.0f);
 
     }  // for each split
-
 
 
     if (layoutChanged_) {

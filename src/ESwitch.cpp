@@ -1,18 +1,11 @@
+#include "EComponents.h"
 #include "EHarp.h"
 #include "Encoding.h"
 #include "LightWire.h"
 #include "plugin.hpp"
 
-#include "EComponents.h"
-
 struct ESwitch : Module {
-    enum ParamId {
-        P_S1_POLY_PARAM,
-        P_S2_POLY_PARAM,
-        P_S3_POLY_PARAM,
-        P_S4_POLY_PARAM,
-        PARAMS_LEN
-    };
+    enum ParamId { P_S1_POLY_PARAM, P_S2_POLY_PARAM, P_S3_POLY_PARAM, P_S4_POLY_PARAM, PARAMS_LEN };
     enum InputId {
         IN_SELECT_INPUT,
         IN_DISABLE_INPUT,
@@ -51,13 +44,7 @@ struct ESwitch : Module {
         OUT4_KG_OUTPUT,
         OUTPUTS_LEN
     };
-	enum LightId {
-		LED_S1_LIGHT,
-		LED_S2_LIGHT,
-		LED_S3_LIGHT,
-		LED_S4_LIGHT,
-		LIGHTS_LEN
-	};
+    enum LightId { LED_S1_LIGHT, LED_S2_LIGHT, LED_S3_LIGHT, LED_S4_LIGHT, LIGHTS_LEN };
 
     ESwitch() {
         config(PARAMS_LEN, INPUTS_LEN, OUTPUTS_LEN, LIGHTS_LEN);
@@ -81,7 +68,7 @@ struct ESwitch : Module {
 
 
         configOutput(OUT_LIGHTS_OUTPUT, "LED");
-        
+
         configOutput(OUT1_K_OUTPUT, "Split 1 Key");
         configOutput(OUT1_X_OUTPUT, "Split 1 X");
         configOutput(OUT1_Y_OUTPUT, "Split 1 Y");
@@ -112,13 +99,9 @@ struct ESwitch : Module {
         paramQuantities[P_S4_POLY_PARAM]->snapEnabled = true;
     }
 
-    void processBypass(const ProcessArgs& args) override {
-        doProcessBypass(args);
-    }
+    void processBypass(const ProcessArgs& args) override { doProcessBypass(args); }
 
-    void process(const ProcessArgs& args) override {
-        doProcess(args);
-    }
+    void process(const ProcessArgs& args) override { doProcess(args); }
 
     void onPortChange(const PortChangeEvent& e) override {
         if (e.connecting) {
@@ -129,8 +112,7 @@ struct ESwitch : Module {
                             layoutChanged_ = true;
                             break;
                         }
-                        default:
-                            break;
+                        default: break;
                     }
                     break;
                 }
@@ -140,8 +122,7 @@ struct ESwitch : Module {
                             refreshLeds_ = true;
                             break;
                         }
-                        default:
-                            break;
+                        default: break;
                     }
                 }
             }
@@ -157,19 +138,16 @@ struct ESwitch : Module {
                             refreshLeds_ = true;
                             break;
                         }
-                        default:
-                            break;
+                        default: break;
                     }
                     break;
                 }
-                default:
-                    break;
+                default: break;
             }
         }
     }
 
-    void doProcessBypass(const ProcessArgs& args) {
-    }
+    void doProcessBypass(const ProcessArgs& args) {}
 
     void doProcess(const ProcessArgs& args);
 
@@ -190,9 +168,7 @@ struct ESwitch : Module {
             z_ = z;
         }
 
-        void freeVoice() override {
-            updateVoice(0xff, false, 0, 0, 0.f, 0.f, 0.f);
-        }
+        void freeVoice() override { updateVoice(0xff, false, 0, 0, 0.f, 0.f, 0.f); }
     };
 
     struct Split {
@@ -200,35 +176,34 @@ struct ESwitch : Module {
         unsigned sizeR_ = 0, sizeC_ = 0;
         bool active_ = false;
 
-        Split() {
-            clearLeds();
-        }
+        Split() { clearLeds(); }
 
         void active(bool a) { active_ = a; }
 
-        void setStart(unsigned r, unsigned c) {
+        bool setStart(unsigned r, unsigned c) {
+            unsigned lr = startR_, lc = startC_;
             startR_ = r < (MAX_R - 1) ? r : MAX_R - 1;
             startC_ = c < (MAX_C - 1) ? c : MAX_C - 1;
+            return startR_ != lr || startC_ != lc;
         }
-        void setSize(unsigned r, unsigned c) {
+
+        bool setSize(unsigned r, unsigned c) {
+            unsigned lr = sizeR_, lc = sizeC_;
             sizeR_ = r < MAX_R ? r : MAX_R;
             sizeC_ = c < MAX_C ? c : MAX_C;
+            return sizeR_ != lr || sizeC_ != lc;
         }
 
         void setLed(LedMsgType t, unsigned startr, unsigned startc, unsigned sizer, unsigned sizec) {
             unsigned r = 0, c = 0;
             for (r = startr; r < sizeR_ && r < (startr + sizer); r++) {
-                for (c = startc; c < sizeC_ && c < (startc + sizec); c++) {
-                    ledState_[r][c] = t;
-                }
+                for (c = startc; c < sizeC_ && c < (startc + sizec); c++) { ledState_[r][c] = t; }
             }
         }
 
         void clearLeds() {
             for (unsigned r = 0; r < MAX_R; r++) {
-                for (unsigned c = 0; c < MAX_R; c++) {
-                    ledState_[r][c] = LED_SET_OFF;
-                }
+                for (unsigned c = 0; c < MAX_R; c++) { ledState_[r][c] = LED_SET_OFF; }
             }
         }
 
@@ -250,55 +225,59 @@ struct ESwitchWidget : ModuleWidget {
     ESwitchWidget(ESwitch* module) {
         setModule(module);
         setPanel(createPanel(asset::plugin(pluginInstance, "res/ESwitch.svg")));
-		addChild(createWidget<ScrewSilver>(Vec(RACK_GRID_WIDTH, 0)));
-		addChild(createWidget<ScrewSilver>(Vec(box.size.x - 2 * RACK_GRID_WIDTH, 0)));
-		addChild(createWidget<ScrewSilver>(Vec(RACK_GRID_WIDTH, RACK_GRID_HEIGHT - RACK_GRID_WIDTH)));
-		addChild(createWidget<ScrewSilver>(Vec(box.size.x - 2 * RACK_GRID_WIDTH, RACK_GRID_HEIGHT - RACK_GRID_WIDTH)));
+        addChild(createWidget<ScrewSilver>(Vec(RACK_GRID_WIDTH, 0)));
+        addChild(createWidget<ScrewSilver>(Vec(box.size.x - 2 * RACK_GRID_WIDTH, 0)));
+        addChild(createWidget<ScrewSilver>(Vec(RACK_GRID_WIDTH, RACK_GRID_HEIGHT - RACK_GRID_WIDTH)));
+        addChild(createWidget<ScrewSilver>(Vec(box.size.x - 2 * RACK_GRID_WIDTH, RACK_GRID_HEIGHT - RACK_GRID_WIDTH)));
 
 
-		addParam(createParamCentered<PolyCountParam>(mm2px(Vec(10.181, 52.554)), module, ESwitch::P_S1_POLY_PARAM));
-		addParam(createParamCentered<PolyCountParam>(mm2px(Vec(10.181, 72.133)), module, ESwitch::P_S2_POLY_PARAM));
-		addParam(createParamCentered<PolyCountParam>(mm2px(Vec(10.181, 91.712)), module, ESwitch::P_S3_POLY_PARAM));
-		addParam(createParamCentered<PolyCountParam>(mm2px(Vec(10.181, 111.106)), module, ESwitch::P_S4_POLY_PARAM));
+        addParam(createParamCentered<PolyCountParam>(mm2px(Vec(10.181, 52.554)), module, ESwitch::P_S1_POLY_PARAM));
+        addParam(createParamCentered<PolyCountParam>(mm2px(Vec(10.181, 72.133)), module, ESwitch::P_S2_POLY_PARAM));
+        addParam(createParamCentered<PolyCountParam>(mm2px(Vec(10.181, 91.712)), module, ESwitch::P_S3_POLY_PARAM));
+        addParam(createParamCentered<PolyCountParam>(mm2px(Vec(10.181, 111.106)), module, ESwitch::P_S4_POLY_PARAM));
 
-		addInput(createInputCentered<PJ301MPort>(mm2px(Vec(45.721, 15.809)), module, ESwitch::IN_SELECT_INPUT));
-		addInput(createInputCentered<PJ301MPort>(mm2px(Vec(10.181, 29.567)), module, ESwitch::IN_DISABLE_INPUT));
-		addInput(createInputCentered<PJ301MPort>(mm2px(Vec(21.336, 29.567)), module, ESwitch::IN_K_INPUT));
-		addInput(createInputCentered<PJ301MPort>(mm2px(Vec(33.523, 29.567)), module, ESwitch::IN_X_INPUT));
-		addInput(createInputCentered<PJ301MPort>(mm2px(Vec(45.71, 29.567)), module, ESwitch::IN_Y_INPUT));
-		addInput(createInputCentered<PJ301MPort>(mm2px(Vec(57.6, 29.567)), module, ESwitch::IN_Z_INPUT));
-		addInput(createInputCentered<PJ301MPort>(mm2px(Vec(70.104, 29.567)), module, ESwitch::IN_KG_INPUT));
-		addInput(createInputCentered<PJ301MPort>(mm2px(Vec(82.296, 49.043)), module, ESwitch::IN1_LIGHTS_INPUT));
-		addInput(createInputCentered<PJ301MPort>(mm2px(Vec(82.296, 68.54)), module, ESwitch::IN2_LIGHTS_INPUT));
-		addInput(createInputCentered<PJ301MPort>(mm2px(Vec(82.296, 88.041)), module, ESwitch::IN3_LIGHTS_INPUT));
-		addInput(createInputCentered<PJ301MPort>(mm2px(Vec(82.296, 107.555)), module, ESwitch::IN4_LIGHTS_INPUT));
+        addInput(createInputCentered<PJ301MPort>(mm2px(Vec(45.721, 15.809)), module, ESwitch::IN_SELECT_INPUT));
+        addInput(createInputCentered<PJ301MPort>(mm2px(Vec(10.181, 29.567)), module, ESwitch::IN_DISABLE_INPUT));
+        addInput(createInputCentered<PJ301MPort>(mm2px(Vec(21.336, 29.567)), module, ESwitch::IN_K_INPUT));
+        addInput(createInputCentered<PJ301MPort>(mm2px(Vec(33.523, 29.567)), module, ESwitch::IN_X_INPUT));
+        addInput(createInputCentered<PJ301MPort>(mm2px(Vec(45.71, 29.567)), module, ESwitch::IN_Y_INPUT));
+        addInput(createInputCentered<PJ301MPort>(mm2px(Vec(57.6, 29.567)), module, ESwitch::IN_Z_INPUT));
+        addInput(createInputCentered<PJ301MPort>(mm2px(Vec(70.104, 29.567)), module, ESwitch::IN_KG_INPUT));
+        addInput(createInputCentered<PJ301MPort>(mm2px(Vec(82.296, 49.043)), module, ESwitch::IN1_LIGHTS_INPUT));
+        addInput(createInputCentered<PJ301MPort>(mm2px(Vec(82.296, 68.54)), module, ESwitch::IN2_LIGHTS_INPUT));
+        addInput(createInputCentered<PJ301MPort>(mm2px(Vec(82.296, 88.041)), module, ESwitch::IN3_LIGHTS_INPUT));
+        addInput(createInputCentered<PJ301MPort>(mm2px(Vec(82.296, 107.555)), module, ESwitch::IN4_LIGHTS_INPUT));
 
-		addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(82.297, 29.567)), module, ESwitch::OUT_LIGHTS_OUTPUT));
-		addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(21.336, 49.043)), module, ESwitch::OUT1_K_OUTPUT));
-		addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(33.523, 49.043)), module, ESwitch::OUT1_X_OUTPUT));
-		addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(45.71, 49.043)), module, ESwitch::OUT1_Y_OUTPUT));
-		addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(58.156, 49.043)), module, ESwitch::OUT1_Z_OUTPUT));
-		addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(70.104, 49.043)), module, ESwitch::OUT1_KG_OUTPUT));
-		addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(21.336, 68.54)), module, ESwitch::OUT2_K_OUTPUT));
-		addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(33.523, 68.54)), module, ESwitch::OUT2_X_OUTPUT));
-		addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(45.71, 68.54)), module, ESwitch::OUT2_Y_OUTPUT));
-		addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(58.156, 68.54)), module, ESwitch::OUT2_Z_OUTPUT));
-		addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(70.104, 68.54)), module, ESwitch::OUT2_KG_OUTPUT));
-		addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(21.336, 88.041)), module, ESwitch::OUT3_K_OUTPUT));
-		addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(33.523, 88.041)), module, ESwitch::OUT3_X_OUTPUT));
-		addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(45.71, 88.041)), module, ESwitch::OUT3_Y_OUTPUT));
-		addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(58.156, 88.041)), module, ESwitch::OUT3_Z_OUTPUT));
-		addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(70.104, 88.041)), module, ESwitch::OUT3_KG_OUTPUT));
-		addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(21.336, 107.555)), module, ESwitch::OUT4_K_OUTPUT));
-		addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(33.523, 107.555)), module, ESwitch::OUT4_X_OUTPUT));
-		addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(45.71, 107.555)), module, ESwitch::OUT4_Y_OUTPUT));
-		addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(57.82, 107.555)), module, ESwitch::OUT4_Z_OUTPUT));
-		addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(70.104, 107.555)), module, ESwitch::OUT4_KG_OUTPUT));
+        addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(82.297, 29.567)), module, ESwitch::OUT_LIGHTS_OUTPUT));
+        addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(21.336, 49.043)), module, ESwitch::OUT1_K_OUTPUT));
+        addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(33.523, 49.043)), module, ESwitch::OUT1_X_OUTPUT));
+        addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(45.71, 49.043)), module, ESwitch::OUT1_Y_OUTPUT));
+        addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(58.156, 49.043)), module, ESwitch::OUT1_Z_OUTPUT));
+        addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(70.104, 49.043)), module, ESwitch::OUT1_KG_OUTPUT));
+        addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(21.336, 68.54)), module, ESwitch::OUT2_K_OUTPUT));
+        addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(33.523, 68.54)), module, ESwitch::OUT2_X_OUTPUT));
+        addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(45.71, 68.54)), module, ESwitch::OUT2_Y_OUTPUT));
+        addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(58.156, 68.54)), module, ESwitch::OUT2_Z_OUTPUT));
+        addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(70.104, 68.54)), module, ESwitch::OUT2_KG_OUTPUT));
+        addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(21.336, 88.041)), module, ESwitch::OUT3_K_OUTPUT));
+        addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(33.523, 88.041)), module, ESwitch::OUT3_X_OUTPUT));
+        addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(45.71, 88.041)), module, ESwitch::OUT3_Y_OUTPUT));
+        addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(58.156, 88.041)), module, ESwitch::OUT3_Z_OUTPUT));
+        addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(70.104, 88.041)), module, ESwitch::OUT3_KG_OUTPUT));
+        addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(21.336, 107.555)), module, ESwitch::OUT4_K_OUTPUT));
+        addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(33.523, 107.555)), module, ESwitch::OUT4_X_OUTPUT));
+        addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(45.71, 107.555)), module, ESwitch::OUT4_Y_OUTPUT));
+        addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(57.82, 107.555)), module, ESwitch::OUT4_Z_OUTPUT));
+        addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(70.104, 107.555)), module, ESwitch::OUT4_KG_OUTPUT));
 
-		addChild(createLightCentered<MediumLight<GreenLight>>(mm2px(Vec(14.389, 46.068)), module, ESwitch::LED_S1_LIGHT));
-		addChild(createLightCentered<MediumLight<GreenLight>>(mm2px(Vec(14.389, 65.564)), module, ESwitch::LED_S2_LIGHT));
-		addChild(createLightCentered<MediumLight<GreenLight>>(mm2px(Vec(14.389, 85.066)), module, ESwitch::LED_S3_LIGHT));
-		addChild(createLightCentered<MediumLight<GreenLight>>(mm2px(Vec(14.389, 104.634)), module, ESwitch::LED_S4_LIGHT));
+        addChild(
+            createLightCentered<MediumLight<GreenLight>>(mm2px(Vec(14.389, 46.068)), module, ESwitch::LED_S1_LIGHT));
+        addChild(
+            createLightCentered<MediumLight<GreenLight>>(mm2px(Vec(14.389, 65.564)), module, ESwitch::LED_S2_LIGHT));
+        addChild(
+            createLightCentered<MediumLight<GreenLight>>(mm2px(Vec(14.389, 85.066)), module, ESwitch::LED_S3_LIGHT));
+        addChild(
+            createLightCentered<MediumLight<GreenLight>>(mm2px(Vec(14.389, 104.634)), module, ESwitch::LED_S4_LIGHT));
     }
 };
 
@@ -326,7 +305,7 @@ void ESwitch::doProcess(const ProcessArgs& args) {
 
     activeSplit_ = activeSplit;
 
-    bool activityLed[MAX_SPLIT] = {false,false,false,false};
+    bool activityLed[MAX_SPLIT] = { false, false, false, false };
     for (unsigned splitId = 0; splitId < MAX_SPLIT; splitId++) {
         auto& voices = voices_[splitId];
         auto& split = splits_[splitId];
@@ -337,9 +316,10 @@ void ESwitch::doProcess(const ProcessArgs& args) {
         bool inSplit = (splitId == activeSplit_);
 
         if (in_kg_r != split.sizeR_ || in_kg_c != split.sizeC_) {
-            split.setStart(0, 0);
-            split.setSize(in_kg_r, in_kg_c);
-            layoutChanged_ |= inSplit;
+            bool chg = false;
+            chg |= split.setStart(0, 0);
+            chg |= split.setSize(in_kg_r, in_kg_c);
+            layoutChanged_ |= (inSplit && chg);
         }
 
         // forward led msgs
@@ -350,9 +330,7 @@ void ESwitch::doProcess(const ProcessArgs& args) {
             decodeLedMsg(ledmsg, t, startr, startc, sizer, sizec);
             split.setLed(t, startr, startc, sizer, sizec);
 
-            if (inSplit) {
-                ledQueue_.write(ledmsg);
-            }
+            if (inSplit) { ledQueue_.write(ledmsg); }
         }
 
         outputs[OUT1_KG_OUTPUT + (splitId * OUT_N)].setVoltage(kgMsg);
@@ -369,9 +347,7 @@ void ESwitch::doProcess(const ProcessArgs& args) {
                 auto v = voices.findVoice(ch);
                 unsigned in_r = 0, in_c = 0;
                 bool valid = enabled;
-                if (valid) {
-                    decodeKey(inputs[IN_K_INPUT].getVoltage(ch), valid, in_r, in_c);
-                }
+                if (valid) { decodeKey(inputs[IN_K_INPUT].getVoltage(ch), valid, in_r, in_c); }
 
                 float inX = inputs[IN_X_INPUT].getVoltage(ch);
                 float inY = inputs[IN_Y_INPUT].getVoltage(ch);
@@ -380,9 +356,7 @@ void ESwitch::doProcess(const ProcessArgs& args) {
                 if (valid && inSplit) {
                     unsigned r = in_r;
                     unsigned c = in_c;
-                    if (!v) {
-                        v = voices.findFreeVoice(maxVoices);
-                    }
+                    if (!v) { v = voices.findFreeVoice(maxVoices); }
 
                     if (v) {
                         v->updateVoice(ch, r, c, valid, inX, inY, inZ);
@@ -390,7 +364,7 @@ void ESwitch::doProcess(const ProcessArgs& args) {
                         outputs[OUT1_X_OUTPUT + (splitId * OUT_N)].setVoltage(inX, v->voiceId_);
                         outputs[OUT1_Y_OUTPUT + (splitId * OUT_N)].setVoltage(inY, v->voiceId_);
                         outputs[OUT1_Z_OUTPUT + (splitId * OUT_N)].setVoltage(inZ, v->voiceId_);
-                        activityLed[splitId] = activityLed[splitId]  |=true;
+                        activityLed[splitId] = activityLed[splitId] |= true;
                     }
                 } else {
                     if (v) {
