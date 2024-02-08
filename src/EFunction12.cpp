@@ -224,7 +224,7 @@ struct EFunction12Widget : ModuleWidget {
     }
 };
 
-Model* modelEFunction12 = createModel<EFunction12, EFunction12Widget>("EFunction12");
+Model* modelEFunction12 = createModel<EFunction12, EFunction12Widget>("Function12");
 
 //////////////////////////////////////////////////////////////////////////////
 

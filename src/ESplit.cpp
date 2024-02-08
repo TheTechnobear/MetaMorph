@@ -265,7 +265,7 @@ struct ESplitWidget : ModuleWidget {
     }
 };
 
-Model *modelESplit = createModel<ESplit, ESplitWidget>("ESplit");
+Model *modelESplit = createModel<ESplit, ESplitWidget>("Splitter");
 
 ////////////////////////////////////////////////////////////////////////////////////////////////
 

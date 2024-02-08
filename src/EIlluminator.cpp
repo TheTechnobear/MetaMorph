@@ -234,7 +234,7 @@ struct EIlluminatorWidget : ModuleWidget {
     }
 };
 
-Model* modelEIlluminator = createModel<EIlluminator, EIlluminatorWidget>("EIlluminator");
+Model* modelEIlluminator = createModel<EIlluminator, EIlluminatorWidget>("Illuminator");
 
 /////////////////////////////////////////////////////////////////////////////
 

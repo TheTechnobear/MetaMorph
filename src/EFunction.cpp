@@ -224,7 +224,7 @@ struct EFunctionWidget : ModuleWidget {
     }
 };
 
-Model* modelEFunction = createModel<EFunction, EFunctionWidget>("EFunction");
+Model* modelEFunction = createModel<EFunction, EFunctionWidget>("Function");
 
 ////////////////////////////////////////////////////////////////////////////////////
 void EFunction::doProcess(const ProcessArgs& args) {

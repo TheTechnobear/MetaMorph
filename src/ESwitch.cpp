@@ -281,7 +281,7 @@ struct ESwitchWidget : ModuleWidget {
     }
 };
 
-Model* modelESwitch = createModel<ESwitch, ESwitchWidget>("ESwitch");
+Model* modelESwitch = createModel<ESwitch, ESwitchWidget>("Switch");
 
 /////////////////////////////////////////////////////////////////////////////////////
 

@@ -1,7 +1,7 @@
 {
   "slug": "MetaMorph",
   "name": "MetaMorph",
-  "version": "2.1.2",
+  "version": "2.1.4",
   "license": "open-source",
   "brand": "TheTechnobear",
   "author": "Mark Harris",
@@ -15,65 +15,75 @@
   "modules": [
     {
       "slug": "EigenHarp",
-      "name": "EigenHarp",
-      "description": "connects to eigenharps via usb",
+      "name": "Eigenharp device",
+      "description": "Connect Eigenharp to VCV",
       "tags": [
-        "polyphonic"
+        "polyphonic",
+        "utility"
       ]
     },
     {
       "slug": "Scaler",
       "name": "Scaler",
-      "description": "scales eigenharp signals",
+      "description": "Convert eigenharp keys to v/oct, and scale leds",
       "tags": [
-        "polyphonic"
+        "polyphonic",
+        "utility",
+        "quantizer"
       ]
     },
     {
-      "slug": "EFunction",
-      "name": "EFunction",
-      "description": "",
+      "slug": "Function",
+      "name": "Function",
+      "description": "Provide gates/trigs/toggles from specific keys",
       "tags": [
-        "polyphonic"
+        "polyphonic",
+        "utility"
       ]
     },
     {
-      "slug": "ESwitch",
-      "name": "ESwitch",
-      "description": "",
+      "slug": "Switch",
+      "name": "Switch",
+      "description": "Switch between different keygroups",
       "tags": [
-        "polyphonic"
+        "polyphonic",
+        "utility"
       ]
     },
     {
-      "slug": "ESplit",
-      "name": "ESplit",
-      "description": "",
+      "slug": "Splitter",
+      "name": "Splitter",
+      "description": "Split keygroup into two",
       "tags": [
-        "polyphonic"
+        "polyphonic",
+        "utility"
       ]
     },
     {
-      "slug": "ERSplit",
-      "name": "ERSplit",
-      "description": "Row Splitter",
+      "slug": "RowSplitter",
+      "name": "Row Splitter",
+      "description": "Split keygroup into up to 4 splits along rows",
       "tags": [
-        "polyphonic"
+        "polyphonic",
+        "utility"
       ]
     },
     {
-      "slug": "EFunction12",
-      "name": "EFunction12",
-      "description": "12 function buttons",
+      "slug": "Function12",
+      "name": "Function 12",
+      "description": "Provide gates/trigs/toggles from first 12 keys",
       "tags": [
-        "polyphonic"
+        "polyphonic",
+        "utility"
       ]
     },
     {
-      "slug": "EIlluminator",
-      "name": "EIlluminator",
-      "description": "add light patterns",
-      "tags": []
+      "slug": "Illuminator",
+      "name": "Illuminator",
+      "description": "Light LEDs according to pattern file",
+      "tags": [
+        "utility"
+      ]
     }
   ]
 }

@@ -5,78 +5,9 @@ aka observations about how to get this working !
 
 - testing, see below
 - move documentation to wiki (from forum)
-- consistency of module name (e.g. EFunction -> Function)
-- check tags in plugin.json
-
-
-# Testing notes
-
-# general 
-
-crash at startup, something to so with paramquantity
-... need to isolate which module!
-
-random crash on deletion... 
 
 
 
------------------------------------------------------
-## module - eigenharp 
-
-strip 1 : rel - voltage range incorect.
-strip 1 : gate - not working
-
-untested so far: 
-strip 2
-pedals 
-strip 1 abs
-
------------------------------------------------------
-# module - function12 
-
-tested : ok
-
------------------------------------------------------
-# module - function 
-
-tested : ok
-
-
------------------------------------------------------
-## module - scaler 
-
-leds checked, 
-untested, musical e.g refnote and pb etc.
-
-(led wrong order : fixed in code , not in svg)
-
------------------------------------------------------
-# module - rowsplitter 
-
-tested : ok
-
-
------------------------------------------------------
-# module - switch 
-
-tested : ok
-
-
------------------------------------------------------
-# module - illuminator 
-
-tested : ok
-
-
-
------------------------------------------------------
-# module - splitter 
-
-
-tested : ok
-
-
------------------------------------------------------
 
 ## modules ideas
 LightMerge - merge multipe light sources 
@@ -111,31 +42,3 @@ bool EF_BaseStation::poll(long long t)
     return true;
 }
 
-
-
------------------------------------------------------
-## module - eigenHarp 
-
-
------------------------------------------------------
-## module - scaler 
-
-custom lighting - currently fixed to root, 5th , 7th
-
-
------------------------------------------------------
-
-
-# module - split 
-
-
------------------------------------------------------
-
-# module - function 
-
-
------------------------------------------------------
-
-# module - switch 
-
------------------------------------------------------

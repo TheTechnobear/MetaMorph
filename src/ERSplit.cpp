@@ -299,7 +299,7 @@ struct ERSplitWidget : ModuleWidget {
     }
 };
 
-Model *modelERSplit = createModel<ERSplit, ERSplitWidget>("ERSplit");
+Model *modelERSplit = createModel<ERSplit, ERSplitWidget>("RowSplitter");
 
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
