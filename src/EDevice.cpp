@@ -323,15 +323,15 @@ void EDevice::doProcess(const ProcessArgs& args) {
 
     switch (filterType_) {
         case 0: {
-            harp_->setDeviceFilter(false, 0);
-            break;
-        }
-        case 1: {
             harp_->setDeviceFilter(false, filterDeviceNum_);
             break;
         }
-        case 2: {
+        case 1: {
             harp_->setDeviceFilter(true, filterDeviceNum_);
+            break;
+        }
+        case 2: {
+            harp_->setDeviceFilter(false, filterDeviceNum_);
             break;
         }
         default:
@@ -468,7 +468,7 @@ void EDevice::doProcess(const ProcessArgs& args) {
     outputs[OUT_S1A_OUTPUT].setVoltage(harpData_.stripAbs_[0].next(iRate));
     outputs[OUT_S1R_OUTPUT].setVoltage(harpData_.stripRel_[0].next(iRate));
     outputs[OUT_S1G_OUTPUT].setVoltage(harpData_.stripGate_[0] ? 10.0f : 0.0f);
-    
+
     outputs[OUT_S2A_OUTPUT].setVoltage(harpData_.stripAbs_[1].next(iRate));
     outputs[OUT_S2R_OUTPUT].setVoltage(harpData_.stripRel_[1].next(iRate));
     outputs[OUT_S2G_OUTPUT].setVoltage(harpData_.stripGate_[1] ? 10.0f : 0.0f);
