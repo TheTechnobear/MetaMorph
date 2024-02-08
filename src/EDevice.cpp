@@ -465,12 +465,13 @@ void EDevice::doProcess(const ProcessArgs& args) {
 
     outputs[OUT_BREATH_OUTPUT].setVoltage(harpData_.breathV_.next(iRate));
 
-    outputs[OUT_S1A_OUTPUT].setVoltage(harpData_.stripV_[0].next(iRate));
-    outputs[OUT_S1R_OUTPUT].setVoltage(harpData_.stripR_[0].next(iRate));
-    outputs[OUT_S1G_OUTPUT].setVoltage(harpData_.stripA_[0] ? 10.0f : 0.0f);
-    outputs[OUT_S2A_OUTPUT].setVoltage(harpData_.stripV_[1].next(iRate));
-    outputs[OUT_S2R_OUTPUT].setVoltage(harpData_.stripR_[1].next(iRate));
-    outputs[OUT_S2G_OUTPUT].setVoltage(harpData_.stripA_[1] ? 10.0f : 0.0f);
+    outputs[OUT_S1A_OUTPUT].setVoltage(harpData_.stripAbs_[0].next(iRate));
+    outputs[OUT_S1R_OUTPUT].setVoltage(harpData_.stripRel_[0].next(iRate));
+    outputs[OUT_S1G_OUTPUT].setVoltage(harpData_.stripGate_[0] ? 10.0f : 0.0f);
+    
+    outputs[OUT_S2A_OUTPUT].setVoltage(harpData_.stripAbs_[1].next(iRate));
+    outputs[OUT_S2R_OUTPUT].setVoltage(harpData_.stripRel_[1].next(iRate));
+    outputs[OUT_S2G_OUTPUT].setVoltage(harpData_.stripGate_[1] ? 10.0f : 0.0f);
 
     outputs[OUT_P1_OUTPUT].setVoltage(harpData_.pedalV_[0].next(iRate));
     outputs[OUT_P2_OUTPUT].setVoltage(harpData_.pedalV_[1].next(iRate));

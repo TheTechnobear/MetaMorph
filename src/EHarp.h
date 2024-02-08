@@ -167,10 +167,14 @@ struct EHarp {
     static constexpr unsigned MAX_PEDAL = 2;
 
     bipolarValue breathV_ = 0.0f;
-    bipolarValue stripV_[2] = {0.0f, 0.0f};
-    bipolarValue stripR_[2] = {0.0f, 0.0f};
-    bool stripA_[2] = {false, false};
+
+    bool stripGate_[2] = {false, false};
+    unipolarValue stripAbs_[2] = {0.0f, 0.0f};
+    float stripStart_[2] = {0.0f, 0.0f};
+    bipolarValue stripRel_[2] = {0.0f, 0.0f};
+
     unipolarValue pedalV_[2] = {0.0f, 0.0f};
+
     Voices<FullVoice> mainVoices_;
     Voices<FullVoice> percVoices_;
     Voices<FunctionVoice> funcVoices_;
@@ -423,10 +427,22 @@ class EHarpCallback : public EigenApi::Callback {
 
         if (strip > EHarp::MAX_STRIP) return;
 
-        harpData_.stripA_[strip - 1]= a;
-        float lastValue = harpData_.stripV_[strip - 1].next(0.0f);
-        harpData_.stripV_[strip - 1].set(val);
-        harpData_.stripR_[strip - 1].set(val-lastValue);
+        unsigned s = strip - 1;
+
+        if(a) {
+            // now active
+            if(!harpData_.stripGate_[s]) {
+                // becoming active
+                harpData_.stripStart_[s] = val;
+            }
+            harpData_.stripAbs_[s].set(val);
+            harpData_.stripRel_[s] = val - harpData_.stripStart_[s]; 
+        } else {
+            // now inactive
+            // harpData_.stripAbs_[s].set(0);
+            harpData_.stripRel_[s].set(0);
+        }
+        harpData_.stripGate_[strip - 1]= a;
     }
 
     void pedal(const char* dev, unsigned long long t, unsigned pedal, float val) override {
