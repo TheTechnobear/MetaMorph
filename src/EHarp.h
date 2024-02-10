@@ -43,6 +43,29 @@ class bipolarValue {
     float tar_ = 0.f;
 };
 
+class bipolarValue10v {
+    static constexpr float maxVolt = 10.f;
+
+   public:
+    bipolarValue10v(float x) {
+        set(x);
+        cur_ = tar_;
+    }
+
+    inline void set(float x) {
+        tar_ = x * maxVolt;
+    }
+    inline float next(float stepPct_) {
+        cur_ += (tar_ - cur_) * stepPct_;
+        if (cur_ > -0.0001f && cur_ < 0.0001f) cur_ = 0.0f;
+        return cur_;
+    }
+
+   private:
+    float cur_ = 0.f;
+    float tar_ = 0.f;
+};
+
 class unipolarValue {
     static constexpr float maxVolt = 10.f;
 
@@ -171,7 +194,7 @@ struct EHarp {
     bool stripGate_[2] = {false, false};
     unipolarValue stripAbs_[2] = {0.0f, 0.0f};
     float stripStart_[2] = {0.0f, 0.0f};
-    bipolarValue stripRel_[2] = {0.0f, 0.0f};
+    bipolarValue10v stripRel_[2] = {0.0f, 0.0f};
 
     unipolarValue pedalV_[2] = {0.0f, 0.0f};
 
