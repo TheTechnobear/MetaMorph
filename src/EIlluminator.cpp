@@ -29,16 +29,29 @@ struct EIlluminator : Module {
         
         configOutput(OUT_LIGHTS_OUTPUT, "LED");
 
-        auto dir = asset::plugin(pluginInstance, "res/patterns");
-        auto files = system::getEntries(dir);
-
         LedPattern emptyPattern;
         emptyPattern.name_ = "None";
         patterns_.push_back(emptyPattern);
 
-        for (auto& f : files) {
-            readPattern(f);
+
+        {
+            // plugin patterns
+            auto dir = asset::plugin(pluginInstance, "res/patterns");
+            auto files = system::getEntries(dir);
+            for (auto& f : files) {
+                readPattern(f);
+            }
         }
+
+        {
+            // user patterns
+            auto dir = asset::user("MetaMorph/patterns");
+            auto files = system::getEntries(dir);
+            for (auto& f : files) {
+                readPattern(f);
+            }
+        }
+
         if (patterns_.size() > 0) patternIdx_ = 0;
     }
 

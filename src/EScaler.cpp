@@ -75,8 +75,6 @@ struct EScaler : Module {
         paramQuantities[P_LED2_COLOUR_PARAM]->snapEnabled = true;
         paramQuantities[P_LED3_COLOUR_PARAM]->snapEnabled = true;
 
-        auto dir = asset::plugin(pluginInstance, "res/scales");
-        auto files = system::getEntries(dir);
 
         scala::scale chromaticScale;
         for (int i = 0; i < 12; i++) {
@@ -87,13 +85,33 @@ struct EScaler : Module {
         scales_.push_back(chromaticScale);
         scaleIdx_ = 0;
 
-        for (auto& f : files) {
-            std::ifstream str(f);
-            if (str.is_open()) {
-                std::string name = system::getStem(f);
-                scala::scale scale = scala::read_scl(str);
-                scaleNames_.push_back(name);
-                scales_.push_back(scale);
+        {
+            // plugin scales
+            auto dir = asset::plugin(pluginInstance, "res/scales");
+            auto files = system::getEntries(dir);
+            for (auto& f : files) {
+                std::ifstream str(f);
+                if (str.is_open()) {
+                    std::string name = system::getStem(f);
+                    scala::scale scale = scala::read_scl(str);
+                    scaleNames_.push_back(name);
+                    scales_.push_back(scale);
+                }
+            }
+        }
+
+        {
+            // user scales
+            auto dir = asset::user("MetaMorph/scales");
+            auto files = system::getEntries(dir);
+            for (auto& f : files) {
+                std::ifstream str(f);
+                if (str.is_open()) {
+                    std::string name = system::getStem(f);
+                    scala::scale scale = scala::read_scl(str);
+                    scaleNames_.push_back(name);
+                    scales_.push_back(scale);
+                }
             }
         }
 
