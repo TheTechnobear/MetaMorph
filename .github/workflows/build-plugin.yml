@@ -2,7 +2,10 @@ name: Build VCV Rack Plugin
 permissions:
   contents: write
 
-on: [push, pull_request]
+on:
+  push:
+    tags:
+    - '*'
 
 env:
   rack-sdk-version: latest
