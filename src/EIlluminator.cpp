@@ -3,22 +3,10 @@
 #include "plugin.hpp"
 
 struct EIlluminator : Module {
-    enum ParamId {
-        PARAMS_LEN
-    };
-    enum InputId {
-        IN_DISABLE_INPUT,
-        IN_K_INPUT,
-        IN_KG_INPUT,
-        INPUTS_LEN
-    };
-    enum OutputId {
-        OUT_LIGHTS_OUTPUT,
-        OUTPUTS_LEN
-    };
-    enum LightId {
-        LIGHTS_LEN
-    };
+    enum ParamId { PARAMS_LEN };
+    enum InputId { IN_DISABLE_INPUT, IN_K_INPUT, IN_KG_INPUT, INPUTS_LEN };
+    enum OutputId { OUT_LIGHTS_OUTPUT, OUTPUTS_LEN };
+    enum LightId { LIGHTS_LEN };
 
     EIlluminator() {
         config(PARAMS_LEN, INPUTS_LEN, OUTPUTS_LEN, LIGHTS_LEN);
@@ -26,7 +14,7 @@ struct EIlluminator : Module {
         configInput(IN_DISABLE_INPUT, "Disable");
         configInput(IN_K_INPUT, "Key");
         configInput(IN_KG_INPUT, "KG");
-        
+
         configOutput(OUT_LIGHTS_OUTPUT, "LED");
 
         LedPattern emptyPattern;
@@ -38,30 +26,22 @@ struct EIlluminator : Module {
             // plugin patterns
             auto dir = asset::plugin(pluginInstance, "res/patterns");
             auto files = system::getEntries(dir);
-            for (auto& f : files) {
-                readPattern(f);
-            }
+            for (auto& f : files) { readPattern(f); }
         }
 
         {
             // user patterns
             auto dir = asset::user("MetaMorph/patterns");
             auto files = system::getEntries(dir);
-            for (auto& f : files) {
-                readPattern(f);
-            }
+            for (auto& f : files) { readPattern(f); }
         }
 
         if (patterns_.size() > 0) patternIdx_ = 0;
     }
 
-    void processBypass(const ProcessArgs& args) override {
-        doProcessBypass(args);
-    }
+    void processBypass(const ProcessArgs& args) override { doProcessBypass(args); }
 
-    void process(const ProcessArgs& args) override {
-        doProcess(args);
-    }
+    void process(const ProcessArgs& args) override { doProcess(args); }
 
     void onPortChange(const PortChangeEvent& e) override {
         if (e.connecting) {
@@ -72,8 +52,7 @@ struct EIlluminator : Module {
                             layoutChanged_ = true;
                             break;
                         }
-                        default:
-                            break;
+                        default: break;
                     }
                     break;
                 }
@@ -83,15 +62,14 @@ struct EIlluminator : Module {
                             refreshLeds_ = true;
                             break;
                         }
-                        default:
-                            break;
+                        default: break;
                     }
                 }
             }
         } else {
         }
-    }    
-    
+    }
+
     void doProcessBypass(const ProcessArgs& args) {}
     void doProcess(const ProcessArgs& args);
 
@@ -173,6 +151,13 @@ struct EIlluminator : Module {
             }
         }
 
+        json_t* repeatJ = json_object_get(rootJ, "repeat");
+        if (repeatJ) {
+            pattern.repeat_ = json_integer_value(repeatJ);
+        } else {
+            pattern.repeat_ = 0;
+        }
+
         patterns_.push_back(pattern);
     }
 
@@ -181,9 +166,7 @@ struct EIlluminator : Module {
         patternIdx_ = idx;
     }
 
-    int getPatternIdx() {
-        return patternIdx_;
-    }
+    int getPatternIdx() { return patternIdx_; }
 
     struct LedMsg {
         unsigned row_ = 0;
@@ -194,6 +177,7 @@ struct EIlluminator : Module {
     struct LedPattern {
         std::string name_;
         std::vector<LedMsg> msgs_;
+        unsigned repeat_ = 0;
     };
 
     bool layoutChanged_ = false;
@@ -210,18 +194,19 @@ struct EIlluminator : Module {
 struct EIlluminatorWidget : ModuleWidget {
     EIlluminatorWidget(EIlluminator* module) {
         setModule(module);
-		setPanel(createPanel(asset::plugin(pluginInstance, "res/EIlluminator.svg")));
+        setPanel(createPanel(asset::plugin(pluginInstance, "res/EIlluminator.svg")));
 
-		addChild(createWidget<ScrewSilver>(Vec(RACK_GRID_WIDTH, 0)));
-		addChild(createWidget<ScrewSilver>(Vec(box.size.x - 2 * RACK_GRID_WIDTH, 0)));
-		addChild(createWidget<ScrewSilver>(Vec(RACK_GRID_WIDTH, RACK_GRID_HEIGHT - RACK_GRID_WIDTH)));
-		addChild(createWidget<ScrewSilver>(Vec(box.size.x - 2 * RACK_GRID_WIDTH, RACK_GRID_HEIGHT - RACK_GRID_WIDTH)));
+        addChild(createWidget<ScrewSilver>(Vec(RACK_GRID_WIDTH, 0)));
+        addChild(createWidget<ScrewSilver>(Vec(box.size.x - 2 * RACK_GRID_WIDTH, 0)));
+        addChild(createWidget<ScrewSilver>(Vec(RACK_GRID_WIDTH, RACK_GRID_HEIGHT - RACK_GRID_WIDTH)));
+        addChild(createWidget<ScrewSilver>(Vec(box.size.x - 2 * RACK_GRID_WIDTH, RACK_GRID_HEIGHT - RACK_GRID_WIDTH)));
 
-		addInput(createInputCentered<PJ301MPort>(mm2px(Vec(15.24, 68.539)), module, EIlluminator::IN_DISABLE_INPUT));
-		addInput(createInputCentered<PJ301MPort>(mm2px(Vec(9.208, 88.0)), module, EIlluminator::IN_K_INPUT));
-		addInput(createInputCentered<PJ301MPort>(mm2px(Vec(21.336, 88.0)), module, EIlluminator::IN_KG_INPUT));
+        addInput(createInputCentered<PJ301MPort>(mm2px(Vec(15.24, 68.539)), module, EIlluminator::IN_DISABLE_INPUT));
+        addInput(createInputCentered<PJ301MPort>(mm2px(Vec(9.208, 88.0)), module, EIlluminator::IN_K_INPUT));
+        addInput(createInputCentered<PJ301MPort>(mm2px(Vec(21.336, 88.0)), module, EIlluminator::IN_KG_INPUT));
 
-		addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(15.24, 107.555)), module, EIlluminator::OUT_LIGHTS_OUTPUT));
+        addOutput(
+            createOutputCentered<PJ301MPort>(mm2px(Vec(15.24, 107.555)), module, EIlluminator::OUT_LIGHTS_OUTPUT));
     }
 
     void appendContextMenu(Menu* menu) override {
@@ -230,20 +215,11 @@ struct EIlluminatorWidget : ModuleWidget {
         menu->addChild(new MenuSeparator);
 
         std::vector<std::string> names;
-        for (auto& pattern : module->patterns_) {
-            names.push_back(pattern.name_);
-        }
+        for (auto& pattern : module->patterns_) { names.push_back(pattern.name_); }
 
-        menu->addChild(
-            createIndexSubmenuItem(
-                "Patterns",
-                names,
-                [=]() {
-                    return module->getPatternIdx();
-                },
-                [=](int idx) {
-                    module->setPatternIdx(idx);
-                }));
+        menu->addChild(createIndexSubmenuItem(
+            "Patterns", names, [=]() { return module->getPatternIdx(); },
+            [=](int idx) { module->setPatternIdx(idx); }));
     }
 };
 
@@ -282,10 +258,15 @@ void EIlluminator::doProcess(const ProcessArgs& args) {
 
         if (patternIdx_ > 0 && patternIdx_ < (int)patterns_.size()) {
             auto& pattern = patterns_[patternIdx_];
-            for (auto& msg : pattern.msgs_) {
-                if (msg.row_ < kg_r_ && msg.col_ < kg_c_) {
-                    float ledmsg = encodeLedMsg(msg.colour_, msg.row_, msg.col_, 1, 1);
-                    ledQueue_.write(ledmsg);
+
+            int n = (kg_r > 0 && pattern.repeat_ > 0) ? (kg_r / pattern.repeat_) + 1 : 1;
+            for (int i = 0; i < n; i++) {
+                for (auto& msg : pattern.msgs_) {
+                    auto row = msg.row_ + (i * pattern.repeat_);
+                    if (row < kg_r_ && msg.col_ < kg_c_) {
+                        float ledmsg = encodeLedMsg(msg.colour_, row, msg.col_, 1, 1);
+                        ledQueue_.write(ledmsg);
+                    }
                 }
             }
         }
