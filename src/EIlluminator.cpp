@@ -23,18 +23,19 @@ struct EIlluminator : Module {
 
 
         {
+            // user patterns
+            auto dir = asset::user("MetaMorph/patterns");
+            auto files = system::getEntries(dir);
+            for (auto& f : files) { readPattern(f); }
+        }
+
+        {
             // plugin patterns
             auto dir = asset::plugin(pluginInstance, "res/patterns");
             auto files = system::getEntries(dir);
             for (auto& f : files) { readPattern(f); }
         }
 
-        {
-            // user patterns
-            auto dir = asset::user("MetaMorph/patterns");
-            auto files = system::getEntries(dir);
-            for (auto& f : files) { readPattern(f); }
-        }
 
         if (patterns_.size() > 0) patternIdx_ = 0;
     }
@@ -75,13 +76,24 @@ struct EIlluminator : Module {
 
     json_t* dataToJson() override {
         json_t* root = json_object();
-        json_object_set_new(root, "patternIdx", json_integer(patternIdx_));
+        auto name = patterns_[patternIdx_].name_;
+        json_object_set_new(root, "patternName", json_string(name.c_str()));
         return root;
     }
     void dataFromJson(json_t* rootJ) override {
-        // panelTheme
-        json_t* patternIdx = json_object_get(rootJ, "patternIdx");
-        if (patternIdx) setPatternIdx(json_integer_value(patternIdx));
+        json_t* nameJ = json_object_get(rootJ, "patternName");
+        if (nameJ) {
+            std::string name = json_string_value(nameJ);
+            int idx = 0;
+            for (auto p : patterns_) {
+                if (p.name_ == name) {
+                    setPatternIdx(idx);
+                    return;
+                }
+                idx++;
+            }
+            setPatternIdx(0);
+        }
     }
 
     void readPattern(const std::string& f) {

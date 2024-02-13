@@ -7,35 +7,23 @@
 
 struct EScaler : Module {
     enum ParamId {
-		P_ROW_MULT_PARAM,
-		P_COL_MULT_PARAM,
-		P_KEYPBR_PARAM,
-		P_GLOBALPBR_PARAM,
-		P_REF_NOTE_PARAM,
-		P_LED1_IDX_PARAM,
-		P_LED2_IDX_PARAM,
-		P_LED3_IDX_PARAM,
-		P_LED1_COLOUR_PARAM,
-		P_LED2_COLOUR_PARAM,
-		P_LED3_COLOUR_PARAM,
+        P_ROW_MULT_PARAM,
+        P_COL_MULT_PARAM,
+        P_KEYPBR_PARAM,
+        P_GLOBALPBR_PARAM,
+        P_REF_NOTE_PARAM,
+        P_LED1_IDX_PARAM,
+        P_LED2_IDX_PARAM,
+        P_LED3_IDX_PARAM,
+        P_LED1_COLOUR_PARAM,
+        P_LED2_COLOUR_PARAM,
+        P_LED3_COLOUR_PARAM,
         PARAMS_LEN
     };
-    enum InputId {
-        IN_K_INPUT,
-        IN_NOTE_PB_INPUT,
-        IN_G_PB_INPUT,
-        IN_KG_INPUT,
-        INPUTS_LEN
-    };
+    enum InputId { IN_K_INPUT, IN_NOTE_PB_INPUT, IN_G_PB_INPUT, IN_KG_INPUT, INPUTS_LEN };
 
-    enum OutputId {
-        OUT_VOCT_OUTPUT,
-        OUT_LIGHTS_OUTPUT,
-        OUTPUTS_LEN
-    };
-    enum LightId {
-        LIGHTS_LEN
-    };
+    enum OutputId { OUT_VOCT_OUTPUT, OUT_LIGHTS_OUTPUT, OUTPUTS_LEN };
+    enum LightId { LIGHTS_LEN };
 
     EScaler() {
         config(PARAMS_LEN, INPUTS_LEN, OUTPUTS_LEN, LIGHTS_LEN);
@@ -45,13 +33,13 @@ struct EScaler : Module {
         configParam(P_REF_NOTE_PARAM, -60.f, 60.f, 0.f, "Ref Note");
         configParam(P_KEYPBR_PARAM, 0.f, 48.f, 1.f, "Key Bend");
         configParam(P_GLOBALPBR_PARAM, 0.f, 48.f, 12.f, "Global Bend");
-        
+
         configParam(P_LED1_IDX_PARAM, 0.f, 24.f, 0.f, "Degree 1");
         configParam(P_LED2_IDX_PARAM, 0.f, 24.f, 0.f, "Degree 2");
         configParam(P_LED3_IDX_PARAM, 0.f, 24.f, 0.f, "Degree 3");
-        configSwitch(P_LED1_COLOUR_PARAM, 0.f, 3.f, 1.f, "Colour 1", {"Off", "Green", "Red", "Orange"});
-        configSwitch(P_LED2_COLOUR_PARAM, 0.f, 3.f, 0.f, "Colour 2", {"Off", "Green", "Red", "Orange"});
-        configSwitch(P_LED3_COLOUR_PARAM, 0.f, 3.f, 0.f, "Colour 3", {"Off", "Green", "Red", "Orange"});
+        configSwitch(P_LED1_COLOUR_PARAM, 0.f, 3.f, 1.f, "Colour 1", { "Off", "Green", "Red", "Orange" });
+        configSwitch(P_LED2_COLOUR_PARAM, 0.f, 3.f, 0.f, "Colour 2", { "Off", "Green", "Red", "Orange" });
+        configSwitch(P_LED3_COLOUR_PARAM, 0.f, 3.f, 0.f, "Colour 3", { "Off", "Green", "Red", "Orange" });
 
         configInput(IN_K_INPUT, "Key");
         configInput(IN_NOTE_PB_INPUT, "Note Bend");
@@ -77,28 +65,12 @@ struct EScaler : Module {
 
 
         scala::scale chromaticScale;
-        for (int i = 0; i < 12; i++) {
-            chromaticScale.add_degree(scala::degree((i + 1) * 100.f));
-        }
+        for (int i = 0; i < 12; i++) { chromaticScale.add_degree(scala::degree((i + 1) * 100.f)); }
 
         scaleNames_.push_back("None");
         scales_.push_back(chromaticScale);
         scaleIdx_ = 0;
 
-        {
-            // plugin scales
-            auto dir = asset::plugin(pluginInstance, "res/scales");
-            auto files = system::getEntries(dir);
-            for (auto& f : files) {
-                std::ifstream str(f);
-                if (str.is_open()) {
-                    std::string name = system::getStem(f);
-                    scala::scale scale = scala::read_scl(str);
-                    scaleNames_.push_back(name);
-                    scales_.push_back(scale);
-                }
-            }
-        }
 
         {
             // user scales
@@ -115,6 +87,22 @@ struct EScaler : Module {
             }
         }
 
+        {
+            // plugin scales
+            auto dir = asset::plugin(pluginInstance, "res/scales");
+            auto files = system::getEntries(dir);
+            for (auto& f : files) {
+                std::ifstream str(f);
+                if (str.is_open()) {
+                    std::string name = system::getStem(f);
+                    scala::scale scale = scala::read_scl(str);
+                    scaleNames_.push_back(name);
+                    scales_.push_back(scale);
+                }
+            }
+        }
+
+
         // for (unsigned i = 0; i < scaleNames_.size(); i++) {
         //     auto& scalename = scaleNames_[i];
         //     auto& scale = scales_[i];
@@ -125,13 +113,9 @@ struct EScaler : Module {
         // }
     }
 
-    void processBypass(const ProcessArgs& args) override {
-        doProcessBypass(args);
-    }
+    void processBypass(const ProcessArgs& args) override { doProcessBypass(args); }
 
-    void process(const ProcessArgs& args) override {
-        doProcess(args);
-    }
+    void process(const ProcessArgs& args) override { doProcess(args); }
 
     void onPortChange(const PortChangeEvent& e) override {
         if (e.connecting) {
@@ -142,8 +126,7 @@ struct EScaler : Module {
                             layoutChanged_ = true;
                             break;
                         }
-                        default:
-                            break;
+                        default: break;
                     }
                     break;
                 }
@@ -153,8 +136,7 @@ struct EScaler : Module {
                             refreshLeds_ = true;
                             break;
                         }
-                        default:
-                            break;
+                        default: break;
                     }
                 }
             }
@@ -162,21 +144,30 @@ struct EScaler : Module {
         }
     }
 
-    void doProcessBypass(const ProcessArgs& args) {
-    }
+    void doProcessBypass(const ProcessArgs& args) {}
 
     void doProcess(const ProcessArgs& args);
 
     json_t* dataToJson() override {
         json_t* root = json_object();
-        json_object_set_new(root, "scaleIdx", json_integer(scaleIdx_));
+        std::string name = scaleNames_[scaleIdx_];
+        json_object_set_new(root, "scaleName", json_string(name.c_str()));
         return root;
     }
     void dataFromJson(json_t* rootJ) override {
-        // panelTheme
-        json_t* scaleIdxJ = json_object_get(rootJ, "scaleIdx");
-        if (scaleIdxJ)
-            setScaleIdx(json_integer_value(scaleIdxJ));
+        json_t* scaleNameJ = json_object_get(rootJ, "scaleName");
+        if (scaleNameJ) {
+            std::string name = json_string_value(scaleNameJ);
+            int idx = 0;
+            for (auto s : scaleNames_) {
+                if (s == name) {
+                    setScaleIdx(idx);
+                    return;
+                }
+                idx++;
+            }
+            setScaleIdx(0);
+        }
     }
 
     void setScaleIdx(int idx) {
@@ -184,9 +175,7 @@ struct EScaler : Module {
         scaleIdx_ = idx;
     }
 
-    int getScaleIdx() {
-        return scaleIdx_;
-    }
+    int getScaleIdx() { return scaleIdx_; }
 
     bool layoutChanged_ = false;
     bool refreshLeds_ = false;
@@ -217,46 +206,46 @@ struct EScaler : Module {
 };
 
 struct LedSwitch : app::SvgSwitch {
-	LedSwitch() {
+    LedSwitch() {
         auto plugin = pluginInstance;
 
-		shadow->opacity = 0.0;
-		addFrame(Svg::load(asset::plugin(plugin,"res/components/led/LED_OFF.svg")));
-		addFrame(Svg::load(asset::plugin(plugin,"res/components/led/LED_GREEN.svg")));
-		addFrame(Svg::load(asset::plugin(plugin,"res/components/led/LED_RED.svg")));
-		addFrame(Svg::load(asset::plugin(plugin,"res/components/led/LED_ORANGE.svg")));
-	}
+        shadow->opacity = 0.0;
+        addFrame(Svg::load(asset::plugin(plugin, "res/components/led/LED_OFF.svg")));
+        addFrame(Svg::load(asset::plugin(plugin, "res/components/led/LED_GREEN.svg")));
+        addFrame(Svg::load(asset::plugin(plugin, "res/components/led/LED_RED.svg")));
+        addFrame(Svg::load(asset::plugin(plugin, "res/components/led/LED_ORANGE.svg")));
+    }
 };
 
 struct EScalerWidget : ModuleWidget {
     EScalerWidget(EScaler* module) {
- 		setModule(module);
-		setPanel(createPanel(asset::plugin(pluginInstance, "res/EScaler.svg")));
+        setModule(module);
+        setPanel(createPanel(asset::plugin(pluginInstance, "res/EScaler.svg")));
 
-		addChild(createWidget<ScrewSilver>(Vec(RACK_GRID_WIDTH, 0)));
-		addChild(createWidget<ScrewSilver>(Vec(box.size.x - 2 * RACK_GRID_WIDTH, 0)));
-		addChild(createWidget<ScrewSilver>(Vec(RACK_GRID_WIDTH, RACK_GRID_HEIGHT - RACK_GRID_WIDTH)));
-		addChild(createWidget<ScrewSilver>(Vec(box.size.x - 2 * RACK_GRID_WIDTH, RACK_GRID_HEIGHT - RACK_GRID_WIDTH)));
+        addChild(createWidget<ScrewSilver>(Vec(RACK_GRID_WIDTH, 0)));
+        addChild(createWidget<ScrewSilver>(Vec(box.size.x - 2 * RACK_GRID_WIDTH, 0)));
+        addChild(createWidget<ScrewSilver>(Vec(RACK_GRID_WIDTH, RACK_GRID_HEIGHT - RACK_GRID_WIDTH)));
+        addChild(createWidget<ScrewSilver>(Vec(box.size.x - 2 * RACK_GRID_WIDTH, RACK_GRID_HEIGHT - RACK_GRID_WIDTH)));
 
-		addParam(createParamCentered<RoundBlackKnob>(mm2px(Vec(22.285, 19.164)), module, EScaler::P_ROW_MULT_PARAM));
-		addParam(createParamCentered<RoundBlackKnob>(mm2px(Vec(34.819, 19.164)), module, EScaler::P_COL_MULT_PARAM));
-		addParam(createParamCentered<RoundBlackKnob>(mm2px(Vec(11.993, 41.514)), module, EScaler::P_KEYPBR_PARAM));
-		addParam(createParamCentered<RoundBlackKnob>(mm2px(Vec(24.527, 41.514)), module, EScaler::P_GLOBALPBR_PARAM));
-		addParam(createParamCentered<RoundBlackKnob>(mm2px(Vec(45.289, 41.514)), module, EScaler::P_REF_NOTE_PARAM));
-		addParam(createParamCentered<RoundBlackKnob>(mm2px(Vec(21.667, 63.84)), module, EScaler::P_LED1_IDX_PARAM));
-		addParam(createParamCentered<RoundBlackKnob>(mm2px(Vec(34.202, 63.84)), module, EScaler::P_LED2_IDX_PARAM));
-		addParam(createParamCentered<RoundBlackKnob>(mm2px(Vec(46.736, 63.84)), module, EScaler::P_LED3_IDX_PARAM));
-		addParam(createParam<LedSwitch>(mm2px(Vec(17.603, 69.502)), module, EScaler::P_LED1_COLOUR_PARAM));
-		addParam(createParam<LedSwitch>(mm2px(Vec(30.138, 69.502)), module, EScaler::P_LED2_COLOUR_PARAM));
-		addParam(createParam<LedSwitch>(mm2px(Vec(42.672, 69.54)), module, EScaler::P_LED3_COLOUR_PARAM));
+        addParam(createParamCentered<RoundBlackKnob>(mm2px(Vec(22.285, 19.164)), module, EScaler::P_ROW_MULT_PARAM));
+        addParam(createParamCentered<RoundBlackKnob>(mm2px(Vec(34.819, 19.164)), module, EScaler::P_COL_MULT_PARAM));
+        addParam(createParamCentered<RoundBlackKnob>(mm2px(Vec(11.993, 41.514)), module, EScaler::P_KEYPBR_PARAM));
+        addParam(createParamCentered<RoundBlackKnob>(mm2px(Vec(24.527, 41.514)), module, EScaler::P_GLOBALPBR_PARAM));
+        addParam(createParamCentered<RoundBlackKnob>(mm2px(Vec(45.289, 41.514)), module, EScaler::P_REF_NOTE_PARAM));
+        addParam(createParamCentered<RoundBlackKnob>(mm2px(Vec(21.667, 63.84)), module, EScaler::P_LED1_IDX_PARAM));
+        addParam(createParamCentered<RoundBlackKnob>(mm2px(Vec(34.202, 63.84)), module, EScaler::P_LED2_IDX_PARAM));
+        addParam(createParamCentered<RoundBlackKnob>(mm2px(Vec(46.736, 63.84)), module, EScaler::P_LED3_IDX_PARAM));
+        addParam(createParam<LedSwitch>(mm2px(Vec(17.603, 69.502)), module, EScaler::P_LED1_COLOUR_PARAM));
+        addParam(createParam<LedSwitch>(mm2px(Vec(30.138, 69.502)), module, EScaler::P_LED2_COLOUR_PARAM));
+        addParam(createParam<LedSwitch>(mm2px(Vec(42.672, 69.54)), module, EScaler::P_LED3_COLOUR_PARAM));
 
-		addInput(createInputCentered<PJ301MPort>(mm2px(Vec(9.133, 87.98)), module, EScaler::IN_K_INPUT));
-		addInput(createInputCentered<PJ301MPort>(mm2px(Vec(21.667, 87.98)), module, EScaler::IN_NOTE_PB_INPUT));
-		addInput(createInputCentered<PJ301MPort>(mm2px(Vec(34.202, 87.98)), module, EScaler::IN_G_PB_INPUT));
-		addInput(createInputCentered<PJ301MPort>(mm2px(Vec(46.736, 87.98)), module, EScaler::IN_KG_INPUT));
+        addInput(createInputCentered<PJ301MPort>(mm2px(Vec(9.133, 87.98)), module, EScaler::IN_K_INPUT));
+        addInput(createInputCentered<PJ301MPort>(mm2px(Vec(21.667, 87.98)), module, EScaler::IN_NOTE_PB_INPUT));
+        addInput(createInputCentered<PJ301MPort>(mm2px(Vec(34.202, 87.98)), module, EScaler::IN_G_PB_INPUT));
+        addInput(createInputCentered<PJ301MPort>(mm2px(Vec(46.736, 87.98)), module, EScaler::IN_KG_INPUT));
 
-		addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(9.133, 107.454)), module, EScaler::OUT_VOCT_OUTPUT));
-		addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(46.705, 107.454)), module, EScaler::OUT_LIGHTS_OUTPUT));
+        addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(9.133, 107.454)), module, EScaler::OUT_VOCT_OUTPUT));
+        addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(46.705, 107.454)), module, EScaler::OUT_LIGHTS_OUTPUT));
     }
 
     void appendContextMenu(Menu* menu) override {
@@ -264,16 +253,9 @@ struct EScalerWidget : ModuleWidget {
 
         menu->addChild(new MenuSeparator);
 
-        menu->addChild(
-            createIndexSubmenuItem(
-                "Scales",
-                module->scaleNames_,
-                [=]() {
-                    return module->getScaleIdx();
-                },
-                [=](int idx) {
-                    module->setScaleIdx(idx);
-                }));
+        menu->addChild(createIndexSubmenuItem(
+            "Scales", module->scaleNames_, [=]() { return module->getScaleIdx(); },
+            [=](int idx) { module->setScaleIdx(idx); }));
     }
 };
 
@@ -380,7 +362,7 @@ void EScaler::doProcess(const ProcessArgs& args) {
 
             outputs[OUT_VOCT_OUTPUT].setVoltage(voct, ch);
         } else {
-            outputs[OUT_VOCT_OUTPUT].setVoltage(0, ch);
+            // do not reset voltage on note off
         }
     }
 
