@@ -18,29 +18,14 @@ struct EFunction : Module {
         P_F4_C_PARAM,
         PARAMS_LEN
     };
-    enum InputId {
-        IN_K_INPUT,
-        IN_GATE_INPUT,
-        IN_KG_INPUT,
-        IN_ENABLE_INPUT,
-        INPUTS_LEN
-    };
-    enum OutputId {
-        OUT_F1_OUTPUT,
-        OUT_F2_OUTPUT,
-        OUT_F3_OUTPUT,
-        OUT_F4_OUTPUT,
-        OUT_LIGHTS_OUTPUT,
-        OUTPUTS_LEN
-    };
-    enum LightId {
-        LIGHTS_LEN
-    };
+    enum InputId { IN_K_INPUT, IN_GATE_INPUT, IN_KG_INPUT, IN_ENABLE_INPUT, INPUTS_LEN };
+    enum OutputId { OUT_F1_OUTPUT, OUT_F2_OUTPUT, OUT_F3_OUTPUT, OUT_F4_OUTPUT, OUT_LIGHTS_OUTPUT, OUTPUTS_LEN };
+    enum LightId { LIGHTS_LEN };
 
     EFunction() {
         config(PARAMS_LEN, INPUTS_LEN, OUTPUTS_LEN, LIGHTS_LEN);
 
-        configSwitch(P_TYPE_PARAM, 0.f, 2.f, 0.f, "Type", {"Toggle", "Trig", "Gate"});
+        configSwitch(P_TYPE_PARAM, 0.f, 2.f, 0.f, "Type", { "Toggle", "Trig", "Gate" });
         configParam(P_F1_R_PARAM, 0.f, 24.f, 0.f, "F1 Row");
         configParam(P_F1_C_PARAM, 0.f, 24.f, 0.f, "F1 Col");
         configParam(P_F2_R_PARAM, 0.f, 24.f, 0.f, "F2 Row");
@@ -59,7 +44,7 @@ struct EFunction : Module {
         configOutput(OUT_F2_OUTPUT, "Func 2");
         configOutput(OUT_F3_OUTPUT, "Func 3");
         configOutput(OUT_F4_OUTPUT, "Func 4");
-        
+
         configOutput(OUT_LIGHTS_OUTPUT, "LED");
 
         paramQuantities[P_F1_R_PARAM]->snapEnabled = true;
@@ -72,13 +57,9 @@ struct EFunction : Module {
         paramQuantities[P_F4_C_PARAM]->snapEnabled = true;
     }
 
-    void processBypass(const ProcessArgs& args) override {
-        doProcessBypass(args);
-    }
+    void processBypass(const ProcessArgs& args) override { doProcessBypass(args); }
 
-    void process(const ProcessArgs& args) override {
-        doProcess(args);
-    }
+    void process(const ProcessArgs& args) override { doProcess(args); }
 
     void onPortChange(const PortChangeEvent& e) override {
         if (e.connecting) {
@@ -89,8 +70,7 @@ struct EFunction : Module {
                             layoutChanged_ = true;
                             break;
                         }
-                        default:
-                            break;
+                        default: break;
                     }
                     break;
                 }
@@ -100,8 +80,7 @@ struct EFunction : Module {
                             refreshLeds_ = true;
                             break;
                         }
-                        default:
-                            break;
+                        default: break;
                     }
                 }
             }
@@ -113,10 +92,10 @@ struct EFunction : Module {
         }
     }
 
-    void doProcessBypass(const ProcessArgs& args) {
-    }
+    void doProcessBypass(const ProcessArgs& args) {}
 
     void doProcess(const ProcessArgs& args);
+
 
     MsgQueue<float> ledQueue_;
 
@@ -125,27 +104,28 @@ struct EFunction : Module {
     bool enabled_ = true;
     unsigned kg_r_ = 0, kg_c_ = 0;
 
+
+    bool exclusiveMode_ = false;
+    bool trigOnRelease_ = false;
+    float trigHigh_ = 2.0f;
+    float trigLow_ = 0.2f;
+
+
     static constexpr unsigned MAX_FUNCS = 4;
-    bool connectedFuncs_[MAX_FUNCS] = {false, false, false, false};
+    bool connectedFuncs_[MAX_FUNCS] = { false, false, false, false };
     struct FuncKey {
         bool state_ = false;
         bool last_key_state_ = false;
+        bool valid_ = false;
         int r_ = -1, c_ = -1;
         unsigned ch_ = 0xff;
-        bool valid_ = false;
 
         unsigned trigCount_ = 0;
         const unsigned TRIG_LEN = 48;
 
-        enum {
-            S_TOGGLE,
-            S_TRIG,
-            S_GATE,
-            S_MAX
-        };
-        bool valid() {
-            return valid_;
-        }
+        enum { S_TOGGLE, S_TRIG, S_GATE, S_MAX };
+
+        bool valid() { return valid_; }
 
         bool updateKey(int r, int c) {
             if (r != r_ || c_ != c) {
@@ -157,7 +137,7 @@ struct EFunction : Module {
             return false;
         }
 
-        bool changeState(unsigned switch_type, bool keystate) {
+        bool changeState(unsigned switch_type, bool keystate, bool trigOnRelease) {
             bool preState = state_;
             switch (switch_type) {
                 case S_GATE: {
@@ -166,18 +146,21 @@ struct EFunction : Module {
                     break;
                 }
                 case S_TRIG: {
-                    // trig is on 1 to 0, i.e. key release
-                    state_ = last_key_state_ && !keystate;
-                    if (state_) {
-                        trigCount_ = TRIG_LEN;
+                    if (trigOnRelease) {
+                        state_ = last_key_state_ && !keystate;
+                        if (state_) { trigCount_ = TRIG_LEN; }
+                    } else {
+                        state_ = !last_key_state_ && keystate;
+                        if (state_) { trigCount_ = TRIG_LEN; }
                     }
                     break;
                 }
                 case S_TOGGLE: {
-                    // trig is on 1 to 0, i.e. key release
                     // then toggle the state
-                    if (last_key_state_ && !keystate) {
-                        state_ = !state_;
+                    if (trigOnRelease) {
+                        if (last_key_state_ && !keystate) { state_ = !state_; }
+                    } else {
+                        if (!last_key_state_ && keystate) { state_ = !state_; }
                     }
                     trigCount_ = 0;
                     break;
@@ -201,26 +184,39 @@ struct EFunctionWidget : ModuleWidget {
         setModule(module);
         setPanel(createPanel(asset::plugin(pluginInstance, "res/EFunction.svg")));
 
-		addParam(createParamCentered<CKSSThree>(mm2px(Vec(27.94, 17.826)), module, EFunction::P_TYPE_PARAM));
-		addParam(createParamCentered<RoundBlackKnob>(mm2px(Vec(9.133, 32.391)), module, EFunction::P_F1_R_PARAM));
-		addParam(createParamCentered<RoundBlackKnob>(mm2px(Vec(21.667, 32.391)), module, EFunction::P_F1_C_PARAM));
-		addParam(createParamCentered<RoundBlackKnob>(mm2px(Vec(34.194, 32.391)), module, EFunction::P_F2_R_PARAM));
-		addParam(createParamCentered<RoundBlackKnob>(mm2px(Vec(46.729, 32.391)), module, EFunction::P_F2_C_PARAM));
-		addParam(createParamCentered<RoundBlackKnob>(mm2px(Vec(9.133, 53.391)), module, EFunction::P_F3_R_PARAM));
-		addParam(createParamCentered<RoundBlackKnob>(mm2px(Vec(21.667, 53.391)), module, EFunction::P_F3_C_PARAM));
-		addParam(createParamCentered<RoundBlackKnob>(mm2px(Vec(34.194, 53.391)), module, EFunction::P_F4_R_PARAM));
-		addParam(createParamCentered<RoundBlackKnob>(mm2px(Vec(46.729, 53.391)), module, EFunction::P_F4_C_PARAM));
+        addParam(createParamCentered<CKSSThree>(mm2px(Vec(27.94, 17.826)), module, EFunction::P_TYPE_PARAM));
+        addParam(createParamCentered<RoundBlackKnob>(mm2px(Vec(9.133, 32.391)), module, EFunction::P_F1_R_PARAM));
+        addParam(createParamCentered<RoundBlackKnob>(mm2px(Vec(21.667, 32.391)), module, EFunction::P_F1_C_PARAM));
+        addParam(createParamCentered<RoundBlackKnob>(mm2px(Vec(34.194, 32.391)), module, EFunction::P_F2_R_PARAM));
+        addParam(createParamCentered<RoundBlackKnob>(mm2px(Vec(46.729, 32.391)), module, EFunction::P_F2_C_PARAM));
+        addParam(createParamCentered<RoundBlackKnob>(mm2px(Vec(9.133, 53.391)), module, EFunction::P_F3_R_PARAM));
+        addParam(createParamCentered<RoundBlackKnob>(mm2px(Vec(21.667, 53.391)), module, EFunction::P_F3_C_PARAM));
+        addParam(createParamCentered<RoundBlackKnob>(mm2px(Vec(34.194, 53.391)), module, EFunction::P_F4_R_PARAM));
+        addParam(createParamCentered<RoundBlackKnob>(mm2px(Vec(46.729, 53.391)), module, EFunction::P_F4_C_PARAM));
 
-		addInput(createInputCentered<PJ301MPort>(mm2px(Vec(9.163, 69.937)), module, EFunction::IN_K_INPUT));
-		addInput(createInputCentered<PJ301MPort>(mm2px(Vec(21.667, 69.937)), module, EFunction::IN_GATE_INPUT));
-		addInput(createInputCentered<PJ301MPort>(mm2px(Vec(46.766, 69.937)), module, EFunction::IN_KG_INPUT));
-		addInput(createInputCentered<PJ301MPort>(mm2px(Vec(9.163, 107.491)), module, EFunction::IN_ENABLE_INPUT));
+        addInput(createInputCentered<PJ301MPort>(mm2px(Vec(9.163, 69.937)), module, EFunction::IN_K_INPUT));
+        addInput(createInputCentered<PJ301MPort>(mm2px(Vec(21.667, 69.937)), module, EFunction::IN_GATE_INPUT));
+        addInput(createInputCentered<PJ301MPort>(mm2px(Vec(46.766, 69.937)), module, EFunction::IN_KG_INPUT));
+        addInput(createInputCentered<PJ301MPort>(mm2px(Vec(9.163, 107.491)), module, EFunction::IN_ENABLE_INPUT));
 
-		addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(9.163, 88.0)), module, EFunction::OUT_F1_OUTPUT));
-		addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(21.667, 88.0)), module, EFunction::OUT_F2_OUTPUT));
-		addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(34.194, 88.0)), module, EFunction::OUT_F3_OUTPUT));
-		addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(46.766, 88.0)), module, EFunction::OUT_F4_OUTPUT));
-		addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(46.766, 107.491)), module, EFunction::OUT_LIGHTS_OUTPUT));
+        addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(9.163, 88.0)), module, EFunction::OUT_F1_OUTPUT));
+        addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(21.667, 88.0)), module, EFunction::OUT_F2_OUTPUT));
+        addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(34.194, 88.0)), module, EFunction::OUT_F3_OUTPUT));
+        addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(46.766, 88.0)), module, EFunction::OUT_F4_OUTPUT));
+        addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(46.766, 107.491)), module, EFunction::OUT_LIGHTS_OUTPUT));
+    }
+
+
+    void appendContextMenu(Menu* menu) override {
+        auto module = getModule<EFunction>();
+
+        menu->addChild(new MenuSeparator);
+        menu->addChild(createBoolMenuItem(
+            "Exclusive", "", [=]() { return module->exclusiveMode_; },
+            [=](bool value) { module->exclusiveMode_ = value; }));
+        menu->addChild(createBoolMenuItem(
+            "On Release", "", [=]() { return module->trigOnRelease_; },
+            [=](bool value) { module->trigOnRelease_ = value; }));
     }
 };
 
@@ -285,21 +281,47 @@ void EFunction::doProcess(const ProcessArgs& args) {
         unsigned in_r = 0, in_c = 0;
         bool valid = enabled_;
 
-        if (valid) {
-            decodeKey(inputs[IN_K_INPUT].getVoltage(ch), valid, in_r, in_c);
-        }
+        if (valid) { decodeKey(inputs[IN_K_INPUT].getVoltage(ch), valid, in_r, in_c); }
 
         for (unsigned fk = 0; fk < MAX_FUNCS; fk++) {
             auto& func = funcs_[fk];
             if (valid && func.valid()) {
                 if (in_r == (unsigned)func.r_ && in_c == (unsigned)func.c_) {
-                    // trig @ 1..2v
-                    bool key_state = (inputs[IN_GATE_INPUT].getVoltage(ch) >= 1.5f);
+                    bool key_state = func.last_key_state_;
+
+                    // use hysteresis
+                    if (func.last_key_state_) {
+                        key_state = (inputs[IN_GATE_INPUT].getVoltage(ch) <= trigLow_) ? false : func.last_key_state_;
+                    } else {
+                        key_state = (inputs[IN_GATE_INPUT].getVoltage(ch) >= trigHigh_) ? true : func.last_key_state_;
+                    }
+
                     if (func.last_key_state_ != key_state) {
-                        bool changed = func.changeState(switch_type, key_state);
+                        bool changed = func.changeState(switch_type, key_state, trigOnRelease_);
+
+                        if (exclusiveMode_ && changed && switch_type == FuncKey::S_TOGGLE) {
+                            // if exlusive toggles then turn off other functions
+                            if (func.state_) {
+                                for (unsigned fk2 = 0; fk2 < MAX_FUNCS; fk2++) {
+                                    if (fk != fk2) {
+                                        auto& func2 = funcs_[fk2];
+                                        if (func2.state_) {
+                                            func2.state_ = false;
+                                            LedMsgType t = connectedFuncs_[fk2]
+                                                               ? (func2.state_ ? LED_SET_RED : LED_SET_GREEN)
+                                                               : LED_SET_OFF;
+                                            float msg = encodeLedMsg(t, func2.r_, func2.c_, 1, 1);
+                                            ledQueue_.write(msg);
+                                        }
+                                    }
+                                }
+                            }
+                        }
+
                         if (changed) {
-                            LedMsgType t = connectedFuncs_[fk] ? (func.state_ ? LED_SET_RED : LED_SET_GREEN) : LED_SET_OFF;
-                            std::cout << "change led " << in_r << "," << in_c << " state" << t << std::endl;
+                            LedMsgType t =
+                                connectedFuncs_[fk] ? (func.state_ ? LED_SET_RED : LED_SET_GREEN) : LED_SET_OFF;
+                            // std::cout << "change led " << in_r << "," << in_c << " state" << t << std::endl;
                             float msg = encodeLedMsg(t, in_r, in_c, 1, 1);
                             ledQueue_.write(msg);
                         }
@@ -312,14 +334,36 @@ void EFunction::doProcess(const ProcessArgs& args) {
                         // key now not active
                         func.ch_ = 0xff;
                         bool key_state = false;
+                        bool changed = false;
+
                         if (func.last_key_state_ != key_state) {
-                            func.changeState(switch_type, key_state);
+                            changed = func.changeState(switch_type, key_state, trigOnRelease_);
+                        }
+
+                        if (exclusiveMode_ && changed && switch_type == FuncKey::S_TOGGLE) {
+                            // if exlusive toggles then turn off other functions
+                            if (func.state_) {
+                                for (unsigned fk2 = 0; fk2 < MAX_FUNCS; fk2++) {
+                                    if (fk != fk2) {
+                                        auto& func2 = funcs_[fk2];
+                                        if (func2.state_) {
+                                            func2.state_ = false;
+                                            LedMsgType t = connectedFuncs_[fk2]
+                                                               ? (func2.state_ ? LED_SET_RED : LED_SET_GREEN)
+                                                               : LED_SET_OFF;
+                                            float msg = encodeLedMsg(t, func2.r_, func2.c_, 1, 1);
+                                            ledQueue_.write(msg);
+                                        }
+                                    }
+                                }
+                            }
                         }
 
                         unsigned r = func.r_;
                         unsigned c = func.c_;
                         if (r < kg_r_ && c < kg_c_ && func.valid()) {
-                            LedMsgType t = connectedFuncs_[fk] ? (func.state_ ? LED_SET_RED : LED_SET_GREEN) : LED_SET_OFF;
+                            LedMsgType t =
+                                connectedFuncs_[fk] ? (func.state_ ? LED_SET_RED : LED_SET_GREEN) : LED_SET_OFF;
                             std::cout << "change led " << in_r << "," << in_c << " state" << t << std::endl;
                             float msg = encodeLedMsg(t, r, c, 1, 1);
                             ledQueue_.write(msg);
@@ -334,7 +378,8 @@ void EFunction::doProcess(const ProcessArgs& args) {
                                 unsigned c = func.c_;
                                 func.state_ = false;
                                 if (r < kg_r_ && c < kg_c_) {
-                                    LedMsgType t = connectedFuncs_[fk] ? (func.state_ ? LED_SET_RED : LED_SET_GREEN) : LED_SET_OFF;
+                                    LedMsgType t =
+                                        connectedFuncs_[fk] ? (func.state_ ? LED_SET_RED : LED_SET_GREEN) : LED_SET_OFF;
                                     std::cout << "change led " << in_r << "," << in_c << " state" << t << std::endl;
                                     float msg = encodeLedMsg(t, r, c, 1, 1);
                                     ledQueue_.write(msg);
