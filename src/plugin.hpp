@@ -14,3 +14,4 @@ extern Model* modelESwitch;
 extern Model* modelEFunction;
 extern Model* modelEFunction12;
 extern Model* modelEIlluminator;
+extern Model* modelOctave;
