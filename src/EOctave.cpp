@@ -3,7 +3,7 @@
 
 struct Octave : Module {
     enum ParamId { P_OFFSET_PARAM, PARAMS_LEN };
-    enum InputId { IN_INC_INPUT, IN_DEC_INPUT, IN_IN_INPUT, INPUTS_LEN };
+    enum InputId { IN_DEC_INPUT, IN_INC_INPUT, IN_IN_INPUT, INPUTS_LEN };
     enum OutputId { OUT_OUT_OUTPUT, OUTPUTS_LEN };
     enum LightId {
         LED_1_LIGHT,
@@ -52,8 +52,8 @@ struct OctaveWidget : ModuleWidget {
 
         addParam(createParamCentered<RoundBlackKnob>(mm2px(Vec(20.269, 72.175)), module, Octave::P_OFFSET_PARAM));
 
-        addInput(createInputCentered<PJ301MPort>(mm2px(Vec(9.937, 87.69)), module, Octave::IN_INC_INPUT));
-        addInput(createInputCentered<PJ301MPort>(mm2px(Vec(28.987, 87.69)), module, Octave::IN_DEC_INPUT));
+        addInput(createInputCentered<PJ301MPort>(mm2px(Vec(9.937, 87.69)), module, Octave::IN_DEC_INPUT));
+        addInput(createInputCentered<PJ301MPort>(mm2px(Vec(28.987, 87.69)), module, Octave::IN_INC_INPUT));
         addInput(createInputCentered<PJ301MPort>(mm2px(Vec(9.937, 105.682)), module, Octave::IN_IN_INPUT));
 
         addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(29.114, 105.417)), module, Octave::OUT_OUT_OUTPUT));
