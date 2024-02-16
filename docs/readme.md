@@ -18,13 +18,18 @@ https://github.com/TheTechnobear/MetaMorph/wiki
 
 
 
-
-
 ## Support & Contact
 You can find me (@TheTechnobear) on polyexpression.com, a forum dedicated to expressive controllers.
 This where you will find a good number of Eigenharp players too :) 
 
 Forum : https://community.polyexpression.com 
+
+
+if you would like to support me, for my efforts on this (and other) projects, 
+you can buy me a coffee via ko-fi : [here](https://ko-fi.com/thetechnobear)
+
+
+
 
 
 ## Download & installation 
@@ -34,9 +39,6 @@ https://community.polyexpression.com/t/meta-morph-download-and-install
 
 ## Release Annoucements
 https://community.polyexpression.com/t/meta-morph-release-announcements
-
-
-
 
 
 ## Credits:

@@ -99,6 +99,10 @@ now we can create the initial classes from the panel
 $RACK_DIR/helper.py createmodule EDevice res/EDevice.svg src/EDevice.cpp
 ```
 
+note: do not use helper.py on existing modules, you'll overwrite all your custom code!
+really, its only useful to create initial template class.
+
+
 this will look in the 'components' layer for circles/ellipsefor and generate jacks/knobs based on colour
 
 component will use centre of circle
