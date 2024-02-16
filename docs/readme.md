@@ -13,10 +13,33 @@ furthermore, I wanted to provide a route that means other developers can add 'ei
 to this end, I have documented the wire protocol, I use between meta morph modules to allow for this.
 
 
+## Documentation
+https://github.com/TheTechnobear/MetaMorph/wiki
 
 
 
-### Credits:
+
+
+## Support & Contact
+You can find me (@TheTechnobear) on polyexpression.com, a forum dedicated to expressive controllers.
+This where you will find a good number of Eigenharp players too :) 
+
+Forum : https://community.polyexpression.com 
+
+
+## Download & installation 
+
+https://community.polyexpression.com/t/meta-morph-download-and-install
+
+
+## Release Annoucements
+https://community.polyexpression.com/t/meta-morph-release-announcements
+
+
+
+
+
+## Credits:
 Id like to thank the following, without thier help this would not be possible.
 - Ben Norland for work on the panel design, and also the meta morph logo.
 - EigenLabs for embracing open source, making this possible
