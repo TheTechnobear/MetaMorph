@@ -8,9 +8,9 @@
   "authorEmail": "",
   "authorUrl": "",
   "pluginUrl": "http://polyexpression.com",
-  "manualUrl": "",
-  "sourceUrl": "",
-  "donateUrl": "",
+  "manualUrl": "https://github.com/TheTechnobear/MetaMorph/wiki",
+  "sourceUrl": "https://github.com/TheTechnobear/MetaMorph",
+  "donateUrl": "https://ko-fi.com/thetechnobear",
   "changelogUrl": "",
   "modules": [
     {
